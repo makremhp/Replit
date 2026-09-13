@@ -123,3 +123,20 @@
 .zombie,.bullet,.fx,.coin { will-change:transform; }
 .zombie { transform:translate3d(0,0,0); }
 @media (max-width:390px) { .wallet-network { display:none; } .wallet-body { padding-inline:14px; } .wallet-balance-amount { font-size:30px; } }
+
+
+/* ===================== TON Connect + SVG wallet controls ===================== */
+.wallet-info-icon svg,.wallet-connect-btn svg,.wallet-disconnect-btn svg,.wallet-action-btn svg { width:18px; height:18px; flex:none; }
+.wallet-info-icon svg { width:16px; height:16px; }
+.wallet-connect-row { display:flex; gap:8px; width:100%; }
+.wallet-connect-btn,.wallet-disconnect-btn { min-height:44px; display:flex; align-items:center; justify-content:center; gap:8px; border-radius:13px; font-size:11px; font-weight:900; cursor:pointer; transition:transform .2s ease,background .2s ease,border-color .2s ease; }
+.wallet-connect-btn { flex:1; border:1px solid rgba(118,224,195,.36); color:#102018; background:linear-gradient(100deg,#79d9c0,#afead5); box-shadow:0 9px 18px rgba(118,224,195,.12); }
+.wallet-disconnect-btn { padding:0 13px; border:1px solid rgba(229,138,148,.25); color:#eaa0a8; background:rgba(229,138,148,.06); }
+.wallet-connect-btn:active,.wallet-disconnect-btn:active { transform:scale(.98); }
+.wallet-connection-status { display:flex; align-items:center; gap:7px; min-height:18px; margin-top:10px; color:var(--muted); font-size:10px; font-weight:700; }
+.wallet-status-dot { width:7px; height:7px; flex:none; border-radius:50%; background:#87969b; box-shadow:0 0 0 3px rgba(135,150,155,.08); }
+.wallet-status-dot.is-connected { background:var(--mint); box-shadow:0 0 0 3px rgba(118,224,195,.1),0 0 10px rgba(118,224,195,.5); }
+.wallet-input[readonly] { cursor:default; color:#dbe7e9; }
+.wallet-input.is-connected { color:var(--mint); }
+.wallet-copy-btn { display:flex; align-items:center; justify-content:center; min-width:44px; }
+.wallet-action-btn { display:flex; align-items:center; justify-content:center; }
