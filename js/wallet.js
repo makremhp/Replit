@@ -10,6 +10,8 @@ document.getElementById('shareBtn').addEventListener('click', () => {
 /* ===================== محفظة TON Connect ===================== */
 const MIN_WITHDRAW = 5;
 const TON_MANIFEST_URL = 'https://replit-liart.vercel.app/tonconnect-manifest.json';
+const TON_SDK_URL = 'https://unpkg.com/@tonconnect/ui@2.2.0/dist/tonconnect-ui.min.js';
+let tonSdkPromise = null;
 const walletPage = document.getElementById('walletPage');
 const walletTitleText = document.getElementById('walletTitleText');
 const walletMinNote = document.getElementById('walletMinNote');
@@ -49,12 +51,26 @@ function applyTonWallet(wallet) {
   walletConnectionStatusText.textContent = connected ? T.walletConnected(shortTonAddress(connectedTonAddress)) : T.walletNotConnected;
 }
 
-function initTonConnect() {
+function loadTonConnectSdk() {
+  if (window.TON_CONNECT_UI && window.TON_CONNECT_UI.TonConnectUI) return Promise.resolve();
+  if (tonSdkPromise) return tonSdkPromise;
+  tonSdkPromise = new Promise((resolve, reject) => {
+    const script = document.createElement('script');
+    script.src = TON_SDK_URL;
+    script.async = true;
+    script.onload = () => {
+      if (window.TON_CONNECT_UI && window.TON_CONNECT_UI.TonConnectUI) resolve();
+      else reject(new Error('TON Connect SDK loaded without its UI class'));
+    };
+    script.onerror = () => reject(new Error('TON Connect SDK failed to load'));
+    document.head.appendChild(script);
+  });
+  return tonSdkPromise;
+}
+
+async function initTonConnect() {
   if (tonConnectUI) return tonConnectUI;
-  if (!window.TON_CONNECT_UI || !window.TON_CONNECT_UI.TonConnectUI) {
-    walletConnectionStatusText.textContent = T.walletSdkUnavailable;
-    return null;
-  }
+  await loadTonConnectSdk();
   tonConnectUI = new window.TON_CONNECT_UI.TonConnectUI({ manifestUrl: TON_MANIFEST_URL });
   tonConnectUI.onStatusChange(wallet => applyTonWallet(wallet));
   applyTonWallet(tonConnectUI.wallet);
@@ -62,9 +78,19 @@ function initTonConnect() {
 }
 
 async function connectTonWallet() {
-  const ui = initTonConnect();
-  if (!ui) return showToast(T.walletSdkUnavailable);
-  await ui.openModal();
+  connectWalletBtn.disabled = true;
+  connectWalletBtnText.textContent = T.connectingWallet;
+  try {
+    const ui = await initTonConnect();
+    await ui.openModal();
+  } catch (error) {
+    console.error('TON Connect error:', error);
+    walletConnectionStatusText.textContent = T.walletConnectFailed;
+    showToast(T.walletConnectFailed);
+  } finally {
+    connectWalletBtn.disabled = false;
+    connectWalletBtnText.textContent = T.connectWallet;
+  }
 }
 
 connectWalletBtn.addEventListener('click', connectTonWallet);
@@ -74,7 +100,7 @@ disconnectWalletBtn.addEventListener('click', async () => {
 });
 
 function openWalletPage() {
-  initTonConnect();
+  initTonConnect().catch(() => {});
   document.getElementById('walletKicker').textContent = T.walletKicker;
   walletTitleText.textContent = T.walletTitle;
   document.getElementById('walletBalanceLabel').textContent = T.walletBalanceLabel;

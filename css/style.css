@@ -140,3 +140,12 @@
 .wallet-input.is-connected { color:var(--mint); }
 .wallet-copy-btn { display:flex; align-items:center; justify-content:center; min-width:44px; }
 .wallet-action-btn { display:flex; align-items:center; justify-content:center; }
+
+
+/* ===================== إصلاح رأس صفحة السحب ===================== */
+.wallet-header { position:relative; display:grid; grid-template-columns:1fr auto 1fr; justify-content:initial; padding-inline:76px; }
+.wallet-title-group { grid-column:2; min-width:132px; text-align:center; }
+.wallet-back { right:auto; inset-inline-end:18px; z-index:3; }
+.wallet-network { position:absolute; inset-inline-start:18px; }
+.wallet-connect-btn:disabled { opacity:.65; cursor:wait; }
+@media (max-width:390px) { .wallet-header { padding-inline:62px; } .wallet-network { display:none; } }
