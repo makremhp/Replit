@@ -51,6 +51,7 @@ function renderBalance() {
   document.getElementById('balanceAmount').textContent = State.balance.toFixed(4);
   const w = document.getElementById('walletBalanceAmount');
   if (w) w.textContent = State.balance.toFixed(4);
+  if (typeof renderWalletProgress === 'function') renderWalletProgress();
 }
 
 let toastTimer = null;
