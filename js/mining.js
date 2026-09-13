@@ -2,8 +2,6 @@
 const stage = document.getElementById('miningStage');
 const activeCoins = new Set();
 const MAX_ACTIVE_COINS = 50;
-const COIN_COLLECT_RADIUS = 82;
-const COIN_AUTO_COLLECT_DELAY_MS = 650;
 let miningTimer = null;
 let stateSyncTimer = null;
 let coinAudioContext = null;
@@ -56,7 +54,13 @@ function spawnFloatText(x, y, text) {
 function addBalance(amount, x, y) {
   spawnFloatText(x, y, `+${amount.toFixed(5)}$`);
   if (State.serverConnected) {
-    requestServerRefresh();
+    collectCoinFromServer(currentHouse().id).then(collected => {
+      if (!collected) {
+        State.balance += amount;
+        saveState();
+        renderBalance();
+      }
+    });
     return;
   }
 
@@ -66,28 +70,17 @@ function addBalance(amount, x, y) {
   renderBalance();
 }
 
-function collectCoinGroup(coin) {
+function collectCoin(coin) {
   if (!activeCoins.has(coin)) return;
 
   const sourceX = Number(coin.dataset.x);
   const sourceY = Number(coin.dataset.y);
-  const coinsToCollect = [...activeCoins].filter(candidate => {
-    const dx = Number(candidate.dataset.x) - sourceX;
-    const dy = Number(candidate.dataset.y) - sourceY;
-    return Math.hypot(dx, dy) <= COIN_COLLECT_RADIUS;
-  });
-  if (!coinsToCollect.length) return;
-
-  const totalValue = coinsToCollect.reduce((total, candidate) => (
-    total + Number(candidate.dataset.value)
-  ), 0);
+  const coinValue = Number(coin.dataset.value);
 
   playCoinCollectSound();
-  coinsToCollect.forEach(candidate => {
-    activeCoins.delete(candidate);
-    candidate.remove();
-  });
-  addBalance(totalValue, sourceX + 18, sourceY + 18);
+  activeCoins.delete(coin);
+  coin.remove();
+  addBalance(coinValue, sourceX + 18, sourceY + 18);
 }
 
 function spawnCoin() {
@@ -110,13 +103,10 @@ function spawnCoin() {
   coin.style.backgroundImage = 'url("asesst/coin-usdt.png")';
   coin.addEventListener('click', event => {
     event.stopPropagation();
-    collectCoinGroup(coin);
+    collectCoin(coin);
   }, { once: true });
   stage.appendChild(coin);
   activeCoins.add(coin);
-
-  // Coins remain visible briefly, then collect themselves without user input.
-  setTimeout(() => collectCoinGroup(coin), COIN_AUTO_COLLECT_DELAY_MS);
 }
 
 function spawnCoins(count) {
