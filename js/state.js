@@ -1,21 +1,22 @@
 /* ===================== الحالة العامة — المصدر الوحيد هو الخادم ===================== */
 const STATE_API_URL = '/api/state';
-const CLIENT_ID_KEY = 'sh_client_id';
-['sh_balance', 'sh_progress', 'sh_unlocked', 'sh_active', 'sh_ton_address'].forEach(key => localStorage.removeItem(key));
-const hasStateApi = window.location.protocol !== 'file:' && typeof fetch === 'function';
+function getTelegramInitData() {
+  return String(window.Telegram?.WebApp?.initData || '');
+}
 
-function getClientId() {
-  let clientId = localStorage.getItem(CLIENT_ID_KEY);
-  if (!clientId) {
-    const randomId = window.crypto?.randomUUID?.() || `${Date.now()}-${Math.random().toString(36).slice(2)}`;
-    clientId = `client-${randomId}`;
-    localStorage.setItem(CLIENT_ID_KEY, clientId);
-  }
-  return clientId;
+function requireTelegramInitData() {
+  const initData = getTelegramInitData();
+  if (!initData) throw new Error('افتح التطبيق من داخل Telegram فقط');
+  return initData;
+}
+
+if (window.Telegram?.WebApp) {
+  window.Telegram.WebApp.ready();
+  window.Telegram.WebApp.expand();
 }
 
 const State = {
-  clientId: getClientId(),
+  clientId: '',
   balance: 0,
   progress: { referrals: 0, ads: 0, deposit: 0 },
   unlockedHouses: [1],
@@ -64,7 +65,7 @@ function applyServerState(data) {
 
 async function requestState(method = 'GET') {
   if (!hasStateApi) throw new Error('State API is unavailable in local file mode');
-  const options = { method, headers: { 'X-Client-Id': State.clientId } };
+  const options = { method, headers: { 'X-Telegram-Init-Data': requireTelegramInitData() } };
   if (method !== 'GET') {
     options.headers['Content-Type'] = 'application/json';
     options.body = JSON.stringify(statePayload());
@@ -134,7 +135,7 @@ function collectCoinFromServer(houseId) {
     try {
       const response = await fetch('/api/collect', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json', 'X-Client-Id': State.clientId },
+        headers: { 'Content-Type': 'application/json', 'X-Telegram-Init-Data': requireTelegramInitData() },
         body: JSON.stringify({ houseId: Number(houseId) }),
       });
       if (!response.ok) throw new Error(`Collect API returned ${response.status}`);
