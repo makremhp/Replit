@@ -2,11 +2,10 @@
   "name": "six-houses",
   "version": "1.0.0",
   "private": true,
-  "description": "Six Houses rewards app with a Telegram bot and PostgreSQL backend",
+  "description": "Six Houses Telegram Mini App with PostgreSQL backend",
   "main": "server.js",
   "scripts": {
-    "start": "node server.js",
-    "bot": "node bot.js"
+    "start": "node server.js"
   },
   "engines": {
     "node": ">=18"
