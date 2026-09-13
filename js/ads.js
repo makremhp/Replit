@@ -1,100 +1,37 @@
-/* ===================== محرّك تشغيل إعلانات 320×50 ===================== */
+/* ===================== إعلانات محكومة بالخادم ===================== */
+let currentVerifiedAdSession = null;
+
 function renderAdSlot(containerId, key) {
   const container = document.getElementById(containerId);
   if (!container) return;
-  container.innerHTML = '';
-  const iframe = document.createElement('iframe');
-  iframe.style.width = '320px';
-  iframe.style.height = '50px';
-  iframe.style.border = '0';
-  iframe.style.overflow = 'hidden';
-  iframe.scrolling = 'no';
-  container.appendChild(iframe);
-  const doc = iframe.contentWindow.document;
-  doc.open();
-  doc.write(
-    '<script>atOptions = {"key":"' + key + '","format":"iframe","height":50,"width":320,"params":{}};<\/script>' +
-    '<script src="https://interventioncopiedloitering.com/' + key + '/invoke.js"><\/script>'
-  );
-  doc.close();
+  container.replaceChildren();
+  const frame = document.createElement('div');
+  frame.className = 'ad-slot-placeholder';
+  frame.dataset.adKey = key || '';
+  frame.textContent = 'Advertisement';
+  container.appendChild(frame);
 }
 
-/* الأكواد الثابتة (أعلى + أسفل) */
-const AD_TOP_KEYS = [
-  'b895987c82805b8778a34f54911e8de0',
-  'ab4615d3d759a81e9b876abbcebaf690',
-  '3b49398bb9242d548c0464f244b621fa'
-];
-const AD_BOTTOM_INITIAL_KEYS = [
-  'b3570e82f7fb6c462dfdfded816f1576',
-  'de29a44d70992e967ae5d20275e77fab',
-  '280eab7c354ed87595a376b2f5e270cb'
-];
-/* الأكواد المتبقية — تُستخدم في تحديث الثلاثة النشطين أسفل الصفحة كل 5 ثواني عشوائيًا */
-const AD_ROTATE_POOL = [
-  'd47f719464108005a03a03e6d49fba1a',
-  '04bcf6532017b6790ab2ddac95a5621d',
-  '8c0574e870e5a3843e89d947bd38aaff',
-  '9f6fe4084cb3d8a8eb4d8246ee57ed25'
-];
-
-const AD_TOP_IDS = ['adTop1', 'adTop2', 'adTop3'];
-const AD_BOTTOM_IDS = ['adBottom1', 'adBottom2', 'adBottom3'];
-const AD_ACTIVE_IDS = AD_TOP_IDS.concat(AD_BOTTOM_IDS);
-
-function randomAdKey() {
-  return AD_ROTATE_POOL[Math.floor(Math.random() * AD_ROTATE_POOL.length)];
+async function startVerifiedAd() {
+  try {
+    currentVerifiedAdSession = await startAdSession();
+    showToast('تم فتح جلسة الإعلان — انتظر تحقق مزود الإعلانات');
+    return currentVerifiedAdSession;
+  } catch (error) {
+    showToast(error.message || 'لا يمكن بدء الإعلان الآن');
+    return null;
+  }
 }
 
-/* تحميل أولي */
-AD_TOP_IDS.forEach((id, i) => renderAdSlot(id, AD_TOP_KEYS[i]));
-AD_BOTTOM_IDS.forEach((id, i) => renderAdSlot(id, AD_BOTTOM_INITIAL_KEYS[i]));
-
-/* تحديث الستة (فوق وتحت) كل 5 ثواني بشكل عشوائي */
-setInterval(() => {
-  AD_ACTIVE_IDS.forEach(id => renderAdSlot(id, randomAdKey()));
-}, 5000);
-
-
-/* ===================== Social Ads مباشرة من أعلى body ===================== */
-const SOCIAL_AD_SOURCES = [
-  'https://interventioncopiedloitering.com/5d/77/0f/5d770ff402768d79ddda9c1cd67e9819.js',
-  'https://interventioncopiedloitering.com/96/90/da/9690da690d344e2579dffa12d4e2ac24.js',
-  'https://interventioncopiedloitering.com/f0/07/9c/f0079c7c7d8c3c01bd28c4116a805f4a.js',
-  'https://interventioncopiedloitering.com/7e/7f/2b/7e7f2b6f7c43d86c6859e5b0a40afe3e.js',
-  'https://interventioncopiedloitering.com/7e/28/55/7e2855c2f9fb53ed0ca536022ca067df.js',
-  'https://interventioncopiedloitering.com/d0/f6/b3/d0f6b318f29b5787025697029ae72f23.js',
-  'https://interventioncopiedloitering.com/58/0d/ca/580dcaa1a10c7fb3943a7ea94b700f42.js',
-  'https://interventioncopiedloitering.com/da/5e/c3/da5ec3a230bfa740492f3f78bd1ed182.js'
-];
-const SOCIAL_AD_VISIBLE_MS = 4000;
-const SOCIAL_AD_GAP_MS = 650;
-let socialAdIndex = 0;
-let socialAdHideTimer = null;
-let socialAdNextTimer = null;
-const socialAdContainer = document.getElementById('socialAdContainer');
-
-function cleanupSocialAd() {
-  clearTimeout(socialAdHideTimer);
-  if (socialAdContainer) socialAdContainer.replaceChildren();
+async function finishVerifiedAd() {
+  if (!currentVerifiedAdSession?.sessionId) return false;
+  try {
+    await completeAdSession(currentVerifiedAdSession.sessionId);
+    currentVerifiedAdSession = null;
+    showToast('تمت إضافة المكافأة بعد التحقق');
+    return true;
+  } catch (error) {
+    showToast(error.message || 'لم يتم التحقق من الإعلان');
+    return false;
+  }
 }
-
-function showNextSocialAd() {
-  if (!socialAdContainer) return;
-  cleanupSocialAd();
-  const source = SOCIAL_AD_SOURCES[socialAdIndex % SOCIAL_AD_SOURCES.length];
-  socialAdIndex += 1;
-  const frame = document.createElement('iframe');
-  frame.className = 'social-ad-frame';
-  frame.title = 'Social advertisement';
-  frame.setAttribute('scrolling', 'no');
-  frame.srcdoc = `<!doctype html><html><head><meta charset="utf-8"><style>html,body{margin:0;padding:0;overflow:hidden;background:transparent}</style></head><body><script src="${source}"><\/script></body></html>`;
-  socialAdContainer.appendChild(frame);
-  socialAdHideTimer = setTimeout(() => {
-    cleanupSocialAd();
-    socialAdNextTimer = setTimeout(showNextSocialAd, SOCIAL_AD_GAP_MS);
-  }, SOCIAL_AD_VISIBLE_MS);
-}
-
-/* Social Ads فقط تتبدل واحدًا تلو الآخر؛ محرك 320×50 بقي كما هو. */
-setTimeout(showNextSocialAd, 900);
