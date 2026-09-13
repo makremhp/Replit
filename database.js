@@ -12,7 +12,7 @@ const HOUSES = {
 const databaseUrl = process.env.DATABASE_URL || process.env.EXTERNAL_DATABASE_URL;
 
 if (!databaseUrl) {
-  console.warn('DATABASE_URL or EXTERNAL_DATABASE_URL is not set. Set one before starting the app or bot.');
+  console.warn('DATABASE_URL or EXTERNAL_DATABASE_URL is not set. Set one before starting the app.');
 }
 
 const pool = new Pool({
@@ -36,14 +36,6 @@ const schema = `
     updated_at BIGINT NOT NULL
   );
 
-  CREATE TABLE IF NOT EXISTS telegram_users (
-    telegram_id BIGINT PRIMARY KEY,
-    client_id TEXT NOT NULL UNIQUE REFERENCES users(client_id) ON DELETE CASCADE,
-    username TEXT,
-    first_name TEXT,
-    created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
-    updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
-  );
 
   CREATE TABLE IF NOT EXISTS withdrawals (
     id BIGSERIAL PRIMARY KEY,
@@ -203,39 +195,6 @@ async function setTonAddress(clientId, address) {
   return readState(clientId);
 }
 
-async function ensureTelegramUser(telegramUser, startPayload = '') {
-  const telegramId = String(telegramUser.id);
-  const clientId = `client-telegram-${telegramId}`;
-  await getOrCreateUser(clientId);
-  const inserted = await pool.query(
-    `INSERT INTO telegram_users (telegram_id, client_id, username, first_name)
-     VALUES ($1, $2, $3, $4)
-     ON CONFLICT (telegram_id) DO NOTHING
-     RETURNING client_id`,
-    [telegramId, clientId, telegramUser.username || null, telegramUser.first_name || null]
-  );
-  await pool.query(
-    'UPDATE telegram_users SET username = $1, first_name = $2, updated_at = NOW() WHERE telegram_id = $3',
-    [telegramUser.username || null, telegramUser.first_name || null, telegramId]
-  );
-  if (inserted.rowCount && /^ref_\d+$/.test(startPayload)) {
-    const referrerId = startPayload.slice(4);
-    if (referrerId !== telegramId) {
-      const referrer = await pool.query('SELECT client_id FROM telegram_users WHERE telegram_id = $1', [referrerId]);
-      if (referrer.rows[0]) {
-        await pool.query('UPDATE users SET referrals = referrals + 1, updated_at = $1 WHERE client_id = $2', [Date.now(), referrer.rows[0].client_id]);
-        await logActivity(referrer.rows[0].client_id, 'referral_joined', { telegramId });
-      }
-    }
-  }
-  return { clientId, isNew: Boolean(inserted.rowCount) };
-}
-
-async function getTelegramClient(telegramId) {
-  const result = await pool.query('SELECT client_id FROM telegram_users WHERE telegram_id = $1', [String(telegramId)]);
-  if (!result.rows[0]) throw new Error('Telegram user is not registered');
-  return result.rows[0].client_id;
-}
 
 async function createWithdrawal(clientId) {
   const minimum = Number(process.env.MIN_WITHDRAWAL || 0.01);
@@ -272,53 +231,6 @@ async function listUserWithdrawals(clientId, limit = 10) {
   return result.rows;
 }
 
-async function listPendingWithdrawals(limit = 20) {
-  const result = await pool.query(
-    `SELECT w.id, w.amount, w.ton_address, w.created_at, w.client_id, t.telegram_id, t.username
-     FROM withdrawals w LEFT JOIN telegram_users t ON t.client_id = w.client_id
-     WHERE w.status = 'pending' ORDER BY w.id ASC LIMIT $1`,
-    [limit]
-  );
-  return result.rows;
-}
-
-async function reviewWithdrawal(id, status, reviewerId) {
-  if (!['approved', 'rejected'].includes(status)) throw new Error('Invalid withdrawal status');
-  const client = await pool.connect();
-  try {
-    await client.query('BEGIN');
-    const result = await client.query('SELECT * FROM withdrawals WHERE id = $1 FOR UPDATE', [id]);
-    const withdrawal = result.rows[0];
-    if (!withdrawal) throw new Error('Withdrawal not found');
-    if (withdrawal.status !== 'pending') throw new Error('Withdrawal was already reviewed');
-    await client.query(
-      'UPDATE withdrawals SET status = $1, reviewed_at = NOW(), reviewer_id = $2 WHERE id = $3',
-      [status, reviewerId, id]
-    );
-    if (status === 'rejected') {
-      await client.query('UPDATE users SET balance = balance + $1, updated_at = $2 WHERE client_id = $3', [withdrawal.amount, Date.now(), withdrawal.client_id]);
-    }
-    await logActivity(withdrawal.client_id, `withdrawal_${status}`, { withdrawalId: id, reviewerId }, client);
-    await client.query('COMMIT');
-    return { ...withdrawal, status };
-  } catch (error) {
-    await client.query('ROLLBACK');
-    throw error;
-  } finally {
-    client.release();
-  }
-}
-
-async function stats() {
-  const result = await pool.query(`SELECT
-    COUNT(*)::int AS users,
-    COALESCE(SUM(balance), 0)::numeric AS balance,
-    COALESCE(SUM(referrals), 0)::int AS referrals,
-    (SELECT COUNT(*)::int FROM withdrawals WHERE status = 'pending') AS pending_withdrawals
-    FROM users`);
-  return result.rows[0];
-}
-
 module.exports = {
   HOUSES,
   pool,
@@ -328,11 +240,6 @@ module.exports = {
   collectCoin,
   setActiveHouse,
   setTonAddress,
-  ensureTelegramUser,
-  getTelegramClient,
   createWithdrawal,
   listUserWithdrawals,
-  listPendingWithdrawals,
-  reviewWithdrawal,
-  stats,
 };
