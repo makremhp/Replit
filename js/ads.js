@@ -56,7 +56,7 @@ setInterval(() => {
 }, 5000);
 
 
-/* ===================== Social Ads متسلسلة فقط ===================== */
+/* ===================== Social Ads متسلسلة ومعزولة ===================== */
 const SOCIAL_AD_SOURCES = [
   'https://interventioncopiedloitering.com/5d/77/0f/5d770ff402768d79ddda9c1cd67e9819.js',
   'https://interventioncopiedloitering.com/96/90/da/9690da690d344e2579dffa12d4e2ac24.js',
@@ -74,25 +74,32 @@ const socialAdSlot = document.getElementById('socialAdSlot');
 let socialAdIndex = 0;
 let socialAdShowTimer = null;
 let socialAdHideTimer = null;
+
+function clearSocialAdFrame() {
+  clearTimeout(socialAdHideTimer);
+  if (socialAdSlot) socialAdSlot.replaceChildren();
+  socialAdStage?.classList.remove('is-visible');
+}
+
 function showNextSocialAd() {
   if (!socialAdStage || !socialAdSlot) return;
-  clearTimeout(socialAdHideTimer);
-  socialAdSlot.replaceChildren();
-  const card = document.createElement('div');
-  card.className = 'social-ad-card';
-  const script = document.createElement('script');
-  script.src = SOCIAL_AD_SOURCES[socialAdIndex % SOCIAL_AD_SOURCES.length];
-  script.async = true;
-  script.dataset.socialAd = 'true';
-  card.appendChild(script);
-  socialAdSlot.appendChild(card);
+  clearSocialAdFrame();
+  const source = SOCIAL_AD_SOURCES[socialAdIndex % SOCIAL_AD_SOURCES.length];
   socialAdIndex += 1;
+  const frame = document.createElement('iframe');
+  frame.className = 'social-ad-frame';
+  frame.title = 'Social advertisement';
+  frame.setAttribute('scrolling', 'no');
+  frame.setAttribute('aria-hidden', 'true');
+  frame.srcdoc = '<!doctype html><html><head><meta name="viewport" content="width=device-width,initial-scale=1"></head><body style="margin:0;overflow:hidden;background:transparent"><script src="' + source + '"><\/script></body></html>';
+  socialAdSlot.appendChild(frame);
   requestAnimationFrame(() => socialAdStage.classList.add('is-visible'));
   socialAdHideTimer = setTimeout(() => {
     socialAdStage.classList.remove('is-visible');
-    setTimeout(() => socialAdSlot.replaceChildren(), 220);
+    frame.remove();
+    socialAdShowTimer = setTimeout(showNextSocialAd, SOCIAL_AD_GAP_MS);
   }, SOCIAL_AD_VISIBLE_MS);
-  socialAdShowTimer = setTimeout(showNextSocialAd, SOCIAL_AD_VISIBLE_MS + SOCIAL_AD_GAP_MS);
 }
-/* الـ320×50 يعمل بالنظام القديم؛ هذا الدوران خاص بـSocial Ads فقط. */
+
+/* 320×50 يعمل بالنظام القديم؛ هنا فقط يتم تدوير Social Ads واحدًا تلو الآخر. */
 setTimeout(showNextSocialAd, 900);
