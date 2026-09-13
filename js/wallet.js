@@ -12,7 +12,7 @@ document.getElementById('shareBtn').addEventListener('click', () => {
 });
 
 /* ===================== اتصال TON Connect — تنفيذ جديد ===================== */
-const MIN_WITHDRAW = 5;
+let MIN_WITHDRAW = 0.01;
 const TON_SDK_URL = 'https://unpkg.com/@tonconnect/ui@2.2.0/dist/tonconnect-ui.min.js';
 const TON_MANIFEST_URL = new URL('tonconnect-manifest.json', document.baseURI).href;
 
@@ -151,6 +151,7 @@ async function disconnectWallet() {
 }
 
 function renderWalletProgress() {
+  MIN_WITHDRAW = Number(State.config?.minWithdrawal || 0.01);
   const fill = document.getElementById('walletProgressFill');
   const progressText = document.getElementById('walletProgressText');
   if (!fill || !progressText) return;
@@ -159,6 +160,7 @@ function renderWalletProgress() {
 }
 
 function openWalletPage() {
+  MIN_WITHDRAW = Number(State.config?.minWithdrawal || 0.01);
   document.getElementById('walletKicker').textContent = T.walletKicker;
   walletTitleText.textContent = T.walletTitle;
   document.getElementById('walletBalanceLabel').textContent = T.walletBalanceLabel;
@@ -206,10 +208,18 @@ copyAddressBtn.addEventListener('click', async () => {
   }
 });
 
-withdrawBtn.addEventListener('click', () => {
+withdrawBtn.addEventListener('click', async () => {
   if (!connectedTonAddress) return showToast(T.connectWalletFirst);
   if (State.balance < MIN_WITHDRAW) return showToast(T.notEnoughBalance(MIN_WITHDRAW));
-  showToast(T.withdrawSent);
+  withdrawBtn.disabled = true;
+  try {
+    await requestWithdrawal();
+    showToast(T.withdrawSent);
+  } catch (error) {
+    showToast(error.message || T.withdrawSent);
+  } finally {
+    withdrawBtn.disabled = false;
+  }
 });
 
-watchAdBtn.addEventListener('click', () => showToast(T.noAdAvailable));
+watchAdBtn.addEventListener('click', () => startVerifiedAd());
