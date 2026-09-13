@@ -1,5 +1,14 @@
 /* ===================== الحالة العامة — المصدر الوحيد هو الخادم ===================== */
 const STATE_API_URL = '/api/state';
+const telegramWebApp = window.Telegram?.WebApp || null;
+const telegramInitData = String(telegramWebApp?.initData || '');
+const hasTelegramSession = Boolean(telegramInitData);
+const hasStateApi = window.location.protocol !== 'file:' && hasTelegramSession;
+
+function showTelegramOnlyGate() {
+  const gate = document.getElementById('telegramOnlyGate');
+  if (gate) gate.hidden = false;
+}
 function getTelegramInitData() {
   return String(window.Telegram?.WebApp?.initData || '');
 }
@@ -10,9 +19,11 @@ function requireTelegramInitData() {
   return initData;
 }
 
-if (window.Telegram?.WebApp) {
-  window.Telegram.WebApp.ready();
-  window.Telegram.WebApp.expand();
+if (hasTelegramSession) {
+  telegramWebApp.ready();
+  telegramWebApp.expand();
+} else {
+  showTelegramOnlyGate();
 }
 
 const State = {
