@@ -118,22 +118,15 @@ function stateFor(user, serverTime, earned = 0) {
 
 function readState(clientId) {
   const now = Date.now();
-  let earned = 0;
-  const transaction = db.transaction(() => {
-    const user = getOrCreateUser(clientId, now);
-    earned = accrue(user, now);
-  });
-  transaction();
+  getOrCreateUser(clientId, now);
   const user = db.prepare('SELECT * FROM users WHERE client_id = ?').get(clientId);
-  return stateFor(user, now, earned);
+  return stateFor(user, now, 0);
 }
 
 function writeState(clientId, body) {
   const now = Date.now();
-  let earned = 0;
   const transaction = db.transaction(() => {
-    const current = getOrCreateUser(clientId, now);
-    earned = accrue(current, now);
+    getOrCreateUser(clientId, now);
     const progress = normalizeProgress(body.progress);
     const unlocked = unlockedFor(progress);
     const requestedHouse = Number(body.activeHouseId) || 1;
@@ -159,7 +152,33 @@ function writeState(clientId, body) {
   });
   transaction();
   const user = db.prepare('SELECT * FROM users WHERE client_id = ?').get(clientId);
-  return stateFor(user, now, earned);
+  return stateFor(user, now, 0);
+}
+
+function collectCoin(clientId, body) {
+  const now = Date.now();
+  let collectedValue = 0;
+  const transaction = db.transaction(() => {
+    const user = getOrCreateUser(clientId, now);
+    const progress = normalizeProgress(user);
+    const unlocked = unlockedFor(progress);
+    const houseId = Number(body.houseId) || 1;
+    if (!unlocked.includes(houseId)) {
+      const error = new Error('This house is not unlocked');
+      error.statusCode = 400;
+      throw error;
+    }
+    const house = HOUSES[houseId];
+    collectedValue = house.coinValue;
+    db.prepare(`
+      UPDATE users
+      SET balance = balance + ?, active_house_id = ?, updated_at = ?
+      WHERE client_id = ?
+    `).run(collectedValue, houseId, now, clientId);
+  });
+  transaction();
+  const user = db.prepare('SELECT * FROM users WHERE client_id = ?').get(clientId);
+  return stateFor(user, now, collectedValue);
 }
 
 app.get('/api/health', (_request, response) => {
@@ -177,6 +196,14 @@ app.get('/api/state', (request, response, next) => {
 app.post('/api/state', (request, response, next) => {
   try {
     response.json(writeState(clientIdFrom(request), request.body || {}));
+  } catch (error) {
+    next(error);
+  }
+});
+
+app.post('/api/collect', (request, response, next) => {
+  try {
+    response.json(collectCoin(clientIdFrom(request), request.body || {}));
   } catch (error) {
     next(error);
   }
