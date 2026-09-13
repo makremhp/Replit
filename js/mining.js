@@ -18,11 +18,9 @@ function currentCoinValue() {
 function playCoinCollectSound() {
   const AudioContext = window.AudioContext || window.webkitAudioContext;
   if (!AudioContext) return;
-
   try {
     if (!coinAudioContext) coinAudioContext = new AudioContext();
     if (coinAudioContext.state === 'suspended') coinAudioContext.resume().catch(() => {});
-
     const now = coinAudioContext.currentTime;
     const oscillator = coinAudioContext.createOscillator();
     const gain = coinAudioContext.createGain();
@@ -36,9 +34,7 @@ function playCoinCollectSound() {
     gain.connect(coinAudioContext.destination);
     oscillator.start(now);
     oscillator.stop(now + 0.17);
-  } catch (_) {
-    // Audio is optional and must never interrupt automatic collection.
-  }
+  } catch (_) {}
 }
 
 function spawnFloatText(x, y, text) {
@@ -52,31 +48,21 @@ function spawnFloatText(x, y, text) {
 }
 
 function addBalance(amount, x, y) {
-  spawnFloatText(x, y, `+${amount.toFixed(5)}$`);
-  if (State.serverConnected) {
-    collectCoinFromServer(currentHouse().id).then(collected => {
-      if (!collected) {
-        State.balance += amount;
-        saveState();
-        renderBalance();
-      }
-    });
+  if (!State.serverConnected) {
+    showToast('الاتصال بقاعدة البيانات غير متاح');
     return;
   }
-
-  // Local fallback is used only while the database is unreachable.
-  State.balance += amount;
-  saveState();
-  renderBalance();
+  spawnFloatText(x, y, `+${amount.toFixed(5)}$`);
+  collectCoinFromServer(currentHouse().id).then(collected => {
+    if (!collected) showToast('لم تتم إضافة الرصيد — تعذر الوصول للخادم');
+  });
 }
 
 function collectCoin(coin) {
   if (!activeCoins.has(coin)) return;
-
   const sourceX = Number(coin.dataset.x);
   const sourceY = Number(coin.dataset.y);
   const coinValue = Number(coin.dataset.value);
-
   playCoinCollectSound();
   activeCoins.delete(coin);
   coin.remove();
@@ -85,7 +71,6 @@ function collectCoin(coin) {
 
 function spawnCoin() {
   if (activeCoins.size >= MAX_ACTIVE_COINS) return;
-
   const rect = stage.getBoundingClientRect();
   const coin = document.createElement('button');
   coin.type = 'button';
@@ -120,26 +105,17 @@ function startMining(house) {
   stopMining();
   nextWaveSize = 1;
   spawnCoins(1);
-
   const waveInterval = Math.max(3000, house?.coinIntervalMs || 15000);
   miningTimer = setInterval(() => {
     spawnCoins(nextWaveSize);
     nextWaveSize = Math.min(nextWaveSize + 1, 6);
   }, waveInterval);
-
-  // The server accrues offline earnings and keeps the visible balance current.
   stateSyncTimer = setInterval(() => refreshStateFromServer(), 5000);
 }
 
 function stopMining() {
-  if (miningTimer) {
-    clearInterval(miningTimer);
-    miningTimer = null;
-  }
-  if (stateSyncTimer) {
-    clearInterval(stateSyncTimer);
-    stateSyncTimer = null;
-  }
+  if (miningTimer) { clearInterval(miningTimer); miningTimer = null; }
+  if (stateSyncTimer) { clearInterval(stateSyncTimer); stateSyncTimer = null; }
   activeCoins.forEach(coin => coin.remove());
   activeCoins.clear();
 }
@@ -147,7 +123,6 @@ function stopMining() {
 (async function bootApp() {
   renderBalance();
   renderBoxes();
-  checkUnlocks();
   await loadStateFromServer();
   renderBalance();
   renderBoxes();
