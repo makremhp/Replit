@@ -5,10 +5,14 @@ const zombieSound = document.getElementById('zombieSound');
 let zombies = [];
 let lastFire = 0;
 let bulletActive = false;
+let lastZombieSoundAt = 0;
 
 function playZombieSound() {
+  const now = performance.now();
+  if (now - lastZombieSoundAt < 720) return;
+  lastZombieSoundAt = now;
   const snd = zombieSound.cloneNode(true);
-  snd.volume = 0.5;
+  snd.volume = 0.28;
   snd.play().catch(() => {});
 }
 
@@ -16,7 +20,8 @@ function spawnZombie(house) {
   const rect = stage.getBoundingClientRect();
   const el = document.createElement('div');
   el.className = 'zombie';
-  const zombieSprite = ALL_ZOMBIE_TYPES[Math.floor(Math.random() * ALL_ZOMBIE_TYPES.length)];
+  if (zombies.length >= MAX_ZOMBIES) return;
+  const zombieSprite = house.zombie;
   el.style.backgroundImage = 'url("' + zombieSprite + '")';
   const laneX = 10 + Math.random() * (rect.width - 62);
   el.style.left = laneX + 'px';
@@ -104,7 +109,7 @@ function killZombie(zombie, house) {
     const zRect = zombie.el.getBoundingClientRect();
     const relX = zRect.left - sRect.left + zRect.width / 2;
     const relY = zRect.top - sRect.top;
-    addBalance(currentCoinValue(), relX, relY);
+    addBalance(currentCoinValue() * (house.perk.amountMultiplier || 1), relX, relY);
   }
   setTimeout(() => zombie.el.remove(), 400);
   zombies = zombies.filter(z => z !== zombie);
@@ -162,12 +167,13 @@ function gameTick(house) {
     if (!z.alive) return;
     z.progress = Math.min(1, z.progress + ZOMBIE_SPEED);
     const bottom = z.progress * (rect.height * 0.78);
-    z.el.style.bottom = bottom + 'px';
+    z.el.style.transform = `translate3d(0, -${bottom}px, 0)`;
     if (z.progress >= 1) killZombie(z, house);
   });
 
   const now = performance.now();
-  if (!bulletActive && zombies.length && now - lastFire > FIRE_COOLDOWN_MS) {
+  const fireCooldown = house.fireCooldownMs || FIRE_COOLDOWN_MS;
+  if (!bulletActive && zombies.length && now - lastFire > fireCooldown) {
     const target = zombies.reduce((a, b) => (a.progress > b.progress ? a : b));
     fireAt(house, target);
     lastFire = now;
