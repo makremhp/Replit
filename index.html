@@ -151,7 +151,7 @@
     </div>
   </div>
 
-  <audio id="zombieSound" src="assets/zombie-sound.wav" preload="auto"></audio>
+  <audio id="zombieSound" src="asesst/zombie-sound.wav" preload="auto"></audio>
 
 <script>
 /* =========================================================
@@ -227,22 +227,22 @@ document.getElementById('heroTitle').textContent = HERO_COPY.title;
 document.getElementById('heroSubtitle').textContent = HERO_COPY.subtitle;
 
 const HOUSES = [
-  { id: 1, key: 'fire',   name: { ar: 'قلعة النار',   en: 'Fire Castle' },    img: 'assets/house-fire.png',   zombie: 'assets/zombie-lava.png',        bullet: 'assets/bullet-fire.png',   fx: 'assets/fx-fire.png',   unlocked: true,
+  { id: 1, key: 'fire',   name: { ar: 'قلعة النار',   en: 'Fire Castle' },    img: 'asesst/house-fire.png',   zombie: 'asesst/zombie-lava.png',        bullet: 'asesst/bullet-fire.png',   fx: 'asesst/fx-fire.png',   unlocked: true,
     perk: { type: 'coinValue', multiplier: 1.5 },
     perkDesc: { ar: 'تزيد قيمة كل عملة USDT تجمعها بنسبة 50%', en: 'Increases the value of every USDT coin you collect by 50%' } },
-  { id: 2, key: 'light',  name: { ar: 'قلعة النور',   en: 'Light Castle' },   img: 'assets/house-light.png',  zombie: 'assets/zombie-skeleton.png',    bullet: 'assets/bullet-light.png',  fx: 'assets/fx-light.png',  unlock: { type: 'referrals', need: 15 },
+  { id: 2, key: 'light',  name: { ar: 'قلعة النور',   en: 'Light Castle' },   img: 'asesst/house-light.png',  zombie: 'asesst/zombie-skeleton.png',    bullet: 'asesst/bullet-light.png',  fx: 'asesst/fx-light.png',  unlock: { type: 'referrals', need: 15 },
     perk: { type: 'passive', amount: 0.001, intervalMs: 20000 },
     perkDesc: { ar: 'تنتج لك 0.001 USDT تلقائيًا كل 20 ثانية بدون أي تفاعل', en: 'Automatically generates 0.001 USDT every 20 seconds with no interaction needed' } },
-  { id: 3, key: 'ice',    name: { ar: 'قلعة الجليد',  en: 'Ice Castle' },     img: 'assets/house-ice.png',    zombie: 'assets/zombie-alien.png',       bullet: 'assets/bullet-ice.png',    fx: 'assets/fx-ice.png',    unlock: { type: 'ads',       need: 50 },
+  { id: 3, key: 'ice',    name: { ar: 'قلعة الجليد',  en: 'Ice Castle' },     img: 'asesst/house-ice.png',    zombie: 'asesst/zombie-alien.png',       bullet: 'asesst/bullet-ice.png',    fx: 'asesst/fx-ice.png',    unlock: { type: 'ads',       need: 50 },
     perk: { type: 'coinRate', intervalMs: 8000 },
     perkDesc: { ar: 'تُسرّع ظهور عملات USDT في الساحة (كل 8 ثوانٍ بدل 15)', en: 'Speeds up USDT coin spawns in the arena (every 8 seconds instead of 15)' } },
-  { id: 4, key: 'nature', name: { ar: 'قلعة الطبيعة', en: 'Nature Castle' }, img: 'assets/house-nature.png', zombie: 'assets/zombie-orc.png',         bullet: 'assets/bullet-nature.png', fx: 'assets/fx-nature.png', unlock: { type: 'ads',       need: 10 },
+  { id: 4, key: 'nature', name: { ar: 'قلعة الطبيعة', en: 'Nature Castle' }, img: 'asesst/house-nature.png', zombie: 'asesst/zombie-orc.png',         bullet: 'asesst/bullet-nature.png', fx: 'asesst/fx-nature.png', unlock: { type: 'ads',       need: 10 },
     perk: { type: 'killBonus', chance: 0.3 },
     perkDesc: { ar: 'كل زومبي تقتله، عندك فرصة 30% تحصل على USDT إضافي فورًا', en: 'Every zombie you kill gives you a 30% chance to instantly get extra USDT' } },
-  { id: 5, key: 'dark',   name: { ar: 'قلعة الظلام',  en: 'Dark Castle' },    img: 'assets/house-dark.png',   zombie: 'assets/zombie-banshee.png',     bullet: 'assets/bullet-dark.png',   fx: 'assets/fx-dark.png',   unlock: { type: 'deposit',   need: 0.03 },
+  { id: 5, key: 'dark',   name: { ar: 'قلعة الظلام',  en: 'Dark Castle' },    img: 'asesst/house-dark.png',   zombie: 'asesst/zombie-banshee.png',     bullet: 'asesst/bullet-dark.png',   fx: 'asesst/fx-dark.png',   unlock: { type: 'deposit',   need: 0.03 },
     perk: { type: 'coinValue', multiplier: 2.5 },
     perkDesc: { ar: 'تضاعف قيمة كل عملة USDT تجمعها 2.5 مرة — أقوى بيت اقتصاديًا', en: 'Multiplies the value of every USDT coin you collect by 2.5× — the strongest castle economically' } },
-  { id: 6, key: 'desert', name: { ar: 'قلعة الصحراء', en: 'Desert Castle' }, img: 'assets/house-desert.png', zombie: 'assets/zombie-executioner.png', bullet: 'assets/bullet-lava.png',   fx: 'assets/fx-lava.png',   unlock: { type: 'referrals', need: 1 },
+  { id: 6, key: 'desert', name: { ar: 'قلعة الصحراء', en: 'Desert Castle' }, img: 'asesst/house-desert.png', zombie: 'asesst/zombie-executioner.png', bullet: 'asesst/bullet-lava.png',   fx: 'asesst/fx-lava.png',   unlock: { type: 'referrals', need: 1 },
     perk: { type: 'passive', amount: 0.0015, intervalMs: 12000 },
     perkDesc: { ar: 'تنتج لك 0.0015 USDT تلقائيًا كل 12 ثانية بدون أي تفاعل', en: 'Automatically generates 0.0015 USDT every 12 seconds with no interaction needed' } },
 ];
@@ -250,7 +250,7 @@ const HOUSES = [
 function hName(house) { return house.name[LANG]; }
 function hPerkDesc(house) { return house.perkDesc[LANG]; }
 
-const ALL_ZOMBIE_TYPES = HOUSES.map(h => h.key);
+const ALL_ZOMBIE_TYPES = HOUSES.map(h => h.zombie);
 
 const HOUSE_THEME = {
   fire: { a: '#ff9478', b: '#ffd27c', dark: '#54243a' },
@@ -363,7 +363,7 @@ function renderBoxes() {
 
     const thumb = document.createElement('img');
     thumb.className = 'house-thumb';
-    thumb.src = houseVisual(house);
+    thumb.src = house.img;
      thumb.alt = hName(house);
     box.appendChild(thumb);
     boxThumbEls[house.id] = thumb;
@@ -423,7 +423,7 @@ function openHouseModal(house) {
   const unlocked = isUnlocked(house);
   const isActive = house.id === State.activeHouseId;
 
-  modalHouseImg.src = houseVisual(house);
+  modalHouseImg.src = house.img;
   modalHouseImg.alt = hName(house);
   modalName.textContent = hName(house);
   modalPerk.textContent = hPerkDesc(house) || '';
@@ -535,7 +535,7 @@ function spawnZombie(house) {
   const el = document.createElement('div');
   el.className = 'zombie';
   const zombieSprite = ALL_ZOMBIE_TYPES[Math.floor(Math.random() * ALL_ZOMBIE_TYPES.length)];
-  el.style.backgroundImage = 'url("' + zombieVisual(zombieSprite) + '")';
+  el.style.backgroundImage = 'url("' + zombieSprite + '")';
   const laneX = 10 + Math.random() * (rect.width - 62);
   el.style.left = laneX + 'px';
   el.style.bottom = '0px';
@@ -568,7 +568,7 @@ function fireAt(house, zombie) {
 
   const bullet = document.createElement('div');
   bullet.className = 'bullet';
-  bullet.style.backgroundImage = 'url("' + bulletVisual(house) + '")';
+  bullet.style.backgroundImage = 'url("' + house.bullet + '")';
   bullet.style.left = x + 'px';
   bullet.style.top = y + 'px';
   fxLayer.appendChild(bullet);
@@ -606,7 +606,7 @@ function fireAt(house, zombie) {
 function explodeAt(house, x, y) {
   const fx = document.createElement('div');
   fx.className = 'fx';
-  fx.style.backgroundImage = 'url("' + fxVisual(house) + '")';
+  fx.style.backgroundImage = 'url("' + house.fx + '")';
   fx.style.left = x + 'px';
   fx.style.top = y + 'px';
   fxLayer.appendChild(fx);
@@ -646,7 +646,7 @@ function spawnCoin() {
   const cy = 14 + Math.random() * (rect.height * 0.4);
   coin.style.left = cx + 'px';
   coin.style.top = cy + 'px';
-  coin.style.backgroundImage = 'url("' + coinVisual() + '")';
+  coin.style.backgroundImage = 'url("asesst/coin-usdt.png")';
   coin.addEventListener('click', (e) => {
     e.stopPropagation();
     addBalance(currentCoinValue(), cx + 14, cy);
