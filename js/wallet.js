@@ -53,6 +53,10 @@ function renderConnectedWallet(wallet) {
   const connected = Boolean(connectedTonAddress);
   tonAddressInput.value = connectedTonAddress;
   tonAddressInput.classList.toggle('is-connected', connected);
+  if (connected && State.tonAddress !== connectedTonAddress) {
+    State.tonAddress = connectedTonAddress;
+    saveState();
+  }
   connectWalletBtn.hidden = connected;
   disconnectWalletBtn.hidden = !connected;
   setConnectionStatus(
@@ -140,6 +144,8 @@ async function disconnectWallet() {
   } catch (error) {
     console.error('TON Connect disconnect error:', error);
   } finally {
+    State.tonAddress = '';
+    saveState();
     renderConnectedWallet(null);
   }
 }
