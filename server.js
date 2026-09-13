@@ -11,6 +11,12 @@ const { startTelegramBot, stopTelegramBot } = require('./bot');
 const app = express();
 const port = Number(process.env.PORT) || 3000;
 
+let databaseInitialization;
+function ensureDatabase() {
+  if (!databaseInitialization) databaseInitialization = initDatabase();
+  return databaseInitialization;
+}
+
 app.use(express.json({ limit: '32kb' }));
 
 function clientIdFrom(request) {
@@ -26,6 +32,11 @@ function clientIdFrom(request) {
 function asyncRoute(handler) {
   return (request, response, next) => Promise.resolve(handler(request, response, next)).catch(next);
 }
+
+app.use('/api', asyncRoute(async (_request, _response, next) => {
+  await ensureDatabase();
+  next();
+}));
 
 app.get('/api/health', asyncRoute(async (_request, response) => {
   response.json({ ok: true, database: 'postgresql', telegramBot: Boolean(process.env.TELEGRAM_BOT_TOKEN) });
@@ -67,7 +78,11 @@ async function start() {
   process.once('SIGTERM', shutdown);
 }
 
-start().catch(error => {
-  console.error('Application failed to start:', error);
-  process.exitCode = 1;
-});
+if (require.main === module) {
+  start().catch(error => {
+    console.error('Application failed to start:', error);
+    process.exitCode = 1;
+  });
+}
+
+module.exports = app;
