@@ -9,12 +9,14 @@ const HOUSES = {
   6: { coinValue: 0.00009, coinIntervalMs: 8000, unlock: ['referrals', 1] },
 };
 
-if (!process.env.DATABASE_URL) {
-  console.warn('DATABASE_URL is not set. Set it before starting the app or bot.');
+const databaseUrl = process.env.DATABASE_URL || process.env.EXTERNAL_DATABASE_URL;
+
+if (!databaseUrl) {
+  console.warn('DATABASE_URL or EXTERNAL_DATABASE_URL is not set. Set one before starting the app or bot.');
 }
 
 const pool = new Pool({
-  connectionString: process.env.DATABASE_URL,
+  connectionString: databaseUrl,
   ssl: process.env.DATABASE_SSL === 'false' ? false : { rejectUnauthorized: false },
   max: Number(process.env.DATABASE_POOL_SIZE) || 10,
 });
@@ -70,7 +72,7 @@ let initialized = false;
 
 async function initDatabase() {
   if (initialized) return;
-  if (!process.env.DATABASE_URL) throw new Error('DATABASE_URL is required');
+  if (!databaseUrl) throw new Error('DATABASE_URL or EXTERNAL_DATABASE_URL is required');
   await pool.query(schema);
   initialized = true;
 }
