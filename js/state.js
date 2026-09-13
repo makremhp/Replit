@@ -36,6 +36,7 @@ const State = {
 let stateHydrating = false;
 let syncTimer = null;
 let refreshTimer = null;
+let collectQueue = Promise.resolve();
 
 function persistLocalState() {
   localStorage.setItem('sh_balance', Number(State.balance || 0).toFixed(6));
@@ -132,6 +133,31 @@ async function refreshStateFromServer() {
     State.serverConnected = false;
     console.warn('Database refresh failed; local fallback remains active.', error);
   }
+}
+
+function collectCoinFromServer(houseId) {
+  const collectRequest = collectQueue.then(async () => {
+    if (!hasStateApi || !State.serverConnected) return false;
+    try {
+      const response = await fetch('/api/collect', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'X-Client-Id': State.clientId,
+        },
+        body: JSON.stringify({ houseId: Number(houseId) }),
+      });
+      if (!response.ok) throw new Error(`Collect API returned ${response.status}`);
+      applyServerState(await response.json());
+      return true;
+    } catch (error) {
+      State.serverConnected = false;
+      console.warn('Database collect failed; local fallback remains active.', error);
+      return false;
+    }
+  });
+  collectQueue = collectRequest.catch(() => false);
+  return collectRequest;
 }
 
 function requestServerRefresh() {
