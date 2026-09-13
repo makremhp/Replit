@@ -9,9 +9,10 @@ document.getElementById('shareBtn').addEventListener('click', () => {
 
 /* ===================== محفظة TON Connect ===================== */
 const MIN_WITHDRAW = 5;
-const TON_MANIFEST_URL = 'https://replit-liart.vercel.app/tonconnect-manifest.json';
+const TON_MANIFEST_URL = new URL('tonconnect-manifest.json', document.baseURI).href;
 const TON_SDK_URL = 'https://unpkg.com/@tonconnect/ui@2.2.0/dist/tonconnect-ui.min.js';
 let tonSdkPromise = null;
+let tonUiPromise = null;
 const walletPage = document.getElementById('walletPage');
 const walletTitleText = document.getElementById('walletTitleText');
 const walletMinNote = document.getElementById('walletMinNote');
@@ -70,11 +71,21 @@ function loadTonConnectSdk() {
 
 async function initTonConnect() {
   if (tonConnectUI) return tonConnectUI;
-  await loadTonConnectSdk();
-  tonConnectUI = new window.TON_CONNECT_UI.TonConnectUI({ manifestUrl: TON_MANIFEST_URL });
-  tonConnectUI.onStatusChange(wallet => applyTonWallet(wallet));
-  applyTonWallet(tonConnectUI.wallet);
-  return tonConnectUI;
+  if (tonUiPromise) return tonUiPromise;
+  tonUiPromise = (async () => {
+    await loadTonConnectSdk();
+    const TonConnectUI = window.TON_CONNECT_UI && window.TON_CONNECT_UI.TonConnectUI;
+    if (!TonConnectUI) throw new Error('TON Connect UI is unavailable');
+    const ui = new TonConnectUI({ manifestUrl: TON_MANIFEST_URL });
+    ui.onStatusChange(wallet => applyTonWallet(wallet), error => console.error('TON Connect status error:', error));
+    tonConnectUI = ui;
+    applyTonWallet(ui.wallet);
+    return ui;
+  })().catch(error => {
+    tonUiPromise = null;
+    throw error;
+  });
+  return tonUiPromise;
 }
 
 async function connectTonWallet() {
@@ -82,7 +93,7 @@ async function connectTonWallet() {
   connectWalletBtnText.textContent = T.connectingWallet;
   try {
     const ui = await initTonConnect();
-    await ui.openModal();
+    ui.openModal();
   } catch (error) {
     console.error('TON Connect error:', error);
     walletConnectionStatusText.textContent = T.walletConnectFailed;
@@ -100,7 +111,7 @@ disconnectWalletBtn.addEventListener('click', async () => {
 });
 
 function openWalletPage() {
-  initTonConnect().catch(() => {});
+  initTonConnect().catch(error => console.error('TON Connect init error:', error));
   document.getElementById('walletKicker').textContent = T.walletKicker;
   walletTitleText.textContent = T.walletTitle;
   document.getElementById('walletBalanceLabel').textContent = T.walletBalanceLabel;

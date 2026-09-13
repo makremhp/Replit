@@ -48,9 +48,9 @@ function checkUnlocks() {
 }
 
 function renderBalance() {
-  document.getElementById('balanceAmount').textContent = State.balance.toFixed(4);
+  document.getElementById('balanceAmount').textContent = State.balance.toFixed(5);
   const w = document.getElementById('walletBalanceAmount');
-  if (w) w.textContent = State.balance.toFixed(4);
+  if (w) w.textContent = State.balance.toFixed(5);
   if (typeof renderWalletProgress === 'function') renderWalletProgress();
 }
 

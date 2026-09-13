@@ -50,8 +50,8 @@ function renderBoxes() {
 
 function preloadHouseAssets() {
   const active = HOUSES.find(h => h.id === State.activeHouseId) || HOUSES[0];
-  const sources = new Set(['asesst/coin-usdt.png', active.img, active.zombie, active.bullet, active.fx]);
-  HOUSES.forEach(h => { sources.add(h.img); sources.add(h.zombie); });
+  const sources = new Set(['asesst/coin-usdt.png', active.img]);
+  HOUSES.forEach(h => sources.add(h.img));
   const load = () => sources.forEach(src => { const image = new Image(); image.decoding = 'async'; image.src = src; });
   if ('requestIdleCallback' in window) window.requestIdleCallback(load, { timeout: 1200 });
   else setTimeout(load, 700);
@@ -59,11 +59,11 @@ function preloadHouseAssets() {
 
 function activateHouse(house) {
   if (house.id === State.activeHouseId) return;
-  stopBattle();
+  stopMining();
   State.activeHouseId = house.id;
   saveState();
   renderBoxes();
-  startBattle(house);
+  startMining(house);
 }
 
 function formatProgress(p, type) {

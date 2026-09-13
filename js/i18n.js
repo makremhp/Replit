@@ -53,6 +53,8 @@ const I18N = {
     notEnoughBalance: (min) => `الرصيد غير كافٍ — الحد الأدنى $${min}`,
     withdrawSent: 'تم إرسال طلب السحب ✅',
     noAdAvailable: 'لا يوجد إعلان متاح حاليًا',
+    collectCoin: 'اجمع العملة',
+    arenaCaption: 'منطقة تعدين العملات',
   },
   en: {
     closeBtn: 'Close',
@@ -98,6 +100,8 @@ const I18N = {
     notEnoughBalance: (min) => `Insufficient balance — minimum $${min}`,
     withdrawSent: 'Withdrawal request sent ✅',
     noAdAvailable: 'No ad available right now',
+    collectCoin: 'Collect coin',
+    arenaCaption: 'Coin mining area',
   },
 };
 const T = I18N[LANG];
@@ -105,3 +109,4 @@ const HERO_COPY = LANG === 'ar' ? { eyebrow: 'ساحة استراتيجية', ti
 document.getElementById('heroEyebrow').textContent = HERO_COPY.eyebrow;
 document.getElementById('heroTitle').textContent = HERO_COPY.title;
 document.getElementById('heroSubtitle').textContent = HERO_COPY.subtitle;
+document.getElementById('arenaCaption').textContent = T.arenaCaption;
