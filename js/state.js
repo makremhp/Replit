@@ -1,14 +1,15 @@
-/* ===================== الحالة العامة — المصدر الوحيد هو الخادم ===================== */
+/* ===================== الحالة العامة — الخادم هو مصدر الحقيقة ===================== */
 const STATE_API_URL = '/api/state';
 const telegramWebApp = window.Telegram?.WebApp || null;
-const telegramInitData = String(telegramWebApp?.initData || '');
-const hasTelegramSession = Boolean(telegramInitData);
+const hasTelegramSession = Boolean(telegramWebApp?.initData);
 const hasStateApi = window.location.protocol !== 'file:' && hasTelegramSession;
+const DEVICE_STORAGE_KEY = 'six-houses-device-id';
 
 function showTelegramOnlyGate() {
   const gate = document.getElementById('telegramOnlyGate');
   if (gate) gate.hidden = false;
 }
+
 function getTelegramInitData() {
   return String(window.Telegram?.WebApp?.initData || '');
 }
@@ -19,6 +20,23 @@ function requireTelegramInitData() {
   return initData;
 }
 
+function getDeviceId() {
+  try {
+    let deviceId = localStorage.getItem(DEVICE_STORAGE_KEY);
+    if (!deviceId) {
+      deviceId = crypto.randomUUID();
+      localStorage.setItem(DEVICE_STORAGE_KEY, deviceId);
+    }
+    return deviceId;
+  } catch (_) {
+    return '';
+  }
+}
+
+function idempotencyKey() {
+  return crypto.randomUUID();
+}
+
 if (hasTelegramSession) {
   telegramWebApp.ready();
   telegramWebApp.expand();
@@ -27,63 +45,73 @@ if (hasTelegramSession) {
 }
 
 const State = {
+  telegramUserId: '',
   clientId: '',
   balance: 0,
+  reservedBalance: 0,
   progress: { referrals: 0, ads: 0, deposit: 0 },
   unlockedHouses: [1],
   activeHouseId: 1,
   tonAddress: '',
+  collectibles: [],
+  config: { minWithdrawal: 0.01, maxActiveCoins: 10 },
   serverConnected: false,
   syncing: false,
 };
 
 let stateHydrating = false;
-let syncTimer = null;
 let refreshTimer = null;
 let collectQueue = Promise.resolve();
 
-function statePayload() {
-  return {
-    progress: {
-      referrals: Number(State.progress.referrals) || 0,
-      ads: Number(State.progress.ads) || 0,
-      deposit: Number(State.progress.deposit) || 0,
-    },
-    activeHouseId: Number(State.activeHouseId) || 1,
-    tonAddress: State.tonAddress || null,
-  };
+function applyServerState(data) {
+  if (!data) return;
+  State.telegramUserId = String(data.telegramUserId || '');
+  State.clientId = State.telegramUserId;
+  State.balance = Number(data.balance) || 0;
+  State.reservedBalance = Number(data.reservedBalance) || 0;
+  State.progress = data.progress || { referrals: 0, ads: 0, deposit: 0 };
+  State.unlockedHouses = Array.isArray(data.unlockedHouses) ? data.unlockedHouses : [1];
+  State.activeHouseId = 1;
+  State.tonAddress = data.tonAddress || '';
+  State.collectibles = Array.isArray(data.collectibles) ? data.collectibles : [];
+  State.config = data.config || State.config;
+  State.serverConnected = true;
+  renderBalance();
+  if (typeof renderServerCoins === 'function') renderServerCoins(State.collectibles);
+  if (typeof renderBoxes === 'function') renderBoxes();
+  if (typeof renderWalletProgress === 'function') renderWalletProgress();
 }
 
 function clearServerState() {
   State.balance = 0;
+  State.reservedBalance = 0;
   State.progress = { referrals: 0, ads: 0, deposit: 0 };
   State.unlockedHouses = [1];
-  State.activeHouseId = 1;
   State.tonAddress = '';
+  State.collectibles = [];
   State.serverConnected = false;
+  if (typeof renderServerCoins === 'function') renderServerCoins([]);
 }
 
-function applyServerState(data) {
-  if (!data) return;
-  State.balance = Number(data.balance) || 0;
-  State.progress = data.progress || { referrals: 0, ads: 0, deposit: 0 };
-  State.unlockedHouses = Array.isArray(data.unlockedHouses) ? data.unlockedHouses : [1];
-  State.activeHouseId = Number(data.activeHouseId) || 1;
-  State.tonAddress = data.tonAddress || '';
-  State.serverConnected = true;
-  renderBalance();
-}
-
-async function requestState(method = 'GET') {
-  if (!hasStateApi) throw new Error('State API is unavailable in local file mode');
-  const options = { method, headers: { 'X-Telegram-Init-Data': requireTelegramInitData() } };
-  if (method !== 'GET') {
-    options.headers['Content-Type'] = 'application/json';
-    options.body = JSON.stringify(statePayload());
+async function apiRequest(path, method = 'GET', body = null, idempotency = '') {
+  if (!hasStateApi) throw new Error('State API is unavailable');
+  const headers = {
+    'X-Telegram-Init-Data': requireTelegramInitData(),
+    'X-Device-ID': getDeviceId(),
+  };
+  if (body !== null) {
+    headers['Content-Type'] = 'application/json';
   }
-  const response = await fetch(STATE_API_URL, options);
-  if (!response.ok) throw new Error(`State API returned ${response.status}`);
-  return response.json();
+  if (idempotency) headers['Idempotency-Key'] = idempotency;
+  const response = await fetch(path, {
+    method,
+    headers,
+    body: body === null ? undefined : JSON.stringify(body),
+  });
+  let data = null;
+  try { data = await response.json(); } catch (_) {}
+  if (!response.ok) throw new Error(data?.error || `API returned ${response.status}`);
+  return data;
 }
 
 async function loadStateFromServer() {
@@ -93,13 +121,13 @@ async function loadStateFromServer() {
   }
   try {
     stateHydrating = true;
-    applyServerState(await requestState('GET'));
+    applyServerState(await apiRequest(STATE_API_URL));
     return true;
   } catch (error) {
     clearServerState();
     renderBalance();
-    console.error('Database state unavailable; local balance is disabled.', error);
-    if (typeof showToast === 'function') showToast('قاعدة البيانات غير متاحة — لم يتم استخدام رصيد محلي');
+    console.error('Server state unavailable; local balance is disabled.', error);
+    if (typeof showToast === 'function') showToast('قاعدة البيانات غير متاحة');
     return false;
   } finally {
     stateHydrating = false;
@@ -110,57 +138,71 @@ async function syncStateToServer() {
   if (!hasStateApi || !State.serverConnected || State.syncing) return;
   State.syncing = true;
   try {
-    applyServerState(await requestState('POST'));
+    applyServerState(await apiRequest(STATE_API_URL, 'POST', { tonAddress: State.tonAddress || null }));
   } catch (error) {
     State.serverConnected = false;
-    console.error('Database sync failed; local balance is disabled.', error);
-    if (typeof showToast === 'function') showToast('فشل حفظ البيانات في قاعدة البيانات');
+    console.error('Server state update failed.', error);
   } finally {
     State.syncing = false;
   }
 }
 
-function scheduleStateSync() {
-  if (stateHydrating || !State.serverConnected) return;
-  clearTimeout(syncTimer);
-  syncTimer = setTimeout(() => syncStateToServer(), 250);
-}
-
 function saveState() {
-  scheduleStateSync();
+  if (stateHydrating || !State.serverConnected) return;
+  clearTimeout(refreshTimer);
+  refreshTimer = setTimeout(() => syncStateToServer(), 200);
 }
 
 async function refreshStateFromServer() {
   if (!hasStateApi || State.syncing) return;
   try {
-    applyServerState(await requestState('GET'));
+    applyServerState(await apiRequest(STATE_API_URL));
   } catch (error) {
     State.serverConnected = false;
-    console.error('Database refresh failed; local balance is disabled.', error);
+    console.error('Server refresh failed.', error);
   }
 }
 
-function collectCoinFromServer(houseId) {
-  const collectRequest = collectQueue.then(async () => {
+function collectCoinFromServer(coinId) {
+  const request = collectQueue.then(async () => {
     if (!hasStateApi || !State.serverConnected) return false;
     try {
-      const response = await fetch('/api/collect', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json', 'X-Telegram-Init-Data': requireTelegramInitData() },
-        body: JSON.stringify({ houseId: Number(houseId) }),
-      });
-      if (!response.ok) throw new Error(`Collect API returned ${response.status}`);
-      applyServerState(await response.json());
+      applyServerState(await apiRequest(
+        '/api/collect',
+        'POST',
+        { coinId: String(coinId) },
+        idempotencyKey()
+      ));
       return true;
     } catch (error) {
-      State.serverConnected = false;
-      console.error('Database collect failed; local balance is disabled.', error);
-      if (typeof showToast === 'function') showToast('تعذر تسجيل العملية في قاعدة البيانات');
+      console.error('Coin collection rejected by server.', error);
+      if (typeof showToast === 'function') showToast(error.message || 'تعذر جمع العملة');
+      await refreshStateFromServer();
       return false;
     }
   });
-  collectQueue = collectRequest.catch(() => false);
-  return collectRequest;
+  collectQueue = request.catch(() => false);
+  return request;
+}
+
+async function startAdSession() {
+  return apiRequest('/api/ads/start', 'POST', {});
+}
+
+async function completeAdSession(sessionId) {
+  applyServerState(await apiRequest(
+    '/api/ads/complete',
+    'POST',
+    { sessionId: String(sessionId) },
+    idempotencyKey()
+  ));
+  return true;
+}
+
+async function requestWithdrawal() {
+  const result = await apiRequest('/api/withdrawals', 'POST', {}, idempotencyKey());
+  await refreshStateFromServer();
+  return result;
 }
 
 function requestServerRefresh() {
@@ -170,16 +212,13 @@ function requestServerRefresh() {
 }
 
 function isUnlocked(house) {
-  return house.unlocked || State.unlockedHouses.includes(house.id);
+  return State.unlockedHouses.includes(Number(house.id));
 }
 
 function unlockProgressFor(house) {
   if (!house.unlock) return { have: 1, need: 1 };
   const { type, need } = house.unlock;
-  if (type === 'referrals') return { have: State.progress.referrals, need };
-  if (type === 'ads') return { have: State.progress.ads, need };
-  if (type === 'deposit') return { have: State.progress.deposit, need };
-  return { have: 0, need: 1 };
+  return { have: Number(State.progress[type]) || 0, need };
 }
 
 function unlockLabel(house) {
@@ -192,21 +231,31 @@ function unlockLabel(house) {
 }
 
 function checkUnlocks() {
-  if (State.serverConnected) renderBoxes();
+  if (State.serverConnected && typeof renderBoxes === 'function') renderBoxes();
 }
 
 function renderBalance() {
-  document.getElementById('balanceAmount').textContent = State.balance.toFixed(5);
+  const balance = Number(State.balance) || 0;
+  const balanceElement = document.getElementById('balanceAmount');
+  if (balanceElement) balanceElement.textContent = balance.toFixed(5);
   const walletBalance = document.getElementById('walletBalanceAmount');
-  if (walletBalance) walletBalance.textContent = State.balance.toFixed(5);
+  if (walletBalance) walletBalance.textContent = balance.toFixed(5);
   if (typeof renderWalletProgress === 'function') renderWalletProgress();
 }
 
 let toastTimer = null;
 function showToast(message) {
   const toast = document.getElementById('toast');
+  if (!toast) return;
   toast.textContent = message;
   toast.classList.add('show');
   clearTimeout(toastTimer);
   toastTimer = setTimeout(() => toast.classList.remove('show'), 2600);
 }
+
+window.addEventListener('load', async () => {
+  await loadStateFromServer();
+  if (hasStateApi) {
+    setInterval(() => refreshStateFromServer(), 20000);
+  }
+});
