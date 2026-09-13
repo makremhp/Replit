@@ -1,6 +1,8 @@
 /* ===================== ساحة تعدين العملات ===================== */
 const stage = document.getElementById('miningStage');
-let currentCoinEl = null;
+const activeCoins = new Set();
+const MAX_ACTIVE_COINS = 10;
+const COIN_COLLECT_RADIUS = 82;
 let miningTimer = null;
 let coinAudioContext = null;
 
@@ -55,16 +57,32 @@ function addBalance(amount, x, y) {
   spawnFloatText(x, y, `+${amount.toFixed(5)}$`);
 }
 
-function collectCoin(coin, x, y) {
-  if (coin !== currentCoinEl) return;
+function collectCoinGroup(coin) {
+  if (!activeCoins.has(coin)) return;
+
+  const sourceX = Number(coin.dataset.x);
+  const sourceY = Number(coin.dataset.y);
+  const coinsToCollect = [...activeCoins].filter(candidate => {
+    const dx = Number(candidate.dataset.x) - sourceX;
+    const dy = Number(candidate.dataset.y) - sourceY;
+    return Math.hypot(dx, dy) <= COIN_COLLECT_RADIUS;
+  });
+  if (!coinsToCollect.length) return;
+
+  const totalValue = coinsToCollect.reduce((total, candidate) => (
+    total + Number(candidate.dataset.value)
+  ), 0);
+
   playCoinCollectSound();
-  addBalance(currentCoinValue(), x, y);
-  coin.remove();
-  currentCoinEl = null;
+  coinsToCollect.forEach(candidate => {
+    activeCoins.delete(candidate);
+    candidate.remove();
+  });
+  addBalance(totalValue, sourceX + 18, sourceY + 18);
 }
 
 function spawnCoin() {
-  if (currentCoinEl) return;
+  if (activeCoins.size >= MAX_ACTIVE_COINS) return;
 
   const rect = stage.getBoundingClientRect();
   const coin = document.createElement('button');
@@ -75,21 +93,31 @@ function spawnCoin() {
   const maxY = Math.max(48, rect.height * 0.65);
   const x = 12 + Math.random() * (maxX - 12);
   const y = 18 + Math.random() * (maxY - 18);
+  coin.dataset.x = String(x);
+  coin.dataset.y = String(y);
+  coin.dataset.value = String(currentCoinValue());
   coin.style.left = x + 'px';
   coin.style.top = y + 'px';
   coin.style.backgroundImage = 'url("asesst/coin-usdt.png")';
   coin.addEventListener('click', event => {
     event.stopPropagation();
-    collectCoin(coin, x + 18, y);
+    collectCoinGroup(coin);
   }, { once: true });
   stage.appendChild(coin);
-  currentCoinEl = coin;
+  activeCoins.add(coin);
+}
+
+function spawnCoins(count) {
+  for (let index = 0; index < count; index += 1) {
+    if (activeCoins.size >= MAX_ACTIVE_COINS) break;
+    spawnCoin();
+  }
 }
 
 function startMining(house) {
   stopMining();
-  spawnCoin();
-  miningTimer = setInterval(spawnCoin, house.coinIntervalMs);
+  spawnCoins(3);
+  miningTimer = setInterval(() => spawnCoins(2), house.coinIntervalMs);
 }
 
 function stopMining() {
@@ -97,10 +125,8 @@ function stopMining() {
     clearInterval(miningTimer);
     miningTimer = null;
   }
-  if (currentCoinEl) {
-    currentCoinEl.remove();
-    currentCoinEl = null;
-  }
+  activeCoins.forEach(coin => coin.remove());
+  activeCoins.clear();
 }
 
 renderBalance();

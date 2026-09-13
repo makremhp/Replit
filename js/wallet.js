@@ -29,6 +29,10 @@ const walletConnectionDot = document.getElementById('walletConnectionDot');
 let tonConnectUI = null;
 let connectedTonAddress = '';
 
+function getTonConnectUIClass() {
+  return window.TON_CONNECT_UI?.TonConnectUI || window.TonConnectUI || null;
+}
+
 function renderWalletProgress() {
   const fill = document.getElementById('walletProgressFill');
   const progressText = document.getElementById('walletProgressText');
@@ -53,17 +57,24 @@ function applyTonWallet(wallet) {
 }
 
 function loadTonConnectSdk() {
-  if (window.TON_CONNECT_UI && window.TON_CONNECT_UI.TonConnectUI) return Promise.resolve();
+  if (getTonConnectUIClass()) return Promise.resolve();
   if (tonSdkPromise) return tonSdkPromise;
   tonSdkPromise = new Promise((resolve, reject) => {
     const script = document.createElement('script');
     script.src = TON_SDK_URL;
     script.async = true;
     script.onload = () => {
-      if (window.TON_CONNECT_UI && window.TON_CONNECT_UI.TonConnectUI) resolve();
-      else reject(new Error('TON Connect SDK loaded without its UI class'));
+      if (getTonConnectUIClass()) {
+        resolve();
+      } else {
+        tonSdkPromise = null;
+        reject(new Error('TON Connect SDK loaded without its UI class'));
+      }
     };
-    script.onerror = () => reject(new Error('TON Connect SDK failed to load'));
+    script.onerror = () => {
+      tonSdkPromise = null;
+      reject(new Error('TON Connect SDK failed to load'));
+    };
     document.head.appendChild(script);
   });
   return tonSdkPromise;
@@ -74,7 +85,7 @@ async function initTonConnect() {
   if (tonUiPromise) return tonUiPromise;
   tonUiPromise = (async () => {
     await loadTonConnectSdk();
-    const TonConnectUI = window.TON_CONNECT_UI && window.TON_CONNECT_UI.TonConnectUI;
+    const TonConnectUI = getTonConnectUIClass();
     if (!TonConnectUI) throw new Error('TON Connect UI is unavailable');
     const ui = new TonConnectUI({ manifestUrl: TON_MANIFEST_URL });
     ui.onStatusChange(wallet => applyTonWallet(wallet), error => console.error('TON Connect status error:', error));
@@ -93,7 +104,7 @@ async function connectTonWallet() {
   connectWalletBtnText.textContent = T.connectingWallet;
   try {
     const ui = await initTonConnect();
-    ui.openModal();
+    await ui.openModal();
   } catch (error) {
     console.error('TON Connect error:', error);
     walletConnectionStatusText.textContent = T.walletConnectFailed;
