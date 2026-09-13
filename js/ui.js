@@ -16,7 +16,9 @@ function renderBoxes() {
     const thumb = document.createElement('img');
     thumb.className = 'house-thumb';
     thumb.src = house.img;
-     thumb.alt = hName(house);
+    thumb.loading = 'lazy';
+    thumb.decoding = 'async';
+    thumb.alt = hName(house);
     box.appendChild(thumb);
     boxThumbEls[house.id] = thumb;
 
@@ -44,6 +46,15 @@ function renderBoxes() {
     box.addEventListener('click', () => openHouseModal(house));
     wrap.appendChild(box);
   });
+}
+
+function preloadHouseAssets() {
+  const active = HOUSES.find(h => h.id === State.activeHouseId) || HOUSES[0];
+  const sources = new Set(['asesst/coin-usdt.png', active.img, active.zombie, active.bullet, active.fx]);
+  HOUSES.forEach(h => { sources.add(h.img); sources.add(h.zombie); });
+  const load = () => sources.forEach(src => { const image = new Image(); image.decoding = 'async'; image.src = src; });
+  if ('requestIdleCallback' in window) window.requestIdleCallback(load, { timeout: 1200 });
+  else setTimeout(load, 700);
 }
 
 function activateHouse(house) {
