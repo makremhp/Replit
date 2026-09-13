@@ -3,8 +3,9 @@ const stage = document.getElementById('miningStage');
 const activeCoins = new Set();
 const MAX_ACTIVE_COINS = 50;
 const COIN_COLLECT_RADIUS = 82;
-const COIN_WAVE_INTERVAL_MS = 30000;
+const COIN_AUTO_COLLECT_DELAY_MS = 650;
 let miningTimer = null;
+let stateSyncTimer = null;
 let coinAudioContext = null;
 let nextWaveSize = 1;
 
@@ -38,7 +39,7 @@ function playCoinCollectSound() {
     oscillator.start(now);
     oscillator.stop(now + 0.17);
   } catch (_) {
-    // Audio is optional and must never interrupt coin collection.
+    // Audio is optional and must never interrupt automatic collection.
   }
 }
 
@@ -53,10 +54,16 @@ function spawnFloatText(x, y, text) {
 }
 
 function addBalance(amount, x, y) {
+  spawnFloatText(x, y, `+${amount.toFixed(5)}$`);
+  if (State.serverConnected) {
+    requestServerRefresh();
+    return;
+  }
+
+  // Local fallback is used only while the database is unreachable.
   State.balance += amount;
   saveState();
   renderBalance();
-  spawnFloatText(x, y, `+${amount.toFixed(5)}$`);
 }
 
 function collectCoinGroup(coin) {
@@ -81,7 +88,6 @@ function collectCoinGroup(coin) {
     candidate.remove();
   });
   addBalance(totalValue, sourceX + 18, sourceY + 18);
-  if (!activeCoins.size) nextWaveSize = 1;
 }
 
 function spawnCoin() {
@@ -108,6 +114,9 @@ function spawnCoin() {
   }, { once: true });
   stage.appendChild(coin);
   activeCoins.add(coin);
+
+  // Coins remain visible briefly, then collect themselves without user input.
+  setTimeout(() => collectCoinGroup(coin), COIN_AUTO_COLLECT_DELAY_MS);
 }
 
 function spawnCoins(count) {
@@ -120,10 +129,16 @@ function spawnCoins(count) {
 function startMining(house) {
   stopMining();
   nextWaveSize = 1;
+  spawnCoins(1);
+
+  const waveInterval = Math.max(3000, house?.coinIntervalMs || 15000);
   miningTimer = setInterval(() => {
     spawnCoins(nextWaveSize);
-    nextWaveSize += 1;
-  }, COIN_WAVE_INTERVAL_MS);
+    nextWaveSize = Math.min(nextWaveSize + 1, 6);
+  }, waveInterval);
+
+  // The server accrues offline earnings and keeps the visible balance current.
+  stateSyncTimer = setInterval(() => refreshStateFromServer(), 5000);
 }
 
 function stopMining() {
@@ -131,11 +146,22 @@ function stopMining() {
     clearInterval(miningTimer);
     miningTimer = null;
   }
+  if (stateSyncTimer) {
+    clearInterval(stateSyncTimer);
+    stateSyncTimer = null;
+  }
   activeCoins.forEach(coin => coin.remove());
   activeCoins.clear();
 }
 
-renderBalance();
-renderBoxes();
-checkUnlocks();
-startMining(currentHouse());
+(async function bootApp() {
+  renderBalance();
+  renderBoxes();
+  checkUnlocks();
+  await loadStateFromServer();
+  renderBalance();
+  renderBoxes();
+  checkUnlocks();
+  preloadHouseAssets();
+  startMining(currentHouse());
+})();
