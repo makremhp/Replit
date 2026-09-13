@@ -9,21 +9,10 @@
 <link rel="stylesheet" href="css/style.css">
 </head>
 <body>
-<!-- ===== نظام الإعلانات: سوشيال (أول شي بالكامل) ===== -->
-<script src="https://interventioncopiedloitering.com/5d/77/0f/5d770ff402768d79ddda9c1cd67e9819.js"></script>
-<script src="https://interventioncopiedloitering.com/96/90/da/9690da690d344e2579dffa12d4e2ac24.js"></script>
-<script src="https://interventioncopiedloitering.com/f0/07/9c/f0079c7c7d8c3c01bd28c4116a805f4a.js"></script>
-<script src="https://interventioncopiedloitering.com/7e/7f/2b/7e7f2b6f7c43d86c6859e5b0a40afe3e.js"></script>
-<script src="https://interventioncopiedloitering.com/7e/28/55/7e2855c2f9fb53ed0ca536022ca067df.js"></script>
-<script src="https://interventioncopiedloitering.com/d0/f6/b3/d0f6b318f29b5787025697029ae72f23.js"></script>
-<script src="https://interventioncopiedloitering.com/58/0d/ca/580dcaa1a10c7fb3943a7ea94b700f42.js"></script>
-<script src="https://interventioncopiedloitering.com/da/5e/c3/da5ec3a230bfa740492f3f78bd1ed182.js"></script>
-
-<!-- ===== إعلانات 320×50 ثابتة — أعلى الصفحة قبل كل شي ===== -->
-<div class="ad-static-top" style="display:flex;flex-direction:column;align-items:center;gap:4px;">
-  <div id="adTop1" style="width:320px;height:50px;"></div>
-  <div id="adTop2" style="width:320px;height:50px;"></div>
-  <div id="adTop3" style="width:320px;height:50px;"></div>
+<!-- ===== إعلان اجتماعي متسلسل: إعلان واحد في كل مرة ===== -->
+<div class="social-ad-stage" id="socialAdStage" aria-label="إعلانات اجتماعية">
+  <div class="social-ad-caption">إعلان</div>
+  <div class="social-ad-slot" id="socialAdSlot" aria-live="polite"></div>
 </div>
 
   <div class="topbar">
@@ -40,34 +29,54 @@
     </div>
   </div>
 
-  <div class="wallet-page" id="walletPage">
-    <div class="wallet-header">
-      <button class="wallet-back" id="walletBackBtn">‹</button>
-      <div class="wallet-title" id="walletTitleText"></div>
-    </div>
-    <div class="wallet-body">
-      <div class="wallet-balance-card">
-        <div class="wallet-balance-label" id="walletBalanceLabel"></div>
+  <div class="wallet-page" id="walletPage" aria-hidden="true">
+    <header class="wallet-header">
+      <button class="wallet-back" id="walletBackBtn" aria-label="Back">‹</button>
+      <div class="wallet-title-group">
+        <span class="wallet-kicker" id="walletKicker"></span>
+        <div class="wallet-title" id="walletTitleText"></div>
+      </div>
+      <span class="wallet-network">TON · USDT</span>
+    </header>
+    <main class="wallet-body">
+      <section class="wallet-balance-card" aria-labelledby="walletBalanceLabel">
+        <div class="wallet-balance-top">
+          <span class="wallet-balance-label" id="walletBalanceLabel"></span>
+          <span class="wallet-live-status"><span></span> Live</span>
+        </div>
         <div class="wallet-balance-row">
           <div class="coin-ic"></div>
           <div class="wallet-balance-amount" id="walletBalanceAmount">0.0000</div>
           <div class="unit">USDT</div>
         </div>
+        <div class="wallet-balance-meta">
+          <span id="walletBalanceHint"></span>
+          <strong id="walletProgressText"></strong>
+        </div>
+        <div class="wallet-progress-track" aria-hidden="true"><span id="walletProgressFill"></span></div>
+      </section>
+
+      <div class="wallet-info-grid">
+        <div class="wallet-info-card"><span class="wallet-info-icon">⚡</span><div><strong id="walletSpeedLabel"></strong><small id="walletSpeedValue"></small></div></div>
+        <div class="wallet-info-card"><span class="wallet-info-icon">🔒</span><div><strong id="walletNetworkLabel"></strong><small>TON Network</small></div></div>
       </div>
 
       <div class="wallet-divider" id="walletDividerLabel"></div>
-
-      <div class="wallet-field">
-        <div class="wallet-field-label" id="walletAddressLabel"></div>
-        <input type="text" class="wallet-input" id="tonAddressInput">
-        <div class="wallet-hint" id="walletMinNote"></div>
-      </div>
+      <section class="wallet-withdraw-panel">
+        <div class="wallet-section-heading"><div><span class="wallet-section-eyebrow">TON NETWORK</span><h2 id="walletAddressLabel"></h2></div><span class="wallet-step">01</span></div>
+        <div class="wallet-input-wrap">
+          <input type="text" class="wallet-input" id="tonAddressInput" autocomplete="off" spellcheck="false">
+          <button class="wallet-copy-btn" id="copyAddressBtn" type="button" aria-label="Copy address">نسخ</button>
+        </div>
+        <div class="wallet-hint-row"><span class="wallet-hint" id="walletMinNote"></span><span class="wallet-hint valid-hint">● TON only</span></div>
+      </section>
 
       <div class="wallet-actions">
         <button class="wallet-action-btn primary" id="withdrawBtn"></button>
         <button class="wallet-action-btn secondary" id="watchAdBtn"></button>
       </div>
-    </div>
+      <p class="wallet-security-note" id="walletSecurityNote"></p>
+    </main>
   </div>
 
   <section class="hero-intro" aria-labelledby="heroTitle">
@@ -99,7 +108,7 @@
     </div>
   </div>
 
-  <audio id="zombieSound" src="asesst/zombie-sound.wav" preload="auto"></audio>
+  <audio id="zombieSound" src="asesst/zombie-sound.wav" preload="metadata"></audio>
 
 <script src="js/i18n.js"></script>
 <script src="js/houses.js"></script>
@@ -107,13 +116,6 @@
 <script src="js/ui.js"></script>
 <script src="js/battle.js"></script>
 <script src="js/wallet.js"></script>
-
-<!-- ===== إعلانات 320×50 ثابتة — أسفل الصفحة بعد كل شي ===== -->
-<div class="ad-static-bottom" style="display:flex;flex-direction:column;align-items:center;gap:4px;">
-  <div id="adBottom1" style="width:320px;height:50px;"></div>
-  <div id="adBottom2" style="width:320px;height:50px;"></div>
-  <div id="adBottom3" style="width:320px;height:50px;"></div>
-</div>
 
 <script src="js/ads.js"></script>
 </body>
