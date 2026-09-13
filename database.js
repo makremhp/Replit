@@ -204,6 +204,7 @@ async function setTonAddress(clientId, address) {
 async function ensureTelegramUser(telegramUser, startPayload = '') {
   const telegramId = String(telegramUser.id);
   const clientId = `client-telegram-${telegramId}`;
+  await getOrCreateUser(clientId);
   const inserted = await pool.query(
     `INSERT INTO telegram_users (telegram_id, client_id, username, first_name)
      VALUES ($1, $2, $3, $4)
@@ -215,7 +216,6 @@ async function ensureTelegramUser(telegramUser, startPayload = '') {
     'UPDATE telegram_users SET username = $1, first_name = $2, updated_at = NOW() WHERE telegram_id = $3',
     [telegramUser.username || null, telegramUser.first_name || null, telegramId]
   );
-  await getOrCreateUser(clientId);
   if (inserted.rowCount && /^ref_\d+$/.test(startPayload)) {
     const referrerId = startPayload.slice(4);
     if (referrerId !== telegramId) {
