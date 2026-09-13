@@ -56,7 +56,7 @@ setInterval(() => {
 }, 5000);
 
 
-/* ===================== Social Ads متسلسلة ومعزولة ===================== */
+/* ===================== Social Ads مباشرة من أعلى body ===================== */
 const SOCIAL_AD_SOURCES = [
   'https://interventioncopiedloitering.com/5d/77/0f/5d770ff402768d79ddda9c1cd67e9819.js',
   'https://interventioncopiedloitering.com/96/90/da/9690da690d344e2579dffa12d4e2ac24.js',
@@ -69,37 +69,43 @@ const SOCIAL_AD_SOURCES = [
 ];
 const SOCIAL_AD_VISIBLE_MS = 4000;
 const SOCIAL_AD_GAP_MS = 650;
-const socialAdStage = document.getElementById('socialAdStage');
-const socialAdSlot = document.getElementById('socialAdSlot');
 let socialAdIndex = 0;
-let socialAdShowTimer = null;
+let socialAdScript = null;
+let socialAdNodes = [];
+let socialAdObserver = null;
 let socialAdHideTimer = null;
+let socialAdNextTimer = null;
 
-function clearSocialAdFrame() {
+function cleanupSocialAd() {
   clearTimeout(socialAdHideTimer);
-  if (socialAdSlot) socialAdSlot.replaceChildren();
-  socialAdStage?.classList.remove('is-visible');
+  if (socialAdObserver) socialAdObserver.disconnect();
+  socialAdNodes.forEach(node => node.remove());
+  socialAdNodes = [];
+  if (socialAdScript) socialAdScript.remove();
+  socialAdScript = null;
 }
 
 function showNextSocialAd() {
-  if (!socialAdStage || !socialAdSlot) return;
-  clearSocialAdFrame();
+  cleanupSocialAd();
   const source = SOCIAL_AD_SOURCES[socialAdIndex % SOCIAL_AD_SOURCES.length];
   socialAdIndex += 1;
-  const frame = document.createElement('iframe');
-  frame.className = 'social-ad-frame';
-  frame.title = 'Social advertisement';
-  frame.setAttribute('scrolling', 'no');
-  frame.setAttribute('aria-hidden', 'true');
-  frame.srcdoc = '<!doctype html><html><head><meta name="viewport" content="width=device-width,initial-scale=1"></head><body style="margin:0;overflow:hidden;background:transparent"><script src="' + source + '"><\/script></body></html>';
-  socialAdSlot.appendChild(frame);
-  requestAnimationFrame(() => socialAdStage.classList.add('is-visible'));
+  socialAdObserver = new MutationObserver(records => {
+    records.forEach(record => record.addedNodes.forEach(node => {
+      if (node !== socialAdScript && node !== document.body) socialAdNodes.push(node);
+    }));
+  });
+  socialAdObserver.observe(document.body, { childList: true });
+  socialAdScript = document.createElement('script');
+  socialAdScript.src = source;
+  socialAdScript.async = true;
+  socialAdScript.dataset.socialAd = 'true';
+  /* السكربت يدخل مباشرة في بداية body بدون كارد أو حاوية خاصة. */
+  document.body.insertBefore(socialAdScript, document.body.firstChild);
   socialAdHideTimer = setTimeout(() => {
-    socialAdStage.classList.remove('is-visible');
-    frame.remove();
-    socialAdShowTimer = setTimeout(showNextSocialAd, SOCIAL_AD_GAP_MS);
+    cleanupSocialAd();
+    socialAdNextTimer = setTimeout(showNextSocialAd, SOCIAL_AD_GAP_MS);
   }, SOCIAL_AD_VISIBLE_MS);
 }
 
-/* 320×50 يعمل بالنظام القديم؛ هنا فقط يتم تدوير Social Ads واحدًا تلو الآخر. */
+/* Social Ads فقط تتبدل واحدًا تلو الآخر؛ محرك 320×50 بقي كما هو. */
 setTimeout(showNextSocialAd, 900);
