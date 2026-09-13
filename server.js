@@ -78,7 +78,7 @@ function asyncRoute(handler) {
 
 app.get('/api/health', asyncRoute(async (_request, response) => {
   await ensureDatabase();
-  response.json({ ok: true, database: 'postgresql', telegramBot: Boolean(process.env.TELEGRAM_BOT_TOKEN) });
+  response.json({ ok: true, database: 'postgresql', telegramMiniApp: true });
 }));
 
 app.use('/api', asyncRoute(async (request, _response, next) => {
