@@ -1,10 +1,12 @@
 /* ===================== ساحة تعدين العملات ===================== */
 const stage = document.getElementById('miningStage');
 const activeCoins = new Set();
-const MAX_ACTIVE_COINS = 10;
+const MAX_ACTIVE_COINS = 50;
 const COIN_COLLECT_RADIUS = 82;
+const COIN_WAVE_INTERVAL_MS = 30000;
 let miningTimer = null;
 let coinAudioContext = null;
+let nextWaveSize = 1;
 
 function currentHouse() {
   return HOUSES.find(house => house.id === State.activeHouseId) || HOUSES[0];
@@ -79,6 +81,7 @@ function collectCoinGroup(coin) {
     candidate.remove();
   });
   addBalance(totalValue, sourceX + 18, sourceY + 18);
+  if (!activeCoins.size) nextWaveSize = 1;
 }
 
 function spawnCoin() {
@@ -116,8 +119,11 @@ function spawnCoins(count) {
 
 function startMining(house) {
   stopMining();
-  spawnCoins(3);
-  miningTimer = setInterval(() => spawnCoins(2), house.coinIntervalMs);
+  nextWaveSize = 1;
+  miningTimer = setInterval(() => {
+    spawnCoins(nextWaveSize);
+    nextWaveSize += 1;
+  }, COIN_WAVE_INTERVAL_MS);
 }
 
 function stopMining() {

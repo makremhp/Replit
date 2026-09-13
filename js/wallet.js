@@ -1,18 +1,21 @@
 /* ===================== المشاركة ===================== */
 const BOT_USERNAME = 'YOUR_BOT_USERNAME';
 const BOT_LINK = `https://t.me/${BOT_USERNAME}`;
+
 document.getElementById('shareBtn').addEventListener('click', () => {
   const shareUrl = `https://t.me/share/url?url=${encodeURIComponent(BOT_LINK)}&text=${encodeURIComponent(T.shareText)}`;
-  if (window.Telegram && window.Telegram.WebApp && window.Telegram.WebApp.openTelegramLink) window.Telegram.WebApp.openTelegramLink(shareUrl);
-  else window.open(shareUrl, '_blank', 'noopener');
+  if (window.Telegram?.WebApp?.openTelegramLink) {
+    window.Telegram.WebApp.openTelegramLink(shareUrl);
+  } else {
+    window.open(shareUrl, '_blank', 'noopener');
+  }
 });
 
-/* ===================== محفظة TON Connect ===================== */
+/* ===================== اتصال TON Connect — تنفيذ جديد ===================== */
 const MIN_WITHDRAW = 5;
-const TON_MANIFEST_URL = new URL('tonconnect-manifest.json', document.baseURI).href;
 const TON_SDK_URL = 'https://unpkg.com/@tonconnect/ui@2.2.0/dist/tonconnect-ui.min.js';
-let tonSdkPromise = null;
-let tonUiPromise = null;
+const TON_MANIFEST_URL = new URL('tonconnect-manifest.json', document.baseURI).href;
+
 const walletPage = document.getElementById('walletPage');
 const walletTitleText = document.getElementById('walletTitleText');
 const walletMinNote = document.getElementById('walletMinNote');
@@ -26,11 +29,119 @@ const connectWalletBtnText = document.getElementById('connectWalletBtnText');
 const disconnectWalletBtnText = document.getElementById('disconnectWalletBtnText');
 const walletConnectionStatusText = document.getElementById('walletConnectionStatusText');
 const walletConnectionDot = document.getElementById('walletConnectionDot');
-let tonConnectUI = null;
+
+let tonConnectUi = null;
+let tonConnectInitPromise = null;
+let tonSdkLoadPromise = null;
 let connectedTonAddress = '';
 
-function getTonConnectUIClass() {
+function getTonConnectUiClass() {
   return window.TON_CONNECT_UI?.TonConnectUI || window.TonConnectUI || null;
+}
+
+function setConnectionStatus(message, connected = false) {
+  walletConnectionStatusText.textContent = message;
+  walletConnectionDot.classList.toggle('is-connected', connected);
+}
+
+function shortTonAddress(address) {
+  return address.length > 18 ? `${address.slice(0, 8)}…${address.slice(-7)}` : address;
+}
+
+function renderConnectedWallet(wallet) {
+  connectedTonAddress = wallet?.account?.address || '';
+  const connected = Boolean(connectedTonAddress);
+  tonAddressInput.value = connectedTonAddress;
+  tonAddressInput.classList.toggle('is-connected', connected);
+  connectWalletBtn.hidden = connected;
+  disconnectWalletBtn.hidden = !connected;
+  setConnectionStatus(
+    connected ? T.walletConnected(shortTonAddress(connectedTonAddress)) : T.walletNotConnected,
+    connected
+  );
+}
+
+function loadTonConnectSdk() {
+  if (getTonConnectUiClass()) return Promise.resolve();
+  if (tonSdkLoadPromise) return tonSdkLoadPromise;
+
+  tonSdkLoadPromise = new Promise((resolve, reject) => {
+    const script = document.createElement('script');
+    script.src = TON_SDK_URL;
+    script.async = true;
+    script.onload = () => {
+      if (getTonConnectUiClass()) {
+        resolve();
+      } else {
+        tonSdkLoadPromise = null;
+        reject(new Error('TON Connect UI class was not exported'));
+      }
+    };
+    script.onerror = () => {
+      tonSdkLoadPromise = null;
+      reject(new Error('TON Connect SDK failed to load'));
+    };
+    document.head.appendChild(script);
+  });
+
+  return tonSdkLoadPromise;
+}
+
+async function getTonConnectUi() {
+  if (tonConnectUi) return tonConnectUi;
+  if (tonConnectInitPromise) return tonConnectInitPromise;
+
+  tonConnectInitPromise = (async () => {
+    await loadTonConnectSdk();
+    const TonConnectUI = getTonConnectUiClass();
+    if (!TonConnectUI) throw new Error('TON Connect UI is unavailable');
+
+    const ui = new TonConnectUI({
+      manifestUrl: TON_MANIFEST_URL,
+      restoreConnection: true
+    });
+
+    ui.onStatusChange(
+      wallet => renderConnectedWallet(wallet),
+      error => console.error('TON Connect status error:', error)
+    );
+    tonConnectUi = ui;
+    renderConnectedWallet(ui.wallet);
+    return ui;
+  })().catch(error => {
+    tonConnectInitPromise = null;
+    throw error;
+  });
+
+  return tonConnectInitPromise;
+}
+
+async function connectWallet() {
+  connectWalletBtn.disabled = true;
+  connectWalletBtnText.textContent = T.connectingWallet;
+  setConnectionStatus(T.connectingWallet);
+
+  try {
+    const ui = await getTonConnectUi();
+    await ui.openModal();
+  } catch (error) {
+    console.error('TON Connect initialization error:', error);
+    setConnectionStatus(T.walletConnectFailed);
+    showToast(T.walletConnectFailed);
+  } finally {
+    connectWalletBtn.disabled = false;
+    if (!connectedTonAddress) connectWalletBtnText.textContent = T.connectWallet;
+  }
+}
+
+async function disconnectWallet() {
+  try {
+    if (tonConnectUi) await tonConnectUi.disconnect();
+  } catch (error) {
+    console.error('TON Connect disconnect error:', error);
+  } finally {
+    renderConnectedWallet(null);
+  }
 }
 
 function renderWalletProgress() {
@@ -41,88 +152,7 @@ function renderWalletProgress() {
   progressText.textContent = T.walletProgress(MIN_WITHDRAW);
 }
 
-function shortTonAddress(address) {
-  return address.length > 18 ? address.slice(0, 8) + '…' + address.slice(-7) : address;
-}
-
-function applyTonWallet(wallet) {
-  connectedTonAddress = wallet?.account?.address || '';
-  const connected = Boolean(connectedTonAddress);
-  tonAddressInput.value = connectedTonAddress;
-  tonAddressInput.classList.toggle('is-connected', connected);
-  connectWalletBtn.hidden = connected;
-  disconnectWalletBtn.hidden = !connected;
-  walletConnectionDot.classList.toggle('is-connected', connected);
-  walletConnectionStatusText.textContent = connected ? T.walletConnected(shortTonAddress(connectedTonAddress)) : T.walletNotConnected;
-}
-
-function loadTonConnectSdk() {
-  if (getTonConnectUIClass()) return Promise.resolve();
-  if (tonSdkPromise) return tonSdkPromise;
-  tonSdkPromise = new Promise((resolve, reject) => {
-    const script = document.createElement('script');
-    script.src = TON_SDK_URL;
-    script.async = true;
-    script.onload = () => {
-      if (getTonConnectUIClass()) {
-        resolve();
-      } else {
-        tonSdkPromise = null;
-        reject(new Error('TON Connect SDK loaded without its UI class'));
-      }
-    };
-    script.onerror = () => {
-      tonSdkPromise = null;
-      reject(new Error('TON Connect SDK failed to load'));
-    };
-    document.head.appendChild(script);
-  });
-  return tonSdkPromise;
-}
-
-async function initTonConnect() {
-  if (tonConnectUI) return tonConnectUI;
-  if (tonUiPromise) return tonUiPromise;
-  tonUiPromise = (async () => {
-    await loadTonConnectSdk();
-    const TonConnectUI = getTonConnectUIClass();
-    if (!TonConnectUI) throw new Error('TON Connect UI is unavailable');
-    const ui = new TonConnectUI({ manifestUrl: TON_MANIFEST_URL });
-    ui.onStatusChange(wallet => applyTonWallet(wallet), error => console.error('TON Connect status error:', error));
-    tonConnectUI = ui;
-    applyTonWallet(ui.wallet);
-    return ui;
-  })().catch(error => {
-    tonUiPromise = null;
-    throw error;
-  });
-  return tonUiPromise;
-}
-
-async function connectTonWallet() {
-  connectWalletBtn.disabled = true;
-  connectWalletBtnText.textContent = T.connectingWallet;
-  try {
-    const ui = await initTonConnect();
-    await ui.openModal();
-  } catch (error) {
-    console.error('TON Connect error:', error);
-    walletConnectionStatusText.textContent = T.walletConnectFailed;
-    showToast(T.walletConnectFailed);
-  } finally {
-    connectWalletBtn.disabled = false;
-    connectWalletBtnText.textContent = T.connectWallet;
-  }
-}
-
-connectWalletBtn.addEventListener('click', connectTonWallet);
-disconnectWalletBtn.addEventListener('click', async () => {
-  if (tonConnectUI) await tonConnectUI.disconnect();
-  applyTonWallet(null);
-});
-
 function openWalletPage() {
-  initTonConnect().catch(error => console.error('TON Connect init error:', error));
   document.getElementById('walletKicker').textContent = T.walletKicker;
   walletTitleText.textContent = T.walletTitle;
   document.getElementById('walletBalanceLabel').textContent = T.walletBalanceLabel;
@@ -132,7 +162,7 @@ function openWalletPage() {
   document.getElementById('walletNetworkLabel').textContent = T.walletNetworkLabel;
   document.getElementById('walletDividerLabel').textContent = T.walletDivider;
   document.getElementById('walletAddressLabel').textContent = T.walletAddressLabel;
-  document.getElementById('walletMinNote').textContent = T.minWithdrawNote(MIN_WITHDRAW);
+  walletMinNote.textContent = T.minWithdrawNote(MIN_WITHDRAW);
   document.getElementById('walletSecurityNote').textContent = T.walletSecurityNote;
   connectWalletBtnText.textContent = T.connectWallet;
   disconnectWalletBtnText.textContent = T.disconnectWallet;
@@ -143,6 +173,10 @@ function openWalletPage() {
   renderWalletProgress();
   walletPage.classList.add('show');
   walletPage.setAttribute('aria-hidden', 'false');
+  getTonConnectUi().catch(error => {
+    console.error('TON Connect preload error:', error);
+    setConnectionStatus(T.walletSdkUnavailable);
+  });
 }
 
 function closeWalletPage() {
@@ -150,20 +184,26 @@ function closeWalletPage() {
   walletPage.setAttribute('aria-hidden', 'true');
 }
 
+connectWalletBtn.addEventListener('click', connectWallet);
+disconnectWalletBtn.addEventListener('click', disconnectWallet);
 document.getElementById('walletBtn').addEventListener('click', openWalletPage);
 document.getElementById('walletBackBtn').addEventListener('click', closeWalletPage);
+
 copyAddressBtn.addEventListener('click', async () => {
-  const address = connectedTonAddress;
-  if (!address) return showToast(T.connectWalletFirst);
-  try { await navigator.clipboard.writeText(address); showToast(T.copiedAddress); }
-  catch (_) { tonAddressInput.select(); showToast(T.copyAddress); }
+  if (!connectedTonAddress) return showToast(T.connectWalletFirst);
+  try {
+    await navigator.clipboard.writeText(connectedTonAddress);
+    showToast(T.copiedAddress);
+  } catch (_) {
+    tonAddressInput.select();
+    showToast(T.copyAddress);
+  }
 });
 
 withdrawBtn.addEventListener('click', () => {
-  const address = connectedTonAddress;
-  if (!address) return showToast(T.connectWalletFirst);
+  if (!connectedTonAddress) return showToast(T.connectWalletFirst);
   if (State.balance < MIN_WITHDRAW) return showToast(T.notEnoughBalance(MIN_WITHDRAW));
-  /* واجهة السحب جاهزة؛ التنفيذ الحقيقي يحتاج endpoint آمن في الباك إند. */
   showToast(T.withdrawSent);
 });
+
 watchAdBtn.addEventListener('click', () => showToast(T.noAdAvailable));

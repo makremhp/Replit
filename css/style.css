@@ -77,6 +77,9 @@
 .social-ad-stage.is-visible .social-ad-slot { opacity:1; transform:translateY(0); }
 .social-ad-card { width:100%; min-height:62px; display:grid; place-items:center; overflow:hidden; border:1px solid rgba(174,204,217,.1); border-radius:16px; background:rgba(255,255,255,.035); }
 .social-ad-card iframe,.social-ad-card img { max-width:100%; border:0; }
+  .social-ad-container { width:min(100%,620px); min-height:0; display:flex; justify-content:center; overflow:hidden; }
+  .social-ad-container:empty { display:none; }
+  .social-ad-frame { display:block; width:min(100%,620px); height:90px; border:0; overflow:hidden; }
 
 /* ===================== محفظة احترافية ===================== */
 .wallet-header { min-height:78px; justify-content:space-between; padding:14px 18px; }

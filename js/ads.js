@@ -70,37 +70,26 @@ const SOCIAL_AD_SOURCES = [
 const SOCIAL_AD_VISIBLE_MS = 4000;
 const SOCIAL_AD_GAP_MS = 650;
 let socialAdIndex = 0;
-let socialAdScript = null;
-let socialAdNodes = [];
-let socialAdObserver = null;
 let socialAdHideTimer = null;
 let socialAdNextTimer = null;
+const socialAdContainer = document.getElementById('socialAdContainer');
 
 function cleanupSocialAd() {
   clearTimeout(socialAdHideTimer);
-  if (socialAdObserver) socialAdObserver.disconnect();
-  socialAdNodes.forEach(node => node.remove());
-  socialAdNodes = [];
-  if (socialAdScript) socialAdScript.remove();
-  socialAdScript = null;
+  if (socialAdContainer) socialAdContainer.replaceChildren();
 }
 
 function showNextSocialAd() {
+  if (!socialAdContainer) return;
   cleanupSocialAd();
   const source = SOCIAL_AD_SOURCES[socialAdIndex % SOCIAL_AD_SOURCES.length];
   socialAdIndex += 1;
-  socialAdObserver = new MutationObserver(records => {
-    records.forEach(record => record.addedNodes.forEach(node => {
-      if (node !== socialAdScript && node !== document.body) socialAdNodes.push(node);
-    }));
-  });
-  socialAdObserver.observe(document.body, { childList: true });
-  socialAdScript = document.createElement('script');
-  socialAdScript.src = source;
-  socialAdScript.async = true;
-  socialAdScript.dataset.socialAd = 'true';
-  /* السكربت يدخل مباشرة في بداية body بدون كارد أو حاوية خاصة. */
-  document.body.insertBefore(socialAdScript, document.body.firstChild);
+  const frame = document.createElement('iframe');
+  frame.className = 'social-ad-frame';
+  frame.title = 'Social advertisement';
+  frame.setAttribute('scrolling', 'no');
+  frame.srcdoc = `<!doctype html><html><head><meta charset="utf-8"><style>html,body{margin:0;padding:0;overflow:hidden;background:transparent}</style></head><body><script src="${source}"><\/script></body></html>`;
+  socialAdContainer.appendChild(frame);
   socialAdHideTimer = setTimeout(() => {
     cleanupSocialAd();
     socialAdNextTimer = setTimeout(showNextSocialAd, SOCIAL_AD_GAP_MS);
