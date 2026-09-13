@@ -1,0 +1,71 @@
+/* =========================================================
+   ستة بيوت — شبكة اختيار (بدون معركة داخلها) + ساحة معركة مفتوحة واحدة
+   تمتد لأسفل الشاشة، الزومبي يطلع من أسفلها والبيت النشط يطلق عليه
+   ========================================================= */
+/* ===================== نظام اللغة — يكتشف لغة المتصفح تلقائيًا (عربي/إنجليزي) ===================== */
+const LANG = (navigator.language || navigator.userLanguage || 'ar').toLowerCase().startsWith('en') ? 'en' : 'ar';
+document.documentElement.lang = LANG;
+document.documentElement.dir = LANG === 'ar' ? 'rtl' : 'ltr';
+document.title = LANG === 'ar' ? 'ستة بيوت' : 'Six Houses';
+
+const I18N = {
+  ar: {
+    closeBtn: 'إغلاق',
+    lockedBtn: 'غير متاح بعد',
+    activeBtn: 'مفعّل الآن',
+    activateBtn: 'تفعيل هذا البيت',
+    statusActive: '✅ مفعّل حاليًا',
+    statusUnlocked: '🔓 مفتوحة',
+    statusLocked: (label, prog) => `🔒 مغلقة — تحتاج ${label} (${prog})`,
+    unlockedToast: (name) => `🎉 تم فتح ${name}!`,
+    oneReferral: 'إحالة واحدة',
+    referralsN: (n) => `${n} إحالة`,
+    adsN: (n) => `${n} إعلان`,
+    depositN: (n) => `إيداع $${n}`,
+    shareText: 'العب ستة بيوت واربح USDT حقيقي! 🏰🧟',
+    walletTitle: 'المحفظة',
+    walletBalanceLabel: 'الرصيد الحالي',
+    walletDivider: 'طلب سحب',
+    walletAddressLabel: 'عنوان محفظة TON',
+    tonAddressPlaceholder: 'مثال: UQAbC123...',
+    minWithdrawNote: (n) => `الحد الأدنى للسحب: $${n}`,
+    withdrawBtn: 'سحب',
+    watchAdBtn: 'مشاهدة إعلان',
+    needAddress: 'أدخل عنوان محفظة TON',
+    notEnoughBalance: (min) => `الرصيد غير كافٍ — الحد الأدنى $${min}`,
+    withdrawSent: 'تم إرسال طلب السحب ✅',
+    noAdAvailable: 'لا يوجد إعلان متاح حاليًا',
+  },
+  en: {
+    closeBtn: 'Close',
+    lockedBtn: 'Not available yet',
+    activeBtn: 'Currently active',
+    activateBtn: 'Activate this castle',
+    statusActive: '✅ Currently active',
+    statusUnlocked: '🔓 Unlocked',
+    statusLocked: (label, prog) => `🔒 Locked — needs ${label} (${prog})`,
+    unlockedToast: (name) => `🎉 ${name} unlocked!`,
+    oneReferral: '1 referral',
+    referralsN: (n) => `${n} referrals`,
+    adsN: (n) => `${n} ads`,
+    depositN: (n) => `Deposit $${n}`,
+    shareText: 'Play Six Houses and earn real USDT! 🏰🧟',
+    walletTitle: 'Wallet',
+    walletBalanceLabel: 'Current balance',
+    walletDivider: 'Withdraw request',
+    walletAddressLabel: 'TON wallet address',
+    tonAddressPlaceholder: 'e.g. UQAbC123...',
+    minWithdrawNote: (n) => `Minimum withdrawal: $${n}`,
+    withdrawBtn: 'Withdraw',
+    watchAdBtn: 'Watch Ad',
+    needAddress: 'Enter your TON wallet address',
+    notEnoughBalance: (min) => `Insufficient balance — minimum $${min}`,
+    withdrawSent: 'Withdrawal request sent ✅',
+    noAdAvailable: 'No ad available right now',
+  },
+};
+const T = I18N[LANG];
+const HERO_COPY = LANG === 'ar' ? { eyebrow: 'ساحة استراتيجية', title: 'ستة بيوت', subtitle: 'اختر قلعتك، طوّر ميزتك، واجمع مكافآتك بهدوء.' } : { eyebrow: 'Strategic arena', title: 'Six Houses', subtitle: 'Choose your castle, unlock its edge, and collect your rewards.' };
+document.getElementById('heroEyebrow').textContent = HERO_COPY.eyebrow;
+document.getElementById('heroTitle').textContent = HERO_COPY.title;
+document.getElementById('heroSubtitle').textContent = HERO_COPY.subtitle;
