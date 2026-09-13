@@ -1,6 +1,7 @@
 /* ===================== الحالة العامة — المصدر الوحيد هو الخادم ===================== */
 const STATE_API_URL = '/api/state';
 const CLIENT_ID_KEY = 'sh_client_id';
+['sh_balance', 'sh_progress', 'sh_unlocked', 'sh_active', 'sh_ton_address'].forEach(key => localStorage.removeItem(key));
 const hasStateApi = window.location.protocol !== 'file:' && typeof fetch === 'function';
 
 function getClientId() {
