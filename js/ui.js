@@ -95,6 +95,8 @@ function openHouseModal(house) {
   const unlocked = isUnlocked(house);
   const isActive = house.id === State.activeHouseId;
   const unlockType = house.unlock?.type || '';
+  const needsAdsToUnlock = !unlocked && unlockType === 'ads';
+  const needsReferralsToUnlock = !unlocked && unlockType === 'referrals';
 
   modalHouseImg.src = house.img;
   modalHouseImg.alt = hName(house);
@@ -103,12 +105,12 @@ function openHouseModal(house) {
   modalProgressTrack.style.display = 'none';
   modalActionBtn.hidden = false;
   modalShareBtn.hidden = true;
-  modalAdPanel.hidden = unlockType !== 'ads';
-  modalAdBtn.hidden = unlockType !== 'ads';
+  modalAdPanel.hidden = !needsAdsToUnlock;
+  modalAdBtn.hidden = !needsAdsToUnlock;
   modalShareBtn.onclick = null;
   modalAdBtn.onclick = null;
 
-  if (unlockType === 'ads') {
+  if (needsAdsToUnlock) {
     const p = unlockProgressFor(house);
     modalAdLabel.textContent = T.houseAdsLabel;
     modalAdCount.textContent = T.houseAdsProgress(p.have, p.need);
@@ -133,7 +135,7 @@ function openHouseModal(house) {
     modalStatus.className = 'modal-status is-locked';
     modalProgressTrack.style.display = 'block';
     modalProgressFill.style.width = Math.min(100, (p.have / p.need) * 100) + '%';
-    if (unlockType === 'referrals') {
+    if (needsReferralsToUnlock) {
       modalActionBtn.hidden = true;
       modalShareBtn.hidden = false;
       modalShareBtn.textContent = T.shareForUnlock;
@@ -141,7 +143,7 @@ function openHouseModal(house) {
         closeHouseModal();
         openReferralShare();
       };
-    } else if (unlockType === 'ads') {
+    } else if (needsAdsToUnlock) {
       modalActionBtn.hidden = true;
     } else {
       modalActionBtn.textContent = T.lockedBtn;
