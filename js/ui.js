@@ -104,7 +104,7 @@ function openHouseModal(house) {
   modalPerk.textContent = hPerkDesc(house) || '';
   modalProgressTrack.style.display = 'none';
   modalActionBtn.hidden = false;
-  modalShareBtn.hidden = true;
+  modalShareBtn.hidden = !needsReferralsToUnlock;
   modalAdPanel.hidden = !needsAdsToUnlock;
   modalAdBtn.hidden = !needsAdsToUnlock;
   modalShareBtn.onclick = null;
