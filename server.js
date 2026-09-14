@@ -1,5 +1,6 @@
 const express = require('express');
 const path = require('path');
+const net = require('net');
 const crypto = require('crypto');
 const { verifyTelegramInitData } = require('./telegram-auth');
 const {
@@ -49,6 +50,57 @@ function rateLimit(request, key, max = 120, windowMs = 60000) {
 
 function idempotencyKey(request) {
   return String(request.get('idempotency-key') || '');
+}
+
+
+function clientIp(request) {
+  const forwarded = String(request.get('x-forwarded-for') || '').split(',')[0].trim();
+  let value = forwarded || String(request.socket?.remoteAddress || request.ip || '').trim();
+  if (value.startsWith('::ffff:')) value = value.slice(7);
+  return value;
+}
+
+function isPublicIp(value) {
+  const ip = String(value || '').trim();
+  const version = net.isIP(ip);
+  if (version === 4) {
+    const parts = ip.split('.').map(Number);
+    const [a, b, c] = parts;
+    if (parts.length !== 4 || parts.some(part => !Number.isInteger(part) || part < 0 || part > 255)) return false;
+    return !(a === 10 || a === 127 || (a === 169 && b === 254) ||
+      (a === 172 && b >= 16 && b <= 31) || (a === 192 && b === 168) ||
+      (a === 100 && b >= 64 && b <= 127) || (a === 192 && b === 0 && c === 0) ||
+      (a === 198 && (b === 18 || b === 19)) || (a === 198 && b === 51 && c === 100) ||
+      (a === 203 && b === 0 && c === 113) || a >= 224);
+  }
+  if (version === 6) {
+    const normalized = ip.toLowerCase();
+    return normalized !== '::1' && !normalized.startsWith('fc') && !normalized.startsWith('fd') &&
+      !normalized.startsWith('fe80') && !normalized.startsWith('ff');
+  }
+  return false;
+}
+
+async function inspectNetworkIdentity(request) {
+  const ip = clientIp(request);
+  if (!isPublicIp(ip) || typeof fetch !== 'function') return { checked: false, blocked: false };
+  const controller = new AbortController();
+  const timeout = setTimeout(() => controller.abort(), 1800);
+  try {
+    const response = await fetch('https://ipwho.is/' + encodeURIComponent(ip), {
+      headers: { accept: 'application/json' },
+      signal: controller.signal,
+    });
+    if (!response.ok) return { checked: false, blocked: false };
+    const payload = await response.json();
+    const security = payload && typeof payload.security === 'object' ? payload.security : {};
+    const detected = ['vpn', 'proxy', 'tor', 'relay'].find(key => security[key] === true);
+    return { checked: true, blocked: Boolean(detected), reason: detected ? 'vpn' : null };
+  } catch (_) {
+    return { checked: false, blocked: false };
+  } finally {
+    clearTimeout(timeout);
+  }
 }
 
 function requireAdminSettingsToken(request) {
@@ -131,6 +183,14 @@ app.put('/api/admin/ad-config', asyncRoute(async (request, response) => {
   }
   response.json({ ok: true, fixed320x50: units.length, social: scripts.length, topVisibleCount, bottomVisibleCount, topRotationMs: effectiveTopRotationMs, bottomRotationMs: effectiveBottomRotationMs });
 }));
+
+app.get('/api/security/check', asyncRoute(async (request, response) => {
+  rateLimit(request, 'security-check', 12, 60000);
+  const result = await inspectNetworkIdentity(request);
+  response.set('Cache-Control', 'no-store');
+  response.json({ ok: true, checked: result.checked, blocked: result.blocked, reason: result.reason || null });
+}));
+
 app.use('/api', asyncRoute(async (request, _response, next) => {
   await ensureDatabase();
   rateLimit(request, 'ip');
