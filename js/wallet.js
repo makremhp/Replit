@@ -1,6 +1,6 @@
-/* ===================== المشاركة ===================== */
-const BOT_USERNAME = 'YOUR_BOT_USERNAME';
-const BOT_LINK = `https://t.me/${BOT_USERNAME}`;
+
+const BOT_USERNAME = 'zombie_housBot';
+const BOT_LINK = `https://t.me/${BOT_USERNAME}/play`;
 
 function openReferralShare() {
   const shareUrl = `https://t.me/share/url?url=${encodeURIComponent(BOT_LINK)}&text=${encodeURIComponent(T.shareText)}`;
