@@ -208,6 +208,14 @@ function hashRequest(value) {
 }
 
 async function migrateLegacyUsers(client) {
+  const migrationQuery = async (label, query) => {
+    try {
+      return await client.query(query);
+    } catch (error) {
+      error.message = `${label}: ${error.message}`;
+      throw error;
+    }
+  };
   const columns = await client.query(
     `SELECT column_name FROM information_schema.columns
      WHERE table_schema = 'public' AND table_name = 'users'`
@@ -223,16 +231,21 @@ async function migrateLegacyUsers(client) {
     last_coin_spawn_at: 'BIGINT',
   };
   for (const [name, type] of Object.entries(additions)) {
-    await client.query(`ALTER TABLE users ADD COLUMN IF NOT EXISTS ${name} ${type}`);
+    await migrationQuery(
+      `users.add_column.${name}`,
+      `ALTER TABLE users ADD COLUMN IF NOT EXISTS ${name} ${type}`
+    );
   }
   if (names.has('client_id')) {
-    await client.query(
+    await migrationQuery(
+      'users.backfill_telegram_user_id',
       `UPDATE users
        SET telegram_user_id = NULLIF(regexp_replace(client_id, '[^0-9]', '', 'g'), '')::BIGINT
        WHERE telegram_user_id IS NULL AND client_id ~ '[0-9]'`
     );
   }
-  await client.query(
+  await migrationQuery(
+    'users.telegram_user_id_index',
     `CREATE UNIQUE INDEX IF NOT EXISTS users_telegram_user_id_uidx
      ON users(telegram_user_id)`
   );
@@ -242,15 +255,23 @@ async function migrateLegacyUsers(client) {
   );
   if (withdrawalColumns.rows.length) {
     const withdrawalNames = new Set(withdrawalColumns.rows.map(row => row.column_name));
-    await client.query('ALTER TABLE withdrawals ADD COLUMN IF NOT EXISTS telegram_user_id BIGINT');
-    await client.query('ALTER TABLE withdrawals ADD COLUMN IF NOT EXISTS fee NUMERIC(18, 8) NOT NULL DEFAULT 0');
+    await migrationQuery(
+      'withdrawals.add_column.telegram_user_id',
+      'ALTER TABLE withdrawals ADD COLUMN IF NOT EXISTS telegram_user_id BIGINT'
+    );
+    await migrationQuery(
+      'withdrawals.add_column.fee',
+      'ALTER TABLE withdrawals ADD COLUMN IF NOT EXISTS fee NUMERIC(18, 8) NOT NULL DEFAULT 0'
+    );
     if (withdrawalNames.has('client_id')) {
-      await client.query(
+      await migrationQuery(
+        'withdrawals.backfill_telegram_user_id',
         `UPDATE withdrawals w SET telegram_user_id = u.telegram_user_id
          FROM users u WHERE w.telegram_user_id IS NULL AND w.client_id = u.client_id`
       );
     }
-    await client.query(
+    await migrationQuery(
+      'withdrawals.telegram_user_id_index',
       `CREATE INDEX IF NOT EXISTS withdrawals_telegram_user_id_idx
        ON withdrawals(telegram_user_id)`
     );
