@@ -24,9 +24,9 @@ function normalizeBotToken(value) {
   return token;
 }
 
-function sortedDataCheckString(params, excludeSignature = false) {
+function sortedDataCheckString(params) {
   const entries = [...params.entries()]
-    .filter(([key]) => key !== 'hash' && (!excludeSignature || key !== 'signature'))
+    .filter(([key]) => key !== 'hash')
     .sort(([left], [right]) => {
       if (left === right) return 0;
       return left < right ? -1 : 1;
@@ -36,14 +36,15 @@ function sortedDataCheckString(params, excludeSignature = false) {
 
 function matchesHash(receivedHash, calculatedHash) {
   const received = Buffer.from(receivedHash, 'hex');
-  return received.length === calculatedHash.length &&
-    crypto.timingSafeEqual(received, calculatedHash);
+  const calculated = Buffer.from(calculatedHash, 'hex');
+  return received.length === calculated.length &&
+    crypto.timingSafeEqual(received, calculated);
 }
 
 function verifyTelegramInitData(request, options = {}) {
   const initData = header(request, 'x-telegram-init-data');
-  const botToken = normalizeBotToken(options.botToken ?? process.env.TELEGRAM_BOT_TOKEN);
-  if (!botToken) throw authError('TELEGRAM_BOT_TOKEN is not configured', 503);
+  const botToken = normalizeBotToken(options.botToken ?? process.env.BOT_TOKEN);
+  if (!botToken) throw authError('BOT_TOKEN is not configured', 503);
   if (!initData) throw authError('Telegram Web App authorization is required');
 
   const params = new URLSearchParams(initData);
@@ -65,14 +66,17 @@ function verifyTelegramInitData(request, options = {}) {
     throw authError('Invalid or expired Telegram authorization');
   }
 
-  const secretKey = crypto.createHmac('sha256', botToken).update('WebAppData').digest();
-  const calculatedHashes = [
-    sortedDataCheckString(params),
-    sortedDataCheckString(params, true),
-  ].map(dataCheckString =>
-    crypto.createHmac('sha256', secretKey).update(dataCheckString).digest()
-  );
-  if (!calculatedHashes.some(hash => matchesHash(receivedHash, hash))) {
+  const secretKey = crypto
+    .createHmac('sha256', 'WebAppData')
+    .update(botToken)
+    .digest();
+  const dataCheckString = sortedDataCheckString(params);
+  const calculatedHash = crypto
+    .createHmac('sha256', secretKey)
+    .update(dataCheckString)
+    .digest('hex');
+
+  if (!matchesHash(receivedHash, calculatedHash)) {
     throw authError('Invalid Telegram authorization signature');
   }
 
