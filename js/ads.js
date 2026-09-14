@@ -145,6 +145,21 @@ function selectAdGroup(units, configuredCount, reservedUnits, previousUnits) {
   return shuffleAdUnits(available).slice(0, count);
 }
 
+function buildAdDocument(unit) {
+  const options = JSON.stringify({
+    key: unit.key,
+    format: unit.format || 'iframe',
+    height: AD_SLOT_HEIGHT,
+    width: 320,
+    params: unit.params || {},
+  }).replace(/</g, '\\u003c');
+  const source = String(unit.src).replace(/&/g, '&amp;').replace(/\"/g, '&quot;');
+  return '<!doctype html><html><head><meta name=\"viewport\" content=\"width=320,height=50\"></head><body style=\"margin:0;width:320px;height:50px;overflow:hidden\">' +
+    '<script>atOptions = ' + options + ';</script>' +
+    '<script src=\"' + source + '\"></script>' +
+    '</body></html>';
+}
+
 function renderFixedAdSide(containerId, units, configuredCount) {
   const container = document.getElementById(containerId);
   if (!container) return;
@@ -160,28 +175,21 @@ function renderFixedAdSide(containerId, units, configuredCount) {
     slot.style.flex = '0 0 ' + String(AD_SLOT_HEIGHT) + 'px';
     slot.dataset.adIndex = String(index);
     slot.dataset.adKey = unit.key;
-    const configScript = document.createElement('script');
-    configScript.textContent = 'window.atOptions = ' + JSON.stringify({
-      key: unit.key,
-      format: unit.format || 'iframe',
-      height: AD_SLOT_HEIGHT,
-      width: 320,
-      params: unit.params || {}
-    }) + ';';
-    const providerScript = document.createElement('script');
-    providerScript.src = unit.src;
-    providerScript.async = false;
-    providerScript.dataset.fixedAdSlot = containerId;
-    providerScript.addEventListener('error', () => {
-      slot.replaceChildren();
+    const frame = document.createElement('iframe');
+    frame.className = 'ad-provider-frame';
+    frame.width = '320';
+    frame.height = String(AD_SLOT_HEIGHT);
+    frame.setAttribute('title', 'Advertisement');
+    frame.setAttribute('scrolling', 'no');
+    frame.setAttribute('frameborder', '0');
+    frame.srcdoc = buildAdDocument(unit);
+    frame.addEventListener('error', () => {
       slot.classList.add('ad-slot-load-error');
-      slot.textContent = 'Advertisement unavailable';
     });
-    slot.append(configScript, providerScript);
+    slot.appendChild(frame);
     container.appendChild(slot);
   }
 }
-
 function stopFixedAdRotation() {
   if (fixedAdTopRotationTimer) {
     window.clearInterval(fixedAdTopRotationTimer);
