@@ -58,5 +58,7 @@ async function finishVerifiedAd() {
     container.appendChild(script);
     }
 
-    FIXED_AD_SLOTS.forEach(renderFixedAdSlot);
+    const loadFixedAds = () => FIXED_AD_SLOTS.forEach(renderFixedAdSlot);
+    if ('requestIdleCallback' in window) window.requestIdleCallback(loadFixedAds, { timeout: 2500 });
+    else window.setTimeout(loadFixedAds, 1800);
     
