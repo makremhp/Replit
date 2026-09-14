@@ -47,6 +47,7 @@ if (hasTelegramSession) {
 const State = {
   telegramUserId: '',
   clientId: '',
+  user: { id: '', name: '', username: '', photoUrl: '' },
   balance: 0,
   reservedBalance: 0,
   progress: { referrals: 0, ads: 0, deposit: 0 },
@@ -69,6 +70,12 @@ function applyServerState(data) {
   if (!data) return;
   State.telegramUserId = String(data.telegramUserId || '');
   State.clientId = State.telegramUserId;
+  State.user = data.user || {
+    id: State.telegramUserId,
+    name: '',
+    username: '',
+    photoUrl: '',
+  };
   State.balance = Number(data.balance) || 0;
   State.reservedBalance = Number(data.reservedBalance) || 0;
   State.progress = data.progress || { referrals: 0, ads: 0, deposit: 0 };
@@ -209,7 +216,19 @@ async function completeAdSession(sessionId) {
 
 async function requestWithdrawal() {
   const result = await apiRequest('/api/withdrawals', 'POST', {}, idempotencyKey());
-  await refreshStateFromServer();
+  // The withdrawal is already committed when this request resolves. A
+  // refresh failure must not turn a successful withdrawal into a false error.
+  try {
+    await refreshStateFromServer();
+  } catch (error) {
+    const withdrawnAmount = Number(result?.amount || 0);
+    if (withdrawnAmount > 0) {
+      State.balance = Math.max(0, Number(State.balance) - withdrawnAmount);
+      State.reservedBalance = Number(State.reservedBalance) + withdrawnAmount;
+      renderBalance();
+    }
+    console.error('Withdrawal succeeded but state refresh failed.', error);
+  }
   return result;
 }
 
