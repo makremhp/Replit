@@ -38,13 +38,16 @@ async function finishVerifiedAd() {
 
 /* ===================== إعلانات 320×50 وSocial — إعدادات من الخادم ===================== */
 const MAX_VISIBLE_FIXED_ADS = 3;
-const FIXED_AD_ROTATION_MS = 5000;
+const DEFAULT_TOP_FIXED_AD_ROTATION_MS = 5000;
+const DEFAULT_BOTTOM_FIXED_AD_ROTATION_MS = 10000;
 const SOCIAL_AD_DURATION_MS = 5000;
 const AD_SLOT_HEIGHT = 50;
 const AD_SLOT_GAP = 5;
 let fixedAdSignature = '';
-let fixedAdOffset = 0;
-let fixedAdRotationTimer = null;
+let fixedAdTopOffset = 0;
+let fixedAdBottomOffset = 0;
+let fixedAdTopRotationTimer = null;
+let fixedAdBottomRotationTimer = null;
 let socialAdRotationTimer = null;
 let socialAdRunId = 0;
 
@@ -79,10 +82,24 @@ function setAdSideHeight(container, visibleCount) {
   container.style.overflow = 'hidden';
 }
 
-function renderFixedAdSide(containerId, units, offset) {
+function normalizeVisibleAdCount(value) {
+  const count = Number(value);
+  return Number.isInteger(count) && count >= 1
+    ? Math.min(count, MAX_VISIBLE_FIXED_ADS)
+    : MAX_VISIBLE_FIXED_ADS;
+}
+
+function normalizeRotationMs(value, fallback) {
+  const interval = Number(value);
+  return Number.isInteger(interval) && interval >= 1000 && interval <= 3600000
+    ? interval
+    : fallback;
+}
+
+function renderFixedAdSide(containerId, units, offset, configuredCount) {
   const container = document.getElementById(containerId);
   if (!container) return;
-  const visibleCount = Math.min(units.length, MAX_VISIBLE_FIXED_ADS);
+  const visibleCount = Math.min(units.length, normalizeVisibleAdCount(configuredCount));
   setAdSideHeight(container, visibleCount);
   container.replaceChildren();
   for (let index = 0; index < visibleCount; index += 1) {
@@ -111,13 +128,17 @@ function renderFixedAdSide(containerId, units, offset) {
 }
 
 function stopFixedAdRotation() {
-  if (fixedAdRotationTimer) {
-    window.clearInterval(fixedAdRotationTimer);
-    fixedAdRotationTimer = null;
+  if (fixedAdTopRotationTimer) {
+    window.clearInterval(fixedAdTopRotationTimer);
+    fixedAdTopRotationTimer = null;
+  }
+  if (fixedAdBottomRotationTimer) {
+    window.clearInterval(fixedAdBottomRotationTimer);
+    fixedAdBottomRotationTimer = null;
   }
 }
 
-function startFixedAdRotation(units) {
+function startFixedAdRotation(units, config = {}) {
   stopFixedAdRotation();
   const topContainer = document.getElementById('adTopAds');
   const bottomContainer = document.getElementById('adBottomAds');
@@ -127,14 +148,27 @@ function startFixedAdRotation(units) {
     renderMissingAdSlot('adBottomAds');
     return;
   }
-  renderFixedAdSide('adTopAds', units, fixedAdOffset);
-  renderFixedAdSide('adBottomAds', units, fixedAdOffset);
+
+  const topVisibleCount = normalizeVisibleAdCount(config.topVisibleCount);
+  const bottomVisibleCount = normalizeVisibleAdCount(config.bottomVisibleCount);
+  const topRotationMs = normalizeRotationMs(config.topRotationMs, DEFAULT_TOP_FIXED_AD_ROTATION_MS);
+  const bottomRotationMs = normalizeRotationMs(config.bottomRotationMs, DEFAULT_BOTTOM_FIXED_AD_ROTATION_MS);
+  fixedAdTopOffset = 0;
+  fixedAdBottomOffset = 0;
+
+  // Render both sides in the same pass so the initial display is synchronized.
+  renderFixedAdSide('adTopAds', units, fixedAdTopOffset, topVisibleCount);
+  renderFixedAdSide('adBottomAds', units, fixedAdBottomOffset, bottomVisibleCount);
+
   if (units.length > 1) {
-    fixedAdRotationTimer = window.setInterval(() => {
-      fixedAdOffset = (fixedAdOffset + 1) % units.length;
-      renderFixedAdSide('adTopAds', units, fixedAdOffset);
-      renderFixedAdSide('adBottomAds', units, fixedAdOffset);
-    }, FIXED_AD_ROTATION_MS);
+    fixedAdTopRotationTimer = window.setInterval(() => {
+      fixedAdTopOffset = (fixedAdTopOffset + 1) % units.length;
+      renderFixedAdSide('adTopAds', units, fixedAdTopOffset, topVisibleCount);
+    }, topRotationMs);
+    fixedAdBottomRotationTimer = window.setInterval(() => {
+      fixedAdBottomOffset = (fixedAdBottomOffset + 1) % units.length;
+      renderFixedAdSide('adBottomAds', units, fixedAdBottomOffset, bottomVisibleCount);
+    }, bottomRotationMs);
   }
 }
 
@@ -190,11 +224,16 @@ function startSocialAdRotation(scripts) {
 function loadConfiguredAds() {
   const units = configuredFixedAdUnits();
   const socialScripts = configuredSocialAdScripts();
-  const signature = JSON.stringify({ units, social: socialScripts });
+  const fixedConfig = {
+    topVisibleCount: State.config?.fixedAdTopCount,
+    bottomVisibleCount: State.config?.fixedAdBottomCount,
+    topRotationMs: State.config?.fixedAdTopRotationMs,
+    bottomRotationMs: State.config?.fixedAdBottomRotationMs,
+  };
+  const signature = JSON.stringify({ units, fixedConfig, social: socialScripts });
   if (signature === fixedAdSignature) return;
   fixedAdSignature = signature;
-  fixedAdOffset = 0;
-  startFixedAdRotation(units);
+  startFixedAdRotation(units, fixedConfig);
   startSocialAdRotation(socialScripts);
 }
 
