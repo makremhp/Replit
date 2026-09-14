@@ -104,10 +104,11 @@ const DEFAULT_SETTINGS = {
     "src": "https://interventioncopiedloitering.com/9f6fe4084cb3d8a8eb4d8246ee57ed25/invoke.js"
   }
 ],
+  ad_320x50_rotation_ms: 5000,
   ad_320x50_top_count: 3,
   ad_320x50_bottom_count: 3,
   ad_320x50_top_rotation_ms: 5000,
-  ad_320x50_bottom_rotation_ms: 10000,
+  ad_320x50_bottom_rotation_ms: 5000,
   ad_social: [
   "https://interventioncopiedloitering.com/5d/77/0f/5d770ff402768d79ddda9c1cd67e9819.js",
   "https://interventioncopiedloitering.com/96/90/da/9690da690d344e2579dffa12d4e2ac24.js",
@@ -452,6 +453,7 @@ function safeConfig(settings) {
     fixedAdBottomCount: safeAdVisibleCount(settings.ad_320x50_bottom_count, DEFAULT_SETTINGS.ad_320x50_bottom_count),
     fixedAdTopRotationMs: safeAdRotationMs(settings.ad_320x50_top_rotation_ms, DEFAULT_SETTINGS.ad_320x50_top_rotation_ms),
     fixedAdBottomRotationMs: safeAdRotationMs(settings.ad_320x50_bottom_rotation_ms, DEFAULT_SETTINGS.ad_320x50_bottom_rotation_ms),
+    fixedAdRotationMs: safeAdRotationMs(settings.ad_320x50_rotation_ms, DEFAULT_SETTINGS.ad_320x50_rotation_ms),
     socialAdScripts: safeAdScripts(settings.ad_social),
     houses: settings.houses || HOUSES,
   };
