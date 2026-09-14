@@ -1,5 +1,6 @@
 /* ===================== إعلانات محكومة بالخادم ===================== */
 let currentVerifiedAdSession = null;
+let currentVerifiedAdHouseId = null;
 
 function renderAdSlot(containerId, key) {
   const container = document.getElementById(containerId);
@@ -12,9 +13,12 @@ function renderAdSlot(containerId, key) {
   container.appendChild(frame);
 }
 
-async function startVerifiedAd() {
+async function startVerifiedAd(houseId) {
+  const targetHouseId = Number(houseId);
+  if (!Number.isInteger(targetHouseId)) return null;
   try {
-    currentVerifiedAdSession = await startAdSession();
+    currentVerifiedAdSession = await startAdSession(targetHouseId);
+    currentVerifiedAdHouseId = targetHouseId;
     showToast('تم فتح جلسة الإعلان — انتظر تحقق مزود الإعلانات');
     return currentVerifiedAdSession;
   } catch (error) {
@@ -28,6 +32,7 @@ async function finishVerifiedAd() {
   try {
     await completeAdSession(currentVerifiedAdSession.sessionId);
     currentVerifiedAdSession = null;
+    currentVerifiedAdHouseId = null;
     showToast('تمت إضافة المكافأة بعد التحقق');
     return true;
   } catch (error) {

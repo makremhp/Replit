@@ -50,7 +50,7 @@ const State = {
   user: { id: '', name: '', username: '', photoUrl: '' },
   balance: 0,
   reservedBalance: 0,
-  progress: { referrals: 0, ads: 0, deposit: 0 },
+  progress: { referrals: 0, ads: 0, adsByHouse: {}, deposit: 0 },
   unlockedHouses: [1],
   activeHouseId: 1,
   tonAddress: '',
@@ -78,7 +78,8 @@ function applyServerState(data) {
   };
   State.balance = Number(data.balance) || 0;
   State.reservedBalance = Number(data.reservedBalance) || 0;
-  State.progress = data.progress || { referrals: 0, ads: 0, deposit: 0 };
+  const serverProgress = data.progress || {};
+  State.progress = { referrals: 0, ads: 0, adsByHouse: {}, deposit: 0, ...serverProgress, adsByHouse: serverProgress.adsByHouse || {} };
   const nextUnlockedHouses = Array.isArray(data.unlockedHouses) ? data.unlockedHouses : [1];
   State.unlockedHouses = nextUnlockedHouses;
   // The server does not persist the selected house; keep the local selection.
@@ -100,7 +101,7 @@ function applyServerState(data) {
 function clearServerState() {
   State.balance = 0;
   State.reservedBalance = 0;
-  State.progress = { referrals: 0, ads: 0, deposit: 0 };
+  State.progress = { referrals: 0, ads: 0, adsByHouse: {}, deposit: 0 };
   State.unlockedHouses = [1];
   State.tonAddress = '';
   State.collectibles = [];
@@ -200,8 +201,8 @@ function collectCoinFromServer(coinId) {
   return request;
 }
 
-async function startAdSession() {
-  return apiRequest('/api/ads/start', 'POST', {});
+async function startAdSession(houseId) {
+  return apiRequest('/api/ads/start', 'POST', { houseId: Number(houseId) });
 }
 
 async function completeAdSession(sessionId) {

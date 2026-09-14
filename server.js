@@ -167,7 +167,7 @@ app.post('/api/collect', asyncRoute(async (request, response) => {
 
 app.post('/api/ads/start', asyncRoute(async (request, response) => {
   const identity = request.telegramIdentity;
-  response.json(await startAd(identity.telegramUserId, identity));
+  response.json(await startAd(identity.telegramUserId, request.body?.houseId, identity));
 }));
 
 app.post('/api/ads/complete', asyncRoute(async (request, response) => {

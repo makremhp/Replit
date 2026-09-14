@@ -2,14 +2,16 @@
 const BOT_USERNAME = 'YOUR_BOT_USERNAME';
 const BOT_LINK = `https://t.me/${BOT_USERNAME}`;
 
-document.getElementById('shareBtn').addEventListener('click', () => {
+function openReferralShare() {
   const shareUrl = `https://t.me/share/url?url=${encodeURIComponent(BOT_LINK)}&text=${encodeURIComponent(T.shareText)}`;
   if (window.Telegram?.WebApp?.openTelegramLink) {
     window.Telegram.WebApp.openTelegramLink(shareUrl);
   } else {
     window.open(shareUrl, '_blank', 'noopener');
   }
-});
+}
+
+document.getElementById('shareBtn').addEventListener('click', openReferralShare);
 
 /* ===================== اتصال TON Connect — تنفيذ جديد ===================== */
 let MIN_WITHDRAW = 0.01;
@@ -21,7 +23,6 @@ const walletTitleText = document.getElementById('walletTitleText');
 const walletMinNote = document.getElementById('walletMinNote');
 const tonAddressInput = document.getElementById('tonAddressInput');
 const withdrawBtn = document.getElementById('withdrawBtn');
-const watchAdBtn = document.getElementById('watchAdBtn');
 const copyAddressBtn = document.getElementById('copyAddressBtn');
 const connectWalletBtn = document.getElementById('connectWalletBtn');
 const disconnectWalletBtn = document.getElementById('disconnectWalletBtn');
@@ -176,7 +177,6 @@ function openWalletPage() {
   disconnectWalletBtnText.textContent = T.disconnectWallet;
   copyAddressBtn.textContent = T.copyAddress;
   withdrawBtn.innerHTML = `<svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M12 3v12M7 10l5 5 5-5M5 20h14" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/></svg><span>${T.withdrawBtn}</span>`;
-  watchAdBtn.innerHTML = `<svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><rect x="3.5" y="5" width="17" height="14" rx="3" stroke="currentColor" stroke-width="1.6"/><path d="m10 9 5 3-5 3V9Z" fill="currentColor"/></svg><span>${T.watchAdBtn}</span>`;
   renderBalance();
   renderWalletProgress();
   walletPage.classList.add('show');
@@ -221,5 +221,3 @@ withdrawBtn.addEventListener('click', async () => {
     withdrawBtn.disabled = false;
   }
 });
-
-watchAdBtn.addEventListener('click', () => startVerifiedAd());

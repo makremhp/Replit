@@ -88,7 +88,6 @@
 
       <div class="wallet-actions">
         <button class="wallet-action-btn primary" id="withdrawBtn"></button>
-        <button class="wallet-action-btn secondary" id="watchAdBtn"></button>
       </div>
       <p class="wallet-security-note" id="walletSecurityNote"></p>
     </main>
@@ -118,6 +117,12 @@
       <div class="modal-progress-track" id="modalProgressTrack" style="display:none;">
         <div class="modal-progress-fill" id="modalProgressFill"></div>
       </div>
+      <div class="modal-ad-panel" id="modalAdPanel" hidden>
+        <div class="modal-ad-head"><span id="modalAdLabel"></span><strong id="modalAdCount"></strong></div>
+        <div class="modal-ad-track"><span id="modalAdProgressFill"></span></div>
+      </div>
+      <button class="modal-ad-btn" id="modalAdBtn" type="button" hidden></button>
+      <button class="modal-share-btn" id="modalShareBtn" type="button" hidden></button>
       <button class="modal-btn" id="modalActionBtn"></button>
       <button class="modal-close" id="modalCloseBtn"></button>
     </div>

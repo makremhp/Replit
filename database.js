@@ -141,6 +141,7 @@ const schema = `
     reserved_balance NUMERIC(18, 8) NOT NULL DEFAULT 0,
     referrals INTEGER NOT NULL DEFAULT 0,
     ads INTEGER NOT NULL DEFAULT 0,
+    house_ad_progress JSONB NOT NULL DEFAULT '{}'::jsonb,
     deposit NUMERIC(18, 8) NOT NULL DEFAULT 0,
     ton_address TEXT,
     device_id TEXT,
@@ -184,6 +185,7 @@ const schema = `
   CREATE TABLE IF NOT EXISTS ad_sessions (
     id TEXT PRIMARY KEY,
     telegram_user_id BIGINT NOT NULL,
+    house_id INTEGER NOT NULL DEFAULT 1,
     reward NUMERIC(18, 8) NOT NULL,
     status TEXT NOT NULL DEFAULT 'pending'
       CHECK (status IN ('pending', 'verified', 'completed', 'failed', 'expired')),
@@ -416,6 +418,8 @@ async function initDatabase() {
   try {
     await client.query('BEGIN');
     await client.query(schema);
+    await client.query(`ALTER TABLE users ADD COLUMN IF NOT EXISTS house_ad_progress JSONB NOT NULL DEFAULT '{}'::jsonb`);
+    await client.query(`ALTER TABLE ad_sessions ADD COLUMN IF NOT EXISTS house_id INTEGER NOT NULL DEFAULT 1`);
     await migrateLegacyUsers(client);
     await seedSettings(client);
     await client.query('COMMIT');
@@ -562,10 +566,16 @@ async function getOrCreateUser(telegramUserId, context = {}, client = pool) {
   return fresh.rows[0];
 }
 
+function houseAdProgressFor(user) {
+  const raw = user.house_ad_progress && typeof user.house_ad_progress === 'object' ? user.house_ad_progress : {};
+  return Object.fromEntries(Object.keys(HOUSES).map(id => [id, Math.max(0, Math.floor(number(raw[id])))]));
+}
+
 function progressFor(user) {
   return {
     referrals: Math.max(0, Math.floor(number(user.referrals))),
     ads: Math.max(0, Math.floor(number(user.ads))),
+    adsByHouse: houseAdProgressFor(user),
     deposit: Math.max(0, number(user.deposit)),
   };
 }
@@ -573,9 +583,10 @@ function progressFor(user) {
 function unlocksFor(user, settings) {
   const progress = progressFor(user);
   return Object.entries(settings.houses || HOUSES)
-    .filter(([, house]) => {
+    .filter(([id, house]) => {
       if (!house.unlock) return true;
-      return progress[house.unlock[0]] >= number(house.unlock[1]);
+      const current = house.unlock[0] === 'ads' ? progress.adsByHouse[id] : progress[house.unlock[0]];
+      return current >= number(house.unlock[1]);
     })
     .map(([id]) => Number(id));
 }
@@ -843,7 +854,14 @@ async function collectCoin(userId, coinId, idempotencyKey, context = {}) {
   }
 }
 
-async function startAd(userId, context = {}) {
+function normalizeAdHouseId(value) {
+  const houseId = integer(value);
+  if (!HOUSES[houseId] || HOUSES[houseId].unlock?.[0] !== 'ads') throw appError('Ads are not assigned to this house', 400);
+  return houseId;
+}
+
+async function startAd(userId, houseId, context = {}) {
+  const targetHouseId = normalizeAdHouseId(houseId);
   const client = await pool.connect();
   const now = Date.now();
   try {
@@ -863,15 +881,16 @@ async function startAd(userId, context = {}) {
       throw appError('Daily ad limit reached', 429);
     }
     const pending = await client.query(
-      `SELECT id, expires_at FROM ad_sessions
-       WHERE telegram_user_id = $1 AND status = 'pending' AND expires_at > $2
+      `SELECT id, house_id, expires_at FROM ad_sessions
+       WHERE telegram_user_id = $1 AND house_id = $2 AND status = 'pending' AND expires_at > $3
        ORDER BY started_at DESC LIMIT 1`,
-      [user.telegram_user_id, now]
+      [user.telegram_user_id, targetHouseId, now]
     );
     if (pending.rows.length) {
       await client.query('COMMIT');
       return {
         sessionId: pending.rows[0].id,
+        houseId: targetHouseId,
         expiresAt: number(pending.rows[0].expires_at),
         cooldownMs: cooldown,
       };
@@ -879,13 +898,13 @@ async function startAd(userId, context = {}) {
     const sessionId = crypto.randomUUID();
     const expiresAt = now + integer(settings.ad_session_ttl_ms);
     await client.query(
-      `INSERT INTO ad_sessions(id, telegram_user_id, reward, started_at, expires_at)
-       VALUES($1, $2, $3, $4, $5)`,
-      [sessionId, user.telegram_user_id, number(settings.ad_reward), now, expiresAt]
+      `INSERT INTO ad_sessions(id, telegram_user_id, house_id, reward, started_at, expires_at)
+       VALUES($1, $2, $3, $4, $5, $6)`,
+      [sessionId, user.telegram_user_id, targetHouseId, number(settings.ad_reward), now, expiresAt]
     );
     await logAudit(user.telegram_user_id, 'ad_started', { sessionId }, client);
     await client.query('COMMIT');
-    return { sessionId, expiresAt, cooldownMs: cooldown };
+    return { sessionId, houseId: targetHouseId, expiresAt, cooldownMs: cooldown };
   } catch (error) {
     await client.query('ROLLBACK');
     throw error;
@@ -939,9 +958,15 @@ async function completeAd(userId, sessionId, idempotencyKey, context = {}) {
     );
     await client.query(
       `UPDATE users SET balance = balance + $1, ads = ads + 1,
+       house_ad_progress = jsonb_set(
+         COALESCE(house_ad_progress, '{}'::jsonb),
+         ARRAY[CAST($4 AS text)],
+         to_jsonb(COALESCE((COALESCE(house_ad_progress, '{}'::jsonb) ->> CAST($4 AS text))::integer, 0) + 1),
+         true
+       ),
        last_ad_completed_at = $2, updated_at = $2
        WHERE telegram_user_id = $3`,
-      [reward, now, user.telegram_user_id]
+      [reward, now, user.telegram_user_id, session.house_id]
     );
     await logAudit(user.telegram_user_id, 'ad_completed', { sessionId: session.id, reward }, client);
     const response = await stateInsideTransaction(user.telegram_user_id, client, now);
