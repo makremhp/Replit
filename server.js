@@ -120,9 +120,9 @@ app.post(
 
 app.use(express.json({ limit: '32kb' }));
 app.use('/api', asyncRoute(async (request, _response, next) => {
+  if (request.path === '/health') return next();
   await ensureDatabase();
   rateLimit(request, 'ip');
-  if (request.path === '/health') return next();
   request.telegramIdentity = verifyTelegramInitData(request);
   rateLimit(request, `user:${request.telegramIdentity.telegramUserId}`, 180);
   next();
