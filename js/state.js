@@ -62,6 +62,7 @@ const State = {
 let stateHydrating = false;
 let refreshTimer = null;
 let renderedHouseSignature = '';
+let collectQueue = Promise.resolve();
 
 
 function applyServerState(data) {
@@ -170,7 +171,7 @@ async function refreshStateFromServer() {
 }
 
 function collectCoinFromServer(coinId) {
-  return (async () => {
+  const request = collectQueue.then(async () => {
     if (!hasStateApi || !State.serverConnected) return false;
     try {
       applyServerState(await apiRequest(
