@@ -139,15 +139,10 @@ function selectAdGroup(units, configuredCount, reservedUnits, previousUnits) {
   const available = units.filter(unit => !reservedKeys.has(unit.key));
   const fresh = shuffleAdUnits(available.filter(unit => !previousKeys.has(unit.key)));
   if (fresh.length >= count) return fresh.slice(0, count);
-  const selected = fresh.slice();
-  const selectedKeys = new Set(selected.map(unit => unit.key));
-  const fallback = shuffleAdUnits(available.filter(unit => !selectedKeys.has(unit.key)));
-  selected.push(...fallback);
-  if (selected.length < count) {
-    const crossGroupFallback = shuffleAdUnits(units.filter(unit => !selectedKeys.has(unit.key)));
-    selected.push(...crossGroupFallback);
-  }
-  return selected.slice(0, count);
+  // Never pull from reserved units: duplicates across the six visible slots are not allowed.
+  // If the server supplies fewer unique keys, render fewer ads instead of reusing a key.
+  if (fresh.length >= count) return fresh.slice(0, count);
+  return shuffleAdUnits(available).slice(0, count);
 }
 
 function renderFixedAdSide(containerId, units, configuredCount) {
