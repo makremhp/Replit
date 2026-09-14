@@ -120,29 +120,17 @@ app.post(
 
 app.use(express.json({ limit: '32kb' }));
 app.use('/api', asyncRoute(async (request, _response, next) => {
-  if (request.path === '/health') return next();
   await ensureDatabase();
   rateLimit(request, 'ip');
+  if (request.path === '/health') return next();
   request.telegramIdentity = verifyTelegramInitData(request);
   rateLimit(request, `user:${request.telegramIdentity.telegramUserId}`, 180);
   next();
 }));
 
 app.get('/api/health', asyncRoute(async (_request, response) => {
-  try {
-    await ensureDatabase();
-    response.json({ ok: true, database: 'postgresql', telegramMiniApp: true });
-  } catch (error) {
-    const message = String(error?.message || 'Database initialization failed')
-      .replace(/postgres(?:ql)?:\/\/[^\s]+/gi, 'postgresql://<redacted>')
-      .slice(0, 240);
-    response.status(503).json({
-      ok: false,
-      database: 'postgresql',
-      errorCode: error?.code || null,
-      error: message,
-    });
-  }
+  await ensureDatabase();
+  response.json({ ok: true, database: 'postgresql', telegramMiniApp: true });
 }));
 
 app.get('/api/state', asyncRoute(async (request, response) => {
