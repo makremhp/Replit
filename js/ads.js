@@ -68,7 +68,8 @@ function configuredFixedAdUnits() {
   return units.filter(unit => {
     const key = String(unit?.key || '').trim();
     const src = String(unit?.src || '').trim();
-    if (!key || !src || seenKeys.has(key)) return false;
+    const code = String(unit?.code || '').trim();
+    if (!key || (!src && !code) || seenKeys.has(key)) return false;
     seenKeys.add(key);
     return true;
   });
@@ -155,20 +156,12 @@ function selectAdGroup(units, configuredCount, reservedUnits, previousUnits) {
 }
 
 function buildAdDocument(unit) {
-  const options = JSON.stringify({
-    key: unit.key,
-    format: unit.format || 'iframe',
-    height: AD_SLOT_HEIGHT,
-    width: 320,
-    params: unit.params || {},
-  }).replace(/</g, '\\u003c');
-  const source = String(unit.src).replace(/&/g, '&amp;').replace(/\"/g, '&quot;');
-  return '<!doctype html><html><head><meta name=\"viewport\" content=\"width=320,height=50\"></head><body style=\"margin:0;width:320px;height:50px;overflow:hidden\">' +
-    '<script>atOptions = ' + options + ';</script>' +
-    '<script src=\"' + source + '\"></script>' +
-    '</body></html>';
+  const code = String(unit.code || '').trim();
+  if (code) return '<!doctype html><html><head><meta name="viewport" content="width=320,height=50"></head><body style="margin:0;width:320px;height:50px;overflow:hidden">' + code + '</body></html>';
+  const options = JSON.stringify({key: unit.key,format: unit.format || 'iframe',height: AD_SLOT_HEIGHT,width: 320,params: unit.params || {}}).replace(/</g, '\\u003c');
+  const source = String(unit.src).replace(/&/g, '&amp;').replace(/"/g, '&quot;');
+  return '<!doctype html><html><head><meta name="viewport" content="width=320,height=50"></head><body style="margin:0;width:320px;height:50px;overflow:hidden">' + '<script>atOptions = ' + options + ';</script>' + '<script src="' + source + '"></script>' + '</body></html>';
 }
-
 function renderFixedAdSide(containerId, units, configuredCount) {
   const container = document.getElementById(containerId);
   if (!container) return;
@@ -274,11 +267,22 @@ function showSocialAd(index, scripts, runId) {
   if (runId !== socialAdRunId || !scripts.length) return;
   const stage = getSocialAdStage();
   stage.replaceChildren();
-  const script = document.createElement('script');
-  script.src = scripts[index];
-  script.async = false;
-  script.dataset.managedAd = 'social';
-  stage.appendChild(script);
+  const value = String(scripts[index] || '').trim();
+  const raw = value.toLowerCase().includes('<script') || value.toLowerCase().includes('<iframe') || value.toLowerCase().includes('<div') || value.toLowerCase().includes('<ins');
+  if (raw) {
+    const frame = document.createElement('iframe');
+    frame.title = 'Advertisement';
+    frame.setAttribute('sandbox', 'allow-scripts allow-popups allow-popups-to-escape-sandbox');
+    frame.style.cssText = 'width:100%;height:100%;border:0';
+    frame.srcdoc = '<!doctype html><html><body style="margin:0;overflow:hidden">' + value + '</body></html>';
+    stage.appendChild(frame);
+  } else {
+    const script = document.createElement('script');
+    script.src = value;
+    script.async = false;
+    script.dataset.managedAd = 'social';
+    stage.appendChild(script);
+  }
   socialAdRotationTimer = window.setTimeout(() => {
     if (runId !== socialAdRunId) return;
     stage.replaceChildren();

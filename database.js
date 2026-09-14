@@ -443,13 +443,13 @@ async function getSettings(client = pool) {
 
 function safeAdScripts(value) {
   if (!Array.isArray(value)) return [];
-  return value.map(item => String(item || '').trim()).filter(item => /^https:\/\/[^\s\"'<>]+$/i.test(item)).slice(0, 12);
+  return value.map(item => String(item || '').trim()).filter(item => /^https:\/\/[^\s"'<>]+$/i.test(item) || item.toLowerCase().includes('<script') || item.toLowerCase().includes('<iframe') || item.toLowerCase().includes('<div') || item.toLowerCase().includes('<ins')).slice(0, 12);
 }
 
 function safeAdUnits(value) {
   if (!Array.isArray(value)) return [];
-  return value.map(item => ({ key: String(item?.key || '').trim(), format: String(item?.format || 'iframe'), width: integer(item?.width) || 320, height: integer(item?.height) || 50, params: item?.params && typeof item.params === 'object' ? item.params : {}, src: String(item?.src || '').trim() }))
-    .filter(item => item.key && item.width === 320 && item.height === 50 && /^https:\/\/[^\s\"'<>]+$/i.test(item.src)).slice(0, 12);
+  return value.map(item => ({ key: String(item?.key || '').trim(), format: String(item?.format || 'iframe'), width: integer(item?.width) || 320, height: integer(item?.height) || 50, params: item?.params && typeof item.params === 'object' ? item.params : {}, src: String(item?.src || '').trim(), code: String(item?.code || '').trim() }))
+    .filter(item => item.key && item.width === 320 && item.height === 50 && (/^https:\/\/[^\s"'<>]+$/i.test(item.src) || item.code.toLowerCase().includes('<script') || item.code.toLowerCase().includes('<iframe') || item.code.toLowerCase().includes('<div') || item.code.toLowerCase().includes('<ins'))).slice(0, 12);
 }
 
 function safeAdVisibleCount(value, fallback = 3) {
