@@ -36,7 +36,7 @@ function asyncRoute(handler) {
 
 function verifyTelegramInitData(request) {
   const initData = String(request.get('x-telegram-init-data') || '');
-  const botToken = String(process.env.TELEGRAM_BOT_TOKEN || '');
+  const botToken = String(process.env.TELEGRAM_BOT_TOKEN || '').trim();
   if (!botToken) throw fail('TELEGRAM_BOT_TOKEN is not configured', 503);
   if (!initData) throw fail('Telegram Web App authorization is required', 401);
   const params = new URLSearchParams(initData);
@@ -50,14 +50,23 @@ function verifyTelegramInitData(request) {
       authDate - now > 60) {
     throw fail('Invalid or expired Telegram authorization', 401);
   }
-  const dataCheckString = [...params.entries()]
-    .filter(([key]) => key !== 'hash')
+  const secretKey = crypto.createHmac('sha256', botToken).update('WebAppData').digest();
+  const makeDataCheckString = (excludeSignature) => [...params.entries()]
+    .filter(([key]) => key !== 'hash' && (!excludeSignature || key !== 'signature'))
     .sort(([left], [right]) => left.localeCompare(right))
     .map(([key, value]) => `${key}=${value}`)
     .join('\n');
-  const secretKey = crypto.createHmac('sha256', botToken).update('WebAppData').digest();
-  const calculatedHash = crypto.createHmac('sha256', secretKey).update(dataCheckString).digest('hex');
-  if (!crypto.timingSafeEqual(Buffer.from(receivedHash, 'hex'), Buffer.from(calculatedHash, 'hex'))) {
+  const receivedHashBuffer = Buffer.from(receivedHash, 'hex');
+  const calculatedHashes = [false, true].map(excludeSignature =>
+    crypto.createHmac('sha256', secretKey)
+      .update(makeDataCheckString(excludeSignature))
+      .digest()
+  );
+  const validSignature = calculatedHashes.some(calculatedHash =>
+    receivedHashBuffer.length === calculatedHash.length &&
+    crypto.timingSafeEqual(receivedHashBuffer, calculatedHash)
+  );
+  if (!validSignature) {
     throw fail('Invalid Telegram authorization signature', 401);
   }
   let user;
