@@ -180,8 +180,6 @@ const schema = `
     ON collectible_coins(telegram_user_id, collected_at, expires_at);
   CREATE INDEX IF NOT EXISTS ad_sessions_user_idx
     ON ad_sessions(telegram_user_id, started_at DESC);
-  CREATE INDEX IF NOT EXISTS withdrawals_user_idx
-    ON withdrawals(telegram_user_id, created_at DESC);
   CREATE INDEX IF NOT EXISTS audit_logs_user_idx
     ON audit_logs(telegram_user_id, created_at DESC);
 `;
