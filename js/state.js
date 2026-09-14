@@ -61,7 +61,8 @@ const State = {
 
 let stateHydrating = false;
 let refreshTimer = null;
-let collectQueue = Promise.resolve();
+let renderedHouseSignature = '';
+
 
 function applyServerState(data) {
   if (!data) return;
@@ -70,15 +71,20 @@ function applyServerState(data) {
   State.balance = Number(data.balance) || 0;
   State.reservedBalance = Number(data.reservedBalance) || 0;
   State.progress = data.progress || { referrals: 0, ads: 0, deposit: 0 };
-  State.unlockedHouses = Array.isArray(data.unlockedHouses) ? data.unlockedHouses : [1];
-  State.activeHouseId = 1;
+  const nextUnlockedHouses = Array.isArray(data.unlockedHouses) ? data.unlockedHouses : [1];
+  State.unlockedHouses = nextUnlockedHouses;
+  // The server does not persist the selected house; keep the local selection.
   State.tonAddress = data.tonAddress || '';
   State.collectibles = Array.isArray(data.collectibles) ? data.collectibles : [];
   State.config = data.config || State.config;
   State.serverConnected = true;
   renderBalance();
   if (typeof renderServerCoins === 'function') renderServerCoins(State.collectibles);
-  if (typeof renderBoxes === 'function') renderBoxes();
+  const houseSignature = `${State.activeHouseId}|${State.unlockedHouses.join(',')}`;
+  if (typeof renderBoxes === 'function' && houseSignature !== renderedHouseSignature) {
+    renderBoxes();
+    renderedHouseSignature = houseSignature;
+  }
   if (typeof renderWalletProgress === 'function') renderWalletProgress();
 }
 
@@ -164,7 +170,7 @@ async function refreshStateFromServer() {
 }
 
 function collectCoinFromServer(coinId) {
-  const request = collectQueue.then(async () => {
+  return (async () => {
     if (!hasStateApi || !State.serverConnected) return false;
     try {
       applyServerState(await apiRequest(
@@ -180,9 +186,7 @@ function collectCoinFromServer(coinId) {
       await refreshStateFromServer();
       return false;
     }
-  });
-  collectQueue = request.catch(() => false);
-  return request;
+  })();
 }
 
 async function startAdSession() {
