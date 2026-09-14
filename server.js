@@ -113,20 +113,24 @@ app.put('/api/admin/ad-config', asyncRoute(async (request, response) => {
   if (units.some(item => !item.key || !isHttpsAdUrl(item.src)) || scripts.some(item => !isHttpsAdUrl(item))) throw fail('Every ad source must be an HTTPS URL', 400);
   const topVisibleCount = optionalAdSetting(request.body?.topVisibleCount, 'topVisibleCount', 1, 3);
   const bottomVisibleCount = optionalAdSetting(request.body?.bottomVisibleCount, 'bottomVisibleCount', 1, 3);
-  const topRotationMs = optionalAdSetting(request.body?.topRotationMs, 'topRotationMs', 1000, 3600000);
-  const bottomRotationMs = optionalAdSetting(request.body?.bottomRotationMs, 'bottomRotationMs', 1000, 3600000);
+  const rotationMs = optionalAdSetting(request.body?.rotationMs, 'rotationMs', 1000, 3600000);
+  const legacyTopRotationMs = optionalAdSetting(request.body?.topRotationMs, 'topRotationMs', 1000, 3600000);
+  const legacyBottomRotationMs = optionalAdSetting(request.body?.bottomRotationMs, 'bottomRotationMs', 1000, 3600000);
+  if (rotationMs === null && legacyTopRotationMs !== null && legacyBottomRotationMs !== null && legacyTopRotationMs !== legacyBottomRotationMs) {
+    throw fail('topRotationMs and bottomRotationMs must match for synchronized ads', 400);
+  }
   const settingsToUpdate = [
     ['ad_320x50', units],
     ['ad_social', scripts],
   ];
   if (topVisibleCount !== null) settingsToUpdate.push(['ad_320x50_top_count', topVisibleCount]);
   if (bottomVisibleCount !== null) settingsToUpdate.push(['ad_320x50_bottom_count', bottomVisibleCount]);
-  if (topRotationMs !== null) settingsToUpdate.push(['ad_320x50_top_rotation_ms', topRotationMs]);
-  if (bottomRotationMs !== null) settingsToUpdate.push(['ad_320x50_bottom_rotation_ms', bottomRotationMs]);
+  const synchronizedRotationMs = rotationMs ?? legacyTopRotationMs ?? legacyBottomRotationMs;
+  if (synchronizedRotationMs !== null) settingsToUpdate.push(['ad_320x50_rotation_ms', synchronizedRotationMs]);
   for (const [key, value] of settingsToUpdate) {
     await pool.query('INSERT INTO system_settings(key, value) VALUES($1, $2::jsonb) ON CONFLICT (key) DO UPDATE SET value = EXCLUDED.value, updated_at = NOW()', [key, JSON.stringify(value)]);
   }
-  response.json({ ok: true, fixed320x50: units.length, social: scripts.length, topVisibleCount, bottomVisibleCount, topRotationMs, bottomRotationMs });
+  response.json({ ok: true, fixed320x50: units.length, social: scripts.length, topVisibleCount, bottomVisibleCount, rotationMs: synchronizedRotationMs });
 }));
 app.use('/api', asyncRoute(async (request, _response, next) => {
   await ensureDatabase();
