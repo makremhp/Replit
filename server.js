@@ -1,6 +1,7 @@
 const express = require('express');
 const path = require('path');
 const crypto = require('crypto');
+const { verifyTelegramInitData } = require('./telegram-auth');
 const {
   pool,
   initDatabase,
@@ -32,57 +33,6 @@ function fail(message, statusCode) {
 
 function asyncRoute(handler) {
   return (request, response, next) => Promise.resolve(handler(request, response, next)).catch(next);
-}
-
-function verifyTelegramInitData(request) {
-  const initData = String(request.get('x-telegram-init-data') || '');
-  const botToken = String(process.env.TELEGRAM_BOT_TOKEN || '').trim();
-  if (!botToken) throw fail('TELEGRAM_BOT_TOKEN is not configured', 503);
-  if (!initData) throw fail('Telegram Web App authorization is required', 401);
-  const params = new URLSearchParams(initData);
-  const receivedHash = String(params.get('hash') || '').toLowerCase();
-  const authDate = Number(params.get('auth_date'));
-  const now = Math.floor(Date.now() / 1000);
-  const maxAge = Number(process.env.TELEGRAM_INITDATA_MAX_AGE_SECONDS) || 3600;
-  if (!/^[a-f0-9]{64}$/.test(receivedHash) ||
-      !Number.isInteger(authDate) ||
-      now - authDate > maxAge ||
-      authDate - now > 60) {
-    throw fail('Invalid or expired Telegram authorization', 401);
-  }
-  const secretKey = crypto.createHmac('sha256', botToken).update('WebAppData').digest();
-  const makeDataCheckString = (excludeSignature) => [...params.entries()]
-    .filter(([key]) => key !== 'hash' && (!excludeSignature || key !== 'signature'))
-    .sort(([left], [right]) => left.localeCompare(right))
-    .map(([key, value]) => `${key}=${value}`)
-    .join('\n');
-  const receivedHashBuffer = Buffer.from(receivedHash, 'hex');
-  const calculatedHashes = [false, true].map(excludeSignature =>
-    crypto.createHmac('sha256', secretKey)
-      .update(makeDataCheckString(excludeSignature))
-      .digest()
-  );
-  const validSignature = calculatedHashes.some(calculatedHash =>
-    receivedHashBuffer.length === calculatedHash.length &&
-    crypto.timingSafeEqual(receivedHashBuffer, calculatedHash)
-  );
-  if (!validSignature) {
-    throw fail('Invalid Telegram authorization signature', 401);
-  }
-  let user;
-  try {
-    user = JSON.parse(params.get('user') || '{}');
-  } catch (_) {
-    user = null;
-  }
-  if (!user || !Number.isSafeInteger(Number(user.id)) || Number(user.id) <= 0) {
-    throw fail('Telegram user data is missing', 401);
-  }
-  return {
-    telegramUserId: Number(user.id),
-    authDate,
-    deviceId: String(request.get('x-device-id') || '').slice(0, 160),
-  };
 }
 
 function rateLimit(request, key, max = 120, windowMs = 60000) {
