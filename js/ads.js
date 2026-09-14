@@ -132,17 +132,21 @@ function adKeys(units) {
 }
 
 function selectAdGroup(units, configuredCount, reservedUnits, previousUnits) {
-  const count = Math.min(units.length, normalizeVisibleAdCount(configuredCount));
-  if (!count) return [];
+  const count = normalizeVisibleAdCount(configuredCount);
+  if (!units.length) return [];
   const reservedKeys = adKeys(reservedUnits || []);
   const previousKeys = adKeys(previousUnits || []);
   const available = units.filter(unit => !reservedKeys.has(unit.key));
+  const reusable = available.length ? available : units;
   const fresh = shuffleAdUnits(available.filter(unit => !previousKeys.has(unit.key)));
-  if (fresh.length >= count) return fresh.slice(0, count);
-  // Never pull from reserved units: duplicates across the six visible slots are not allowed.
-  // If the server supplies fewer unique keys, render fewer ads instead of reusing a key.
-  if (fresh.length >= count) return fresh.slice(0, count);
-  return shuffleAdUnits(available).slice(0, count);
+  const selected = fresh.slice(0, count);
+  const fallback = shuffleAdUnits(reusable);
+  let fallbackIndex = 0;
+  while (selected.length < count) {
+    selected.push(fallback[fallbackIndex % fallback.length]);
+    fallbackIndex += 1;
+  }
+  return selected;
 }
 
 function buildAdDocument(unit) {
@@ -163,11 +167,11 @@ function buildAdDocument(unit) {
 function renderFixedAdSide(containerId, units, configuredCount) {
   const container = document.getElementById(containerId);
   if (!container) return;
-  const visibleCount = Math.min(units.length, normalizeVisibleAdCount(configuredCount));
+  const visibleCount = normalizeVisibleAdCount(configuredCount);
   setAdSideHeight(container, visibleCount);
   container.replaceChildren();
   for (let index = 0; index < visibleCount; index += 1) {
-    const unit = units[index];
+    const unit = units[index % units.length];
     const slot = document.createElement('div');
     slot.className = 'ad-320-slot';
     slot.style.height = String(AD_SLOT_HEIGHT) + 'px';
@@ -292,13 +296,13 @@ function startSocialAdRotation(scripts) {
 function loadConfiguredAds() {
   const units = loadAdPool();
   const socialScripts = configuredSocialAdScripts();
+  const serverConfig = typeof State !== 'undefined' ? State.config || {} : {};
   const fixedConfig = {
-    // The product requirement is always three independent slots per side.
-    // Ad keys themselves remain server-provided through loadAdPool().
-    topVisibleCount: MAX_VISIBLE_FIXED_ADS,
-    bottomVisibleCount: MAX_VISIBLE_FIXED_ADS,
-    topRotationMs: DEFAULT_TOP_FIXED_AD_ROTATION_MS,
-    bottomRotationMs: DEFAULT_BOTTOM_FIXED_AD_ROTATION_MS,
+    // The server controls the visible count independently for each side.
+    topVisibleCount: serverConfig.fixedAdTopCount,
+    bottomVisibleCount: serverConfig.fixedAdBottomCount,
+    topRotationMs: serverConfig.fixedAdTopRotationMs,
+    bottomRotationMs: serverConfig.fixedAdBottomRotationMs,
   };
   const signature = JSON.stringify({ units, fixedConfig, social: socialScripts });
   if (signature === fixedAdSignature) return;
