@@ -7,6 +7,7 @@ const HOUSES = {
   3: { unlock: ['referrals', 15], coinMultiplier: 0.50, production: 0 },
   4: { unlock: ['referrals', 45], coinMultiplier: 0, production: 0.0001 },
   5: { unlock: ['ads', 50], coinMultiplier: 0, production: 0.0002 },
+  6: { unlock: ['referrals', 3], coinMultiplier: 0.8, production: 0 },
 };
 
 const DEFAULT_SETTINGS = {
@@ -282,11 +283,12 @@ async function seedSettings(client) {
     houses: HOUSES,
   };
   for (const [key, value] of Object.entries(settings)) {
-    await client.query(
-      `INSERT INTO system_settings(key, value) VALUES($1, $2::jsonb)
-       ON CONFLICT (key) DO NOTHING`,
-      [key, JSON.stringify(value)]
-    );
+    const query = key === 'houses'
+      ? `INSERT INTO system_settings(key, value) VALUES($1, $2::jsonb)
+         ON CONFLICT (key) DO UPDATE SET value = EXCLUDED.value, updated_at = NOW()`
+      : `INSERT INTO system_settings(key, value) VALUES($1, $2::jsonb)
+         ON CONFLICT (key) DO NOTHING`;
+    await client.query(query, [key, JSON.stringify(value)]);
   }
 }
 
