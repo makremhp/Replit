@@ -208,7 +208,7 @@ body {
   background-color: #8c5428;
   background-image:
     linear-gradient(180deg, rgba(63, 31, 10, .07), rgba(63, 31, 10, .14)),
-    url('../asesst/game-background.jpg');
+    url('../asesst/game-background.png');
   background-position: center center;
   background-repeat: no-repeat;
   background-size: 100% 100%;
@@ -268,7 +268,7 @@ body::before {
   background-color: #8c5428;
   background-image:
     linear-gradient(180deg, rgba(63, 31, 10, .09), rgba(42, 20, 7, .18)),
-    url('../asesst/game-background.jpg');
+    url('../asesst/game-background.png');
   background-position: center center;
   background-repeat: no-repeat;
   background-size: 100% 100%;
