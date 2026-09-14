@@ -134,6 +134,9 @@ const schema = `
   CREATE TABLE IF NOT EXISTS users (
     telegram_user_id BIGINT PRIMARY KEY,
     client_id TEXT UNIQUE NOT NULL,
+    telegram_name TEXT,
+    telegram_username TEXT,
+    telegram_photo_url TEXT,
     balance NUMERIC(18, 8) NOT NULL DEFAULT 0,
     reserved_balance NUMERIC(18, 8) NOT NULL DEFAULT 0,
     referrals INTEGER NOT NULL DEFAULT 0,
@@ -299,6 +302,16 @@ function integer(value) {
   return Number.isSafeInteger(result) ? result : 0;
 }
 
+function profileText(value, maxLength) {
+  const text = String(value || '').trim();
+  return text ? text.slice(0, maxLength) : null;
+}
+
+function profilePhotoUrl(value) {
+  const photoUrl = profileText(value, 2048);
+  return photoUrl && /^https:\/\//i.test(photoUrl) ? photoUrl : null;
+}
+
 function hashRequest(value) {
   return crypto.createHash('sha256').update(JSON.stringify(value || {})).digest('hex');
 }
@@ -320,6 +333,9 @@ async function migrateLegacyUsers(client) {
   const names = new Set(columns.rows.map(row => row.column_name));
   const additions = {
     telegram_user_id: 'BIGINT',
+    telegram_name: 'TEXT',
+    telegram_username: 'TEXT',
+    telegram_photo_url: 'TEXT',
     reserved_balance: 'NUMERIC(18, 8) NOT NULL DEFAULT 0',
     device_id: 'TEXT',
     risk_score: 'INTEGER NOT NULL DEFAULT 0',
@@ -492,12 +508,22 @@ async function getOrCreateUser(telegramUserId, context = {}, client = pool) {
   const userId = normalizedUserId(telegramUserId);
   const now = Date.now();
   const clientId = String(userId);
+  const telegramName = profileText(context.name, 256);
+  const telegramUsername = profileText(context.username, 128);
+  const telegramPhotoUrl = profilePhotoUrl(context.photoUrl);
   await client.query(
-    `INSERT INTO users(telegram_user_id, client_id, created_at, last_seen_at, updated_at, device_id)
-     VALUES($1, $2, $3, $3, $3, $4)
+    `INSERT INTO users(
+       telegram_user_id, client_id, created_at, last_seen_at, updated_at,
+       device_id, telegram_name, telegram_username, telegram_photo_url
+     )
+      VALUES($1, $2, $3, $3, $3, $4, $5, $6, $7)
      ON CONFLICT(telegram_user_id) DO UPDATE
-       SET last_seen_at = EXCLUDED.last_seen_at, updated_at = EXCLUDED.updated_at`,
-    [userId, clientId, now, context.deviceId || null]
+        SET last_seen_at = EXCLUDED.last_seen_at,
+            updated_at = EXCLUDED.updated_at,
+            telegram_name = COALESCE(NULLIF(EXCLUDED.telegram_name, ''), users.telegram_name),
+            telegram_username = COALESCE(NULLIF(EXCLUDED.telegram_username, ''), users.telegram_username),
+            telegram_photo_url = COALESCE(NULLIF(EXCLUDED.telegram_photo_url, ''), users.telegram_photo_url)`,
+    [userId, clientId, now, context.deviceId || null, telegramName, telegramUsername, telegramPhotoUrl]
   );
   const userResult = await client.query(
     'SELECT * FROM users WHERE telegram_user_id = $1 FOR UPDATE',
@@ -658,6 +684,12 @@ async function stateInsideTransaction(userId, client, now) {
   return {
     telegramUserId: String(user.telegram_user_id),
     clientId: String(user.telegram_user_id),
+    user: {
+      id: String(user.telegram_user_id),
+      name: user.telegram_name || '',
+      username: user.telegram_username || '',
+      photoUrl: user.telegram_photo_url || '',
+    },
     balance: Number(number(user.balance).toFixed(8)),
     reservedBalance: Number(number(user.reserved_balance).toFixed(8)),
     progress: progressFor(user),
