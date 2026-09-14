@@ -381,6 +381,10 @@ async function migrateLegacyUsers(client) {
         `UPDATE withdrawals w SET telegram_user_id = u.telegram_user_id
          FROM users u WHERE w.telegram_user_id IS NULL AND w.client_id = u.client_id`
       );
+      await migrationQuery(
+        'withdrawals.client_id_nullable',
+        'ALTER TABLE withdrawals ALTER COLUMN client_id DROP NOT NULL'
+      );
     }
     await migrationQuery(
       'withdrawals.telegram_user_id_index',
