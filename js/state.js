@@ -79,6 +79,7 @@ function applyServerState(data) {
   State.collectibles = Array.isArray(data.collectibles) ? data.collectibles : [];
   State.config = data.config || State.config;
   State.serverConnected = true;
+  if (typeof window !== 'undefined') window.dispatchEvent(new Event('six-houses-config-ready'));
   renderBalance();
   if (typeof renderServerCoins === 'function') renderServerCoins(State.collectibles);
   const houseSignature = `${State.activeHouseId}|${State.unlockedHouses.join(',')}`;
@@ -187,7 +188,9 @@ function collectCoinFromServer(coinId) {
       await refreshStateFromServer();
       return false;
     }
-  })();
+  });
+  collectQueue = request.catch(() => false);
+  return request;
 }
 
 async function startAdSession() {
