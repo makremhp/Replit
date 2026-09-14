@@ -104,6 +104,10 @@ const DEFAULT_SETTINGS = {
     "src": "https://interventioncopiedloitering.com/9f6fe4084cb3d8a8eb4d8246ee57ed25/invoke.js"
   }
 ],
+  ad_320x50_top_count: 3,
+  ad_320x50_bottom_count: 3,
+  ad_320x50_top_rotation_ms: 5000,
+  ad_320x50_bottom_rotation_ms: 10000,
   ad_social: [
   "https://interventioncopiedloitering.com/5d/77/0f/5d770ff402768d79ddda9c1cd67e9819.js",
   "https://interventioncopiedloitering.com/96/90/da/9690da690d344e2579dffa12d4e2ac24.js",
@@ -423,6 +427,16 @@ function safeAdUnits(value) {
     .filter(item => item.key && item.width === 320 && item.height === 50 && /^https:\/\/[^\s\"'<>]+$/i.test(item.src)).slice(0, 12);
 }
 
+function safeAdVisibleCount(value, fallback = 3) {
+  const count = integer(value);
+  return count >= 1 && count <= 3 ? count : fallback;
+}
+
+function safeAdRotationMs(value, fallback) {
+  const interval = integer(value);
+  return interval >= 1000 && interval <= 3600000 ? interval : fallback;
+}
+
 function safeConfig(settings) {
   return {
     maxActiveCoins: integer(settings.max_active_coins) || DEFAULT_SETTINGS.max_active_coins,
@@ -434,6 +448,10 @@ function safeConfig(settings) {
     adDailyLimit: integer(settings.ad_daily_limit),
     adSessionTtlMs: integer(settings.ad_session_ttl_ms),
     fixedAdUnits: safeAdUnits(settings.ad_320x50),
+    fixedAdTopCount: safeAdVisibleCount(settings.ad_320x50_top_count, DEFAULT_SETTINGS.ad_320x50_top_count),
+    fixedAdBottomCount: safeAdVisibleCount(settings.ad_320x50_bottom_count, DEFAULT_SETTINGS.ad_320x50_bottom_count),
+    fixedAdTopRotationMs: safeAdRotationMs(settings.ad_320x50_top_rotation_ms, DEFAULT_SETTINGS.ad_320x50_top_rotation_ms),
+    fixedAdBottomRotationMs: safeAdRotationMs(settings.ad_320x50_bottom_rotation_ms, DEFAULT_SETTINGS.ad_320x50_bottom_rotation_ms),
     socialAdScripts: safeAdScripts(settings.ad_social),
     houses: settings.houses || HOUSES,
   };
