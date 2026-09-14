@@ -10,7 +10,10 @@
   body::before { content:''; position:fixed; inset:0; pointer-events:none; opacity:.26; background-image:linear-gradient(rgba(255,255,255,.018) 1px,transparent 1px),linear-gradient(90deg,rgba(255,255,255,.018) 1px,transparent 1px); background-size:36px 36px; mask-image:linear-gradient(to bottom,black,transparent 74%); }
   button,input { font:inherit; } button { -webkit-appearance:none; } img { display:block; }
   .ad-static-top,.ad-static-bottom { width:100%; display:flex!important; flex-direction:column; align-items:center; gap:5px!important; opacity:.84; overflow:hidden; }
-  .ad-static-top { padding:7px 0 2px; min-height:12px; } .ad-static-bottom { padding:22px 0 12px; }
+  .ad-static-top { padding:7px 0 2px; } .ad-static-bottom { padding:22px 0 12px; }
+  #adTopAds,#adBottomAds { display:flex; flex-direction:column; align-items:center; gap:5px; width:100%; }
+  .ad-320-slot,.ad-slot-placeholder { width:320px; min-width:320px; height:50px; min-height:50px; overflow:hidden; }
+  .social-ad-stage { width:100%; min-height:0; display:flex; justify-content:center; align-items:center; overflow:hidden; }
 
   .topbar { position:sticky; top:0; z-index:40; width:min(100%,620px); display:grid; grid-template-columns:44px 1fr 44px; align-items:center; gap:10px; padding:14px 16px 12px; background:linear-gradient(180deg,rgba(7,16,24,.96),rgba(7,16,24,.79)); border-bottom:1px solid rgba(174,204,217,.09); backdrop-filter:blur(18px); }
   .topbar::after { content:''; position:absolute; left:20%; right:20%; bottom:-1px; height:1px; background:linear-gradient(90deg,transparent,rgba(118,224,195,.55),transparent); }
