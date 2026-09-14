@@ -40,6 +40,8 @@ async function finishVerifiedAd() {
 const MAX_VISIBLE_FIXED_ADS = 3;
 const FIXED_AD_ROTATION_MS = 5000;
 const SOCIAL_AD_DURATION_MS = 5000;
+const AD_SLOT_HEIGHT = 50;
+const AD_SLOT_GAP = 5;
 let fixedAdSignature = '';
 let fixedAdOffset = 0;
 let fixedAdRotationTimer = null;
@@ -60,27 +62,42 @@ function renderMissingAdSlot(containerId) {
   const container = document.getElementById(containerId);
   if (!container) return;
   container.replaceChildren();
+  container.style.height = `${AD_SLOT_HEIGHT}px`;
+  container.style.minHeight = '0';
   const placeholder = document.createElement('div');
   placeholder.className = 'ad-320-slot ad-slot-placeholder';
   placeholder.textContent = 'Ad code is not configured';
   container.appendChild(placeholder);
 }
 
+function setAdSideHeight(container, visibleCount) {
+  const contentHeight = visibleCount > 0
+    ? (visibleCount * AD_SLOT_HEIGHT) + ((visibleCount - 1) * AD_SLOT_GAP)
+    : 0;
+  container.style.height = `${contentHeight}px`;
+  container.style.minHeight = '0';
+  container.style.overflow = 'hidden';
+}
+
 function renderFixedAdSide(containerId, units, offset) {
   const container = document.getElementById(containerId);
   if (!container) return;
-  container.replaceChildren();
   const visibleCount = Math.min(units.length, MAX_VISIBLE_FIXED_ADS);
+  setAdSideHeight(container, visibleCount);
+  container.replaceChildren();
   for (let index = 0; index < visibleCount; index += 1) {
     const unit = units[(offset + index) % units.length];
     const slot = document.createElement('div');
     slot.className = 'ad-320-slot';
+    slot.style.height = `${AD_SLOT_HEIGHT}px`;
+    slot.style.minHeight = `${AD_SLOT_HEIGHT}px`;
+    slot.style.flex = `0 0 ${AD_SLOT_HEIGHT}px`;
     slot.dataset.adIndex = String(index);
     const configScript = document.createElement('script');
     configScript.textContent = 'window.atOptions = ' + JSON.stringify({
       key: unit.key,
       format: unit.format || 'iframe',
-      height: 50,
+      height: AD_SLOT_HEIGHT,
       width: 320,
       params: unit.params || {}
     }) + ';';

@@ -9,11 +9,13 @@
   body { min-height:100vh; font-family:'Tajawal','Cairo',sans-serif; display:flex; flex-direction:column; align-items:center; overflow-x:hidden; color:var(--text); background:radial-gradient(circle at 50% -8%,rgba(118,224,195,.11),transparent 32%),radial-gradient(circle at 0% 38%,rgba(215,181,109,.07),transparent 27%),linear-gradient(180deg,#08131c 0%,var(--bg) 58%,#050b11 100%); }
   body::before { content:''; position:fixed; inset:0; pointer-events:none; opacity:.26; background-image:linear-gradient(rgba(255,255,255,.018) 1px,transparent 1px),linear-gradient(90deg,rgba(255,255,255,.018) 1px,transparent 1px); background-size:36px 36px; mask-image:linear-gradient(to bottom,black,transparent 74%); }
   button,input { font:inherit; } button { -webkit-appearance:none; } img { display:block; }
-  .ad-static-top,.ad-static-bottom { width:100%; display:flex!important; flex-direction:column; align-items:center; gap:5px!important; opacity:.84; overflow:hidden; }
+  .ad-static-top,.ad-static-bottom { width:100%; display:flex!important; flex-direction:column; align-items:center; gap:5px!important; min-height:0; opacity:.84; overflow:hidden; }
   .ad-static-top { padding:7px 0 2px; } .ad-static-bottom { padding:22px 0 12px; }
-  #adTopAds,#adBottomAds { display:flex; flex-direction:column; align-items:center; gap:5px; width:100%; }
-  .ad-320-slot,.ad-slot-placeholder { width:320px; min-width:320px; height:50px; min-height:50px; overflow:hidden; }
+  #adTopAds,#adBottomAds { display:flex; flex-direction:column; align-items:center; gap:5px; width:100%; min-height:0; overflow:hidden; box-sizing:border-box; }
+  .ad-320-slot,.ad-slot-placeholder { width:320px; min-width:320px; height:50px; min-height:50px; max-height:50px; flex:0 0 50px; overflow:hidden; contain:layout paint; }
+  .ad-320-slot iframe,.ad-320-slot img { display:block; width:320px!important; height:50px!important; max-width:none; max-height:50px; border:0; }
   .social-ad-stage { width:100%; min-height:0; display:flex; justify-content:center; align-items:center; overflow:hidden; }
+  #socialAdStage:empty { display:none; }
 
   .topbar { position:sticky; top:0; z-index:40; width:min(100%,620px); display:grid; grid-template-columns:44px 1fr 44px; align-items:center; gap:10px; padding:14px 16px 12px; background:linear-gradient(180deg,rgba(7,16,24,.96),rgba(7,16,24,.79)); border-bottom:1px solid rgba(174,204,217,.09); backdrop-filter:blur(18px); }
   .topbar::after { content:''; position:absolute; left:20%; right:20%; bottom:-1px; height:1px; background:linear-gradient(90deg,transparent,rgba(118,224,195,.55),transparent); }
@@ -74,7 +76,7 @@
 
 
 /* ===================== واجهة الإعلان الاجتماعي ===================== */
-.social-ad-stage { width:min(100%,620px); min-height:84px; padding:8px 16px 2px; display:flex; flex-direction:column; align-items:center; gap:5px; overflow:hidden; }
+.social-ad-stage { width:min(100%,620px); min-height:0; padding:8px 16px 2px; display:flex; flex-direction:column; align-items:center; gap:5px; overflow:hidden; }
 .social-ad-caption { color:rgba(174,204,217,.5); font-size:9px; font-weight:800; letter-spacing:1.5px; }
 .social-ad-slot { width:min(100%,520px); min-height:64px; display:grid; place-items:center; opacity:0; transform:translateY(-6px); transition:opacity .24s ease,transform .24s ease; }
 .social-ad-stage.is-visible .social-ad-slot { opacity:1; transform:translateY(0); }
