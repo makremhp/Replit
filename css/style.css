@@ -183,3 +183,120 @@
 .telegram-only-icon { font-size: 42px; margin-bottom: 12px; }
 .telegram-only-card h1 { margin: 0 0 12px; font-size: 24px; }
 .telegram-only-card p { margin: 0; color: #b6b7c2; line-height: 1.8; }
+
+/* ===================== خلفية ساحة اللعبة ===================== */
+:root {
+  --bg: #7f4a25;
+  --bg-soft: #9d612e;
+  --panel: rgba(53, 29, 13, .76);
+  --panel-solid: #422613;
+  --line: rgba(255, 226, 177, .18);
+  --line-strong: rgba(255, 226, 177, .3);
+  --gold: #edbd68;
+  --gold-soft: #fff0c2;
+  --mint: #86d16b;
+  --text: #fff8e9;
+  --muted: #f0cfaa;
+  --shadow: 0 22px 70px rgba(48, 23, 7, .42);
+}
+
+html {
+  background: #7f4a25;
+}
+
+body {
+  background-color: #8c5428;
+  background-image:
+    linear-gradient(180deg, rgba(63, 31, 10, .24), rgba(63, 31, 10, .48)),
+    url('../asesst/game-background.jpg');
+  background-position: center center;
+  background-repeat: no-repeat;
+  background-size: cover;
+  background-attachment: fixed;
+}
+
+body::before {
+  opacity: .18;
+  background-image:
+    linear-gradient(rgba(255, 239, 198, .04) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(255, 239, 198, .04) 1px, transparent 1px);
+  background-size: 36px 36px;
+  mask-image: linear-gradient(to bottom, black, transparent 78%);
+}
+
+.topbar {
+  background: linear-gradient(180deg, rgba(60, 31, 13, .93), rgba(60, 31, 13, .74));
+  border-bottom-color: rgba(255, 226, 177, .2);
+}
+
+.topbar::after {
+  background: linear-gradient(90deg, transparent, rgba(134, 209, 107, .7), transparent);
+}
+
+.box {
+  border-color: rgba(255, 226, 177, .22);
+  background: linear-gradient(145deg, rgba(94, 52, 22, .68), rgba(48, 26, 11, .48) 52%, rgba(134, 209, 107, .08));
+}
+
+.box::after {
+  border-color: rgba(255, 239, 198, .1);
+}
+
+.mining-stage {
+  background: linear-gradient(180deg, rgba(112, 63, 25, .16), rgba(54, 28, 11, .24));
+  border-radius: 30px;
+}
+
+.stage-ground {
+  background:
+    linear-gradient(180deg, transparent, rgba(48, 23, 7, .5) 70%),
+    radial-gradient(ellipse at center bottom, rgba(134, 209, 107, .18), transparent 64%);
+}
+
+.modal-overlay {
+  background: rgba(45, 20, 7, .68);
+}
+
+.modal-card,
+.telegram-only-card {
+  border-color: rgba(255, 226, 177, .28);
+  background: linear-gradient(155deg, rgba(78, 43, 18, .96), rgba(42, 22, 9, .98));
+}
+
+.wallet-page,
+.telegram-only-gate {
+  background-color: #8c5428;
+  background-image:
+    linear-gradient(180deg, rgba(63, 31, 10, .3), rgba(42, 20, 7, .58)),
+    url('../asesst/game-background.jpg');
+  background-position: center center;
+  background-repeat: no-repeat;
+  background-size: cover;
+  background-attachment: fixed;
+}
+
+.wallet-header {
+  background: rgba(60, 31, 13, .72);
+  border-bottom-color: rgba(255, 226, 177, .2);
+}
+
+.wallet-balance-card,
+.wallet-withdraw-panel,
+.wallet-info-card {
+  border-color: rgba(255, 226, 177, .2);
+  background: rgba(68, 36, 15, .62);
+}
+
+.wallet-input-wrap {
+  background: rgba(35, 17, 6, .3);
+}
+
+.wallet-action-btn.secondary,
+.share-btn,
+.wallet-btn-icon {
+  background: rgba(64, 34, 14, .56);
+}
+
+.telegram-only-gate {
+  background-color: #8c5428;
+}
