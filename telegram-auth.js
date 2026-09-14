@@ -41,6 +41,10 @@ function matchesHash(receivedHash, calculatedHash) {
     crypto.timingSafeEqual(received, calculated);
 }
 
+function profileText(value, maxLength) {
+  return String(value || '').trim().slice(0, maxLength);
+}
+
 function verifyTelegramInitData(request, options = {}) {
   const initData = header(request, 'x-telegram-init-data');
   const botToken = normalizeBotToken(options.botToken ?? process.env.BOT_TOKEN);
@@ -90,8 +94,15 @@ function verifyTelegramInitData(request, options = {}) {
     throw authError('Telegram user data is missing');
   }
 
+  const firstName = profileText(user.first_name, 128);
+  const lastName = profileText(user.last_name, 128);
+  const username = profileText(user.username, 128);
+  const photoUrl = profileText(user.photo_url, 2048);
   return {
     telegramUserId: Number(user.id),
+    name: profileText([firstName, lastName].filter(Boolean).join(' ') || username, 256),
+    username,
+    photoUrl,
     authDate,
     deviceId: header(request, 'x-device-id').slice(0, 160),
   };
