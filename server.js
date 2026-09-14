@@ -51,6 +51,19 @@ function idempotencyKey(request) {
   return String(request.get('idempotency-key') || '');
 }
 
+function requireAdminSettingsToken(request) {
+  const expected = String(process.env.ADMIN_SETTINGS_TOKEN || '');
+  const received = String(request.get('x-admin-settings-token') || '');
+  if (!expected) throw fail('ADMIN_SETTINGS_TOKEN is not configured', 503);
+  const expectedBuffer = Buffer.from(expected);
+  const receivedBuffer = Buffer.from(received);
+  if (expectedBuffer.length !== receivedBuffer.length || !crypto.timingSafeEqual(expectedBuffer, receivedBuffer)) throw fail('Invalid admin settings token', 401);
+}
+
+function isHttpsAdUrl(value) {
+  return /^https:\/\/[^\s\"'<>]+$/i.test(String(value || '').trim());
+}
+
 app.post(
   '/api/ads/webhook',
   express.raw({ type: 'application/json', limit: '16kb' }),
@@ -78,6 +91,21 @@ app.post(
 );
 
 app.use(express.json({ limit: '32kb' }));
+
+app.put('/api/admin/ad-config', asyncRoute(async (request, response) => {
+  requireAdminSettingsToken(request);
+  await ensureDatabase();
+  rateLimit(request, 'admin-ad-config', 30);
+  const fixed320 = request.body?.fixed320x50;
+  const social = request.body?.social;
+  if (!Array.isArray(fixed320) || fixed320.length > 12 || !Array.isArray(social) || social.length > 12) throw fail('fixed320x50 and social must be arrays with at most 12 items', 400);
+  const units = fixed320.map(item => ({ key: String(item?.key || '').trim(), format: 'iframe', width: 320, height: 50, params: item?.params && typeof item.params === 'object' ? item.params : {}, src: String(item?.src || '').trim() }));
+  const scripts = social.map(item => String(item || '').trim());
+  if (units.some(item => !item.key || !isHttpsAdUrl(item.src)) || scripts.some(item => !isHttpsAdUrl(item))) throw fail('Every ad source must be an HTTPS URL', 400);
+  await pool.query('INSERT INTO system_settings(key, value) VALUES($1, $2::jsonb) ON CONFLICT (key) DO UPDATE SET value = EXCLUDED.value, updated_at = NOW()', ['ad_320x50', JSON.stringify(units)]);
+  await pool.query('INSERT INTO system_settings(key, value) VALUES($1, $2::jsonb) ON CONFLICT (key) DO UPDATE SET value = EXCLUDED.value, updated_at = NOW()', ['ad_social', JSON.stringify(scripts)]);
+  response.json({ ok: true, fixed320x50: units.length, social: scripts.length });
+}));
 app.use('/api', asyncRoute(async (request, _response, next) => {
   await ensureDatabase();
   rateLimit(request, 'ip');
