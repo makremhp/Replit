@@ -7,7 +7,7 @@ const HOUSES = {
   3: { unlock: ['referrals', 15], coinMultiplier: 0.50, production: 0 },
   4: { unlock: ['referrals', 45], coinMultiplier: 0, production: 0.0001 },
   5: { unlock: ['ads', 50], coinMultiplier: 0, production: 0.0002 },
-  6: { unlock: ['referrals', 3], coinMultiplier: 0.8, production: 0 },
+  6: { unlock: ['ads', 200], coinMultiplier: 0, production: 0.0002, productionIntervalMs: 60000 },
 };
 
 const DEFAULT_SETTINGS = {
@@ -445,12 +445,12 @@ async function settleHouseProduction(user, settings, now, client) {
      WHERE hu.telegram_user_id = $1`,
     [user.telegram_user_id]
   );
-  const interval = integer(settings.house_production_interval_ms) || 120000;
   let earned = 0;
   for (const row of unlocks.rows) {
     const house = (settings.houses || HOUSES)[row.house_id];
     const rate = number(house?.production);
     if (!rate) continue;
+    const interval = integer(house?.productionIntervalMs) || integer(settings.house_production_interval_ms) || 120000;
     const last = Math.max(number(row.last_settled_at), number(row.unlocked_at));
     const units = Math.floor(Math.max(0, now - last) / interval);
     const settledAt = units ? last + units * interval : last;

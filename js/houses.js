@@ -49,9 +49,11 @@ const HOUSES = [
     key: 'desert',
     name: { ar: 'قلعة الصحراء', en: 'Desert Castle' },
     img: 'asesst/house-desert.png',
-    unlock: { type: 'referrals', need: 3 },
-    coinMultiplier: 0.80,
-    perkDesc: { ar: 'زيادة 80% على أرباح جمع العملات', en: '80% bonus on collected coins' },
+    unlock: { type: 'ads', need: 200 },
+    coinMultiplier: 0,
+    production: 0.0002,
+    productionIntervalMs: 60000,
+    perkDesc: { ar: 'تنتج 0.0002 USDT تلقائيًا كل دقيقة بعد إكمال 200 إعلان', en: 'Produces 0.0002 USDT every minute after completing 200 ads' },
   },
 ];
 
