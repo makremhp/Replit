@@ -290,10 +290,12 @@ function loadConfiguredAds() {
   const units = loadAdPool();
   const socialScripts = configuredSocialAdScripts();
   const fixedConfig = {
-    topVisibleCount: State.config?.fixedAdTopCount,
-    bottomVisibleCount: State.config?.fixedAdBottomCount,
-    topRotationMs: State.config?.fixedAdTopRotationMs,
-    bottomRotationMs: State.config?.fixedAdBottomRotationMs ?? State.config?.fixedAdRotationMs,
+    // The product requirement is always three independent slots per side.
+    // Ad keys themselves remain server-provided through loadAdPool().
+    topVisibleCount: MAX_VISIBLE_FIXED_ADS,
+    bottomVisibleCount: MAX_VISIBLE_FIXED_ADS,
+    topRotationMs: DEFAULT_TOP_FIXED_AD_ROTATION_MS,
+    bottomRotationMs: DEFAULT_BOTTOM_FIXED_AD_ROTATION_MS,
   };
   const signature = JSON.stringify({ units, fixedConfig, social: socialScripts });
   if (signature === fixedAdSignature) return;
