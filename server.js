@@ -64,6 +64,15 @@ function isHttpsAdUrl(value) {
   return /^https:\/\/[^\s\"'<>]+$/i.test(String(value || '').trim());
 }
 
+function optionalAdSetting(value, name, min, max) {
+  if (value === undefined || value === null || value === '') return null;
+  const parsed = Number(value);
+  if (!Number.isInteger(parsed) || parsed < min || parsed > max) {
+    throw fail(name + ' must be an integer between ' + min + ' and ' + max, 400);
+  }
+  return parsed;
+}
+
 app.post(
   '/api/ads/webhook',
   express.raw({ type: 'application/json', limit: '16kb' }),
@@ -102,9 +111,22 @@ app.put('/api/admin/ad-config', asyncRoute(async (request, response) => {
   const units = fixed320.map(item => ({ key: String(item?.key || '').trim(), format: 'iframe', width: 320, height: 50, params: item?.params && typeof item.params === 'object' ? item.params : {}, src: String(item?.src || '').trim() }));
   const scripts = social.map(item => String(item || '').trim());
   if (units.some(item => !item.key || !isHttpsAdUrl(item.src)) || scripts.some(item => !isHttpsAdUrl(item))) throw fail('Every ad source must be an HTTPS URL', 400);
-  await pool.query('INSERT INTO system_settings(key, value) VALUES($1, $2::jsonb) ON CONFLICT (key) DO UPDATE SET value = EXCLUDED.value, updated_at = NOW()', ['ad_320x50', JSON.stringify(units)]);
-  await pool.query('INSERT INTO system_settings(key, value) VALUES($1, $2::jsonb) ON CONFLICT (key) DO UPDATE SET value = EXCLUDED.value, updated_at = NOW()', ['ad_social', JSON.stringify(scripts)]);
-  response.json({ ok: true, fixed320x50: units.length, social: scripts.length });
+  const topVisibleCount = optionalAdSetting(request.body?.topVisibleCount, 'topVisibleCount', 1, 3);
+  const bottomVisibleCount = optionalAdSetting(request.body?.bottomVisibleCount, 'bottomVisibleCount', 1, 3);
+  const topRotationMs = optionalAdSetting(request.body?.topRotationMs, 'topRotationMs', 1000, 3600000);
+  const bottomRotationMs = optionalAdSetting(request.body?.bottomRotationMs, 'bottomRotationMs', 1000, 3600000);
+  const settingsToUpdate = [
+    ['ad_320x50', units],
+    ['ad_social', scripts],
+  ];
+  if (topVisibleCount !== null) settingsToUpdate.push(['ad_320x50_top_count', topVisibleCount]);
+  if (bottomVisibleCount !== null) settingsToUpdate.push(['ad_320x50_bottom_count', bottomVisibleCount]);
+  if (topRotationMs !== null) settingsToUpdate.push(['ad_320x50_top_rotation_ms', topRotationMs]);
+  if (bottomRotationMs !== null) settingsToUpdate.push(['ad_320x50_bottom_rotation_ms', bottomRotationMs]);
+  for (const [key, value] of settingsToUpdate) {
+    await pool.query('INSERT INTO system_settings(key, value) VALUES($1, $2::jsonb) ON CONFLICT (key) DO UPDATE SET value = EXCLUDED.value, updated_at = NOW()', [key, JSON.stringify(value)]);
+  }
+  response.json({ ok: true, fixed320x50: units.length, social: scripts.length, topVisibleCount, bottomVisibleCount, topRotationMs, bottomRotationMs });
 }));
 app.use('/api', asyncRoute(async (request, _response, next) => {
   await ensureDatabase();
