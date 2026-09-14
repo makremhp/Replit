@@ -22,6 +22,98 @@ const DEFAULT_SETTINGS = {
   ad_daily_limit: 50,
   ad_session_ttl_ms: 120000,
   house_production_interval_ms: 120000,
+  ad_320x50: [
+  {
+    "key": "b895987c82805b8778a34f54911e8de0",
+    "format": "iframe",
+    "width": 320,
+    "height": 50,
+    "params": {},
+    "src": "https://interventioncopiedloitering.com/b895987c82805b8778a34f54911e8de0/invoke.js"
+  },
+  {
+    "key": "ab4615d3d759a81e9b876abbcebaf690",
+    "format": "iframe",
+    "width": 320,
+    "height": 50,
+    "params": {},
+    "src": "https://interventioncopiedloitering.com/ab4615d3d759a81e9b876abbcebaf690/invoke.js"
+  },
+  {
+    "key": "3b49398bb9242d548c0464f244b621fa",
+    "format": "iframe",
+    "width": 320,
+    "height": 50,
+    "params": {},
+    "src": "https://interventioncopiedloitering.com/3b49398bb9242d548c0464f244b621fa/invoke.js"
+  },
+  {
+    "key": "b3570e82f7fb6c462dfdfded816f1576",
+    "format": "iframe",
+    "width": 320,
+    "height": 50,
+    "params": {},
+    "src": "https://interventioncopiedloitering.com/b3570e82f7fb6c462dfdfded816f1576/invoke.js"
+  },
+  {
+    "key": "de29a44d70992e967ae5d20275e77fab",
+    "format": "iframe",
+    "width": 320,
+    "height": 50,
+    "params": {},
+    "src": "https://interventioncopiedloitering.com/de29a44d70992e967ae5d20275e77fab/invoke.js"
+  },
+  {
+    "key": "280eab7c354ed87595a376b2f5e270cb",
+    "format": "iframe",
+    "width": 320,
+    "height": 50,
+    "params": {},
+    "src": "https://interventioncopiedloitering.com/280eab7c354ed87595a376b2f5e270cb/invoke.js"
+  },
+  {
+    "key": "d47f719464108005a03a03e6d49fba1a",
+    "format": "iframe",
+    "width": 320,
+    "height": 50,
+    "params": {},
+    "src": "https://interventioncopiedloitering.com/d47f719464108005a03a03e6d49fba1a/invoke.js"
+  },
+  {
+    "key": "04bcf6532017b6790ab2ddac95a5621d",
+    "format": "iframe",
+    "width": 320,
+    "height": 50,
+    "params": {},
+    "src": "https://interventioncopiedloitering.com/04bcf6532017b6790ab2ddac95a5621d/invoke.js"
+  },
+  {
+    "key": "8c0574e870e5a3843e89d947bd38aaff",
+    "format": "iframe",
+    "width": 320,
+    "height": 50,
+    "params": {},
+    "src": "https://interventioncopiedloitering.com/8c0574e870e5a3843e89d947bd38aaff/invoke.js"
+  },
+  {
+    "key": "9f6fe4084cb3d8a8eb4d8246ee57ed25",
+    "format": "iframe",
+    "width": 320,
+    "height": 50,
+    "params": {},
+    "src": "https://interventioncopiedloitering.com/9f6fe4084cb3d8a8eb4d8246ee57ed25/invoke.js"
+  }
+],
+  ad_social: [
+  "https://interventioncopiedloitering.com/5d/77/0f/5d770ff402768d79ddda9c1cd67e9819.js",
+  "https://interventioncopiedloitering.com/96/90/da/9690da690d344e2579dffa12d4e2ac24.js",
+  "https://interventioncopiedloitering.com/f0/07/9c/f0079c7c7d8c3c01bd28c4116a805f4a.js",
+  "https://interventioncopiedloitering.com/7e/7f/2b/7e7f2b6f7c43d86c6859e5b0a40afe3e.js",
+  "https://interventioncopiedloitering.com/7e/28/55/7e2855c2f9fb53ed0ca536022ca067df.js",
+  "https://interventioncopiedloitering.com/d0/f6/b3/d0f6b318f29b5787025697029ae72f23.js",
+  "https://interventioncopiedloitering.com/58/0d/ca/580dcaa1a10c7fb3943a7ea94b700f42.js",
+  "https://interventioncopiedloitering.com/da/5e/c3/da5ec3a230bfa740492f3f78bd1ed182.js"
+],
 };
 
 const databaseUrl = process.env.DATABASE_URL || process.env.EXTERNAL_DATABASE_URL;
@@ -320,6 +412,17 @@ async function getSettings(client = pool) {
   return settings;
 }
 
+function safeAdScripts(value) {
+  if (!Array.isArray(value)) return [];
+  return value.map(item => String(item || '').trim()).filter(item => /^https:\/\/[^\s\"'<>]+$/i.test(item)).slice(0, 12);
+}
+
+function safeAdUnits(value) {
+  if (!Array.isArray(value)) return [];
+  return value.map(item => ({ key: String(item?.key || '').trim(), format: String(item?.format || 'iframe'), width: integer(item?.width) || 320, height: integer(item?.height) || 50, params: item?.params && typeof item.params === 'object' ? item.params : {}, src: String(item?.src || '').trim() }))
+    .filter(item => item.key && item.width === 320 && item.height === 50 && /^https:\/\/[^\s\"'<>]+$/i.test(item.src)).slice(0, 12);
+}
+
 function safeConfig(settings) {
   return {
     maxActiveCoins: integer(settings.max_active_coins) || DEFAULT_SETTINGS.max_active_coins,
@@ -330,6 +433,8 @@ function safeConfig(settings) {
     adCooldownMs: integer(settings.ad_cooldown_ms),
     adDailyLimit: integer(settings.ad_daily_limit),
     adSessionTtlMs: integer(settings.ad_session_ttl_ms),
+    fixedAdUnits: safeAdUnits(settings.ad_320x50),
+    socialAdScripts: safeAdScripts(settings.ad_social),
     houses: settings.houses || HOUSES,
   };
 }
