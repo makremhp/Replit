@@ -40,11 +40,13 @@ async function finishVerifiedAd() {
     const FIXED_AD_SLOTS = ['adTop1', 'adTop2', 'adTop3', 'adBottom1', 'adBottom2', 'adBottom3'];
     let fixedAdSignature = '';
     function configuredFixedAdUnits() {
-      const units = window.State?.config?.fixedAdUnits;
+      const units = typeof State !== 'undefined' ? State.config?.fixedAdUnits : [];
+
       return Array.isArray(units) ? units : [];
     }
     function configuredSocialAdScripts() {
-      const scripts = window.State?.config?.socialAdScripts;
+      const scripts = typeof State !== 'undefined' ? State.config?.socialAdScripts : [];
+
       return Array.isArray(scripts) ? scripts : [];
     }
     function renderMissingAdSlot(containerId) {
