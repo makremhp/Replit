@@ -90,7 +90,6 @@ const modalAdProgressFill = document.getElementById('modalAdProgressFill');
 const modalAdBtn = document.getElementById('modalAdBtn');
 const modalShareBtn = document.getElementById('modalShareBtn');
 const modalCloseBtn = document.getElementById('modalCloseBtn');
-const globalShareBtn = document.getElementById('shareBtn');
 
 function openHouseModal(house) {
   const unlocked = isUnlocked(house);
@@ -106,7 +105,6 @@ function openHouseModal(house) {
   modalProgressTrack.style.display = 'none';
   modalActionBtn.hidden = false;
   modalShareBtn.hidden = !needsReferralsToUnlock;
-  if (globalShareBtn) globalShareBtn.hidden = needsAdsToUnlock;
   modalAdPanel.hidden = !needsAdsToUnlock;
   modalAdBtn.hidden = !needsAdsToUnlock;
   modalShareBtn.onclick = null;
@@ -170,7 +168,6 @@ function openHouseModal(house) {
 }
 function closeHouseModal() {
   houseModal.classList.remove('show');
-  if (globalShareBtn) globalShareBtn.hidden = false;
 }
 
 modalCloseBtn.textContent = T.closeBtn;
