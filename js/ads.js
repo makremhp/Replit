@@ -48,10 +48,31 @@ let fixedAdTopRotationTimer = null;
 let fixedAdBottomRotationTimer = null;
 let socialAdRotationTimer = null;
 let socialAdRunId = 0;
+let adPool = [];
+let currentTopAdUnits = [];
+let currentBottomAdUnits = [];
+let fixedAdTopVisibleCount = MAX_VISIBLE_FIXED_ADS;
+let fixedAdBottomVisibleCount = MAX_VISIBLE_FIXED_ADS;
+let fixedAdTopRotationMs = DEFAULT_TOP_FIXED_AD_ROTATION_MS;
+let fixedAdBottomRotationMs = DEFAULT_BOTTOM_FIXED_AD_ROTATION_MS;
 
 function configuredFixedAdUnits() {
   const units = typeof State !== 'undefined' ? State.config?.fixedAdUnits : [];
-  return Array.isArray(units) ? units.filter(unit => unit && unit.key && unit.src) : [];
+  if (!Array.isArray(units)) return [];
+  const seenKeys = new Set();
+  return units.filter(unit => {
+    const key = String(unit?.key || '').trim();
+    const src = String(unit?.src || '').trim();
+    if (!key || !src || seenKeys.has(key)) return false;
+    seenKeys.add(key);
+    return true;
+  });
+}
+
+// The ad pool is populated only from the server-provided State.config values.
+function loadAdPool() {
+  adPool = configuredFixedAdUnits();
+  return adPool;
 }
 
 function configuredSocialAdScripts() {
@@ -59,23 +80,26 @@ function configuredSocialAdScripts() {
   return Array.isArray(scripts) ? scripts.filter(Boolean) : [];
 }
 
-function renderMissingAdSlot(containerId) {
+function renderMissingAdSlots(containerId, configuredCount) {
   const container = document.getElementById(containerId);
   if (!container) return;
+  const visibleCount = normalizeVisibleAdCount(configuredCount);
+  setAdSideHeight(container, visibleCount);
   container.replaceChildren();
-  container.style.height = `${AD_SLOT_HEIGHT}px`;
-  container.style.minHeight = '0';
-  const placeholder = document.createElement('div');
-  placeholder.className = 'ad-320-slot ad-slot-placeholder';
-  placeholder.textContent = 'Ad code is not configured';
-  container.appendChild(placeholder);
+  for (let index = 0; index < visibleCount; index += 1) {
+    const placeholder = document.createElement('div');
+    placeholder.className = 'ad-320-slot ad-slot-placeholder';
+    placeholder.style.height = String(AD_SLOT_HEIGHT) + 'px';
+    placeholder.textContent = 'Ad code is not configured';
+    container.appendChild(placeholder);
+  }
 }
 
 function setAdSideHeight(container, visibleCount) {
   const contentHeight = visibleCount > 0
     ? (visibleCount * AD_SLOT_HEIGHT) + ((visibleCount - 1) * AD_SLOT_GAP)
     : 0;
-  container.style.height = `${contentHeight}px`;
+  container.style.height = String(contentHeight) + 'px';
   container.style.minHeight = '0';
   container.style.overflow = 'hidden';
 }
@@ -94,30 +118,53 @@ function normalizeRotationMs(value, fallback) {
     : fallback;
 }
 
-function selectRandomAdUnits(units, configuredCount) {
-  const count = Math.min(units.length, normalizeVisibleAdCount(configuredCount));
-  const selected = units.slice();
-  for (let index = selected.length - 1; index > 0; index -= 1) {
+function shuffleAdUnits(units) {
+  const shuffled = units.slice();
+  for (let index = shuffled.length - 1; index > 0; index -= 1) {
     const randomIndex = Math.floor(Math.random() * (index + 1));
-    [selected[index], selected[randomIndex]] = [selected[randomIndex], selected[index]];
+    [shuffled[index], shuffled[randomIndex]] = [shuffled[randomIndex], shuffled[index]];
+  }
+  return shuffled;
+}
+
+function adKeys(units) {
+  return new Set(units.map(unit => unit.key));
+}
+
+function selectAdGroup(units, configuredCount, reservedUnits, previousUnits) {
+  const count = Math.min(units.length, normalizeVisibleAdCount(configuredCount));
+  if (!count) return [];
+  const reservedKeys = adKeys(reservedUnits || []);
+  const previousKeys = adKeys(previousUnits || []);
+  const available = units.filter(unit => !reservedKeys.has(unit.key));
+  const fresh = shuffleAdUnits(available.filter(unit => !previousKeys.has(unit.key)));
+  if (fresh.length >= count) return fresh.slice(0, count);
+  const selected = fresh.slice();
+  const selectedKeys = new Set(selected.map(unit => unit.key));
+  const fallback = shuffleAdUnits(available.filter(unit => !selectedKeys.has(unit.key)));
+  selected.push(...fallback);
+  if (selected.length < count) {
+    const crossGroupFallback = shuffleAdUnits(units.filter(unit => !selectedKeys.has(unit.key)));
+    selected.push(...crossGroupFallback);
   }
   return selected.slice(0, count);
 }
 
-function renderFixedAdSide(containerId, units, offset, configuredCount) {
+function renderFixedAdSide(containerId, units, configuredCount) {
   const container = document.getElementById(containerId);
   if (!container) return;
   const visibleCount = Math.min(units.length, normalizeVisibleAdCount(configuredCount));
   setAdSideHeight(container, visibleCount);
   container.replaceChildren();
   for (let index = 0; index < visibleCount; index += 1) {
-    const unit = units[(offset + index) % units.length];
+    const unit = units[index];
     const slot = document.createElement('div');
     slot.className = 'ad-320-slot';
-    slot.style.height = `${AD_SLOT_HEIGHT}px`;
-    slot.style.minHeight = `${AD_SLOT_HEIGHT}px`;
-    slot.style.flex = `0 0 ${AD_SLOT_HEIGHT}px`;
+    slot.style.height = String(AD_SLOT_HEIGHT) + 'px';
+    slot.style.minHeight = String(AD_SLOT_HEIGHT) + 'px';
+    slot.style.flex = '0 0 ' + String(AD_SLOT_HEIGHT) + 'px';
     slot.dataset.adIndex = String(index);
+    slot.dataset.adKey = unit.key;
     const configScript = document.createElement('script');
     configScript.textContent = 'window.atOptions = ' + JSON.stringify({
       key: unit.key,
@@ -130,6 +177,11 @@ function renderFixedAdSide(containerId, units, offset, configuredCount) {
     providerScript.src = unit.src;
     providerScript.async = false;
     providerScript.dataset.fixedAdSlot = containerId;
+    providerScript.addEventListener('error', () => {
+      slot.replaceChildren();
+      slot.classList.add('ad-slot-load-error');
+      slot.textContent = 'Advertisement unavailable';
+    });
     slot.append(configScript, providerScript);
     container.appendChild(slot);
   }
@@ -146,39 +198,43 @@ function stopFixedAdRotation() {
   }
 }
 
+function rotateTopAds() {
+  if (!adPool.length) {
+    currentTopAdUnits = [];
+    renderMissingAdSlots('adTopAds', fixedAdTopVisibleCount);
+    return;
+  }
+  currentTopAdUnits = selectAdGroup(adPool, fixedAdTopVisibleCount, currentBottomAdUnits, currentTopAdUnits);
+  renderFixedAdSide('adTopAds', currentTopAdUnits, fixedAdTopVisibleCount);
+}
+
+function rotateBottomAds() {
+  if (!adPool.length) {
+    currentBottomAdUnits = [];
+    renderMissingAdSlots('adBottomAds', fixedAdBottomVisibleCount);
+    return;
+  }
+  currentBottomAdUnits = selectAdGroup(adPool, fixedAdBottomVisibleCount, currentTopAdUnits, currentBottomAdUnits);
+  renderFixedAdSide('adBottomAds', currentBottomAdUnits, fixedAdBottomVisibleCount);
+}
+
 function startFixedAdRotation(units, config = {}) {
   stopFixedAdRotation();
   const topContainer = document.getElementById('adTopAds');
   const bottomContainer = document.getElementById('adBottomAds');
   if (!topContainer || !bottomContainer) return;
-  if (!units.length) {
-    renderMissingAdSlot('adTopAds');
-    renderMissingAdSlot('adBottomAds');
-    return;
-  }
-
-  const topVisibleCount = normalizeVisibleAdCount(config.topVisibleCount);
-  const bottomVisibleCount = normalizeVisibleAdCount(config.bottomVisibleCount);
-  const topRotationMs = normalizeRotationMs(config.topRotationMs, DEFAULT_TOP_FIXED_AD_ROTATION_MS);
-  const bottomRotationMs = normalizeRotationMs(config.bottomRotationMs, DEFAULT_BOTTOM_FIXED_AD_ROTATION_MS);
-  const renderTopAds = () => renderFixedAdSide(
-    'adTopAds',
-    selectRandomAdUnits(units, topVisibleCount),
-    0,
-    topVisibleCount
-  );
-  const renderBottomAds = () => renderFixedAdSide(
-    'adBottomAds',
-    selectRandomAdUnits(units, bottomVisibleCount),
-    0,
-    bottomVisibleCount
-  );
-
-  renderTopAds();
-  renderBottomAds();
-  if (units.length > 1) {
-    fixedAdTopRotationTimer = window.setInterval(renderTopAds, topRotationMs);
-    fixedAdBottomRotationTimer = window.setInterval(renderBottomAds, bottomRotationMs);
+  adPool = units.slice();
+  fixedAdTopVisibleCount = normalizeVisibleAdCount(config.topVisibleCount);
+  fixedAdBottomVisibleCount = normalizeVisibleAdCount(config.bottomVisibleCount);
+  fixedAdTopRotationMs = normalizeRotationMs(config.topRotationMs, DEFAULT_TOP_FIXED_AD_ROTATION_MS);
+  fixedAdBottomRotationMs = normalizeRotationMs(config.bottomRotationMs, DEFAULT_BOTTOM_FIXED_AD_ROTATION_MS);
+  currentTopAdUnits = [];
+  currentBottomAdUnits = [];
+  rotateTopAds();
+  rotateBottomAds();
+  if (adPool.length > 1) {
+    fixedAdTopRotationTimer = window.setInterval(rotateTopAds, fixedAdTopRotationMs);
+    fixedAdBottomRotationTimer = window.setInterval(rotateBottomAds, fixedAdBottomRotationMs);
   }
 }
 function getSocialAdStage() {
@@ -231,7 +287,7 @@ function startSocialAdRotation(scripts) {
 }
 
 function loadConfiguredAds() {
-  const units = configuredFixedAdUnits();
+  const units = loadAdPool();
   const socialScripts = configuredSocialAdScripts();
   const fixedConfig = {
     topVisibleCount: State.config?.fixedAdTopCount,
