@@ -38,13 +38,13 @@ async function finishVerifiedAd() {
 
 /* ===================== إعلانات 320×50 وSocial — إعدادات من الخادم ===================== */
 const MAX_VISIBLE_FIXED_ADS = 3;
+const DEFAULT_TOP_FIXED_AD_ROTATION_MS = 5000;
 const DEFAULT_BOTTOM_FIXED_AD_ROTATION_MS = 10000;
 const SOCIAL_AD_DURATION_MS = 5000;
 const AD_SLOT_HEIGHT = 50;
 const AD_SLOT_GAP = 5;
 let fixedAdSignature = '';
-let fixedAdTopOffset = 0;
-let fixedAdBottomOffset = 0;
+let fixedAdTopRotationTimer = null;
 let fixedAdBottomRotationTimer = null;
 let socialAdRotationTimer = null;
 let socialAdRunId = 0;
@@ -94,6 +94,16 @@ function normalizeRotationMs(value, fallback) {
     : fallback;
 }
 
+function selectRandomAdUnits(units, configuredCount) {
+  const count = Math.min(units.length, normalizeVisibleAdCount(configuredCount));
+  const selected = units.slice();
+  for (let index = selected.length - 1; index > 0; index -= 1) {
+    const randomIndex = Math.floor(Math.random() * (index + 1));
+    [selected[index], selected[randomIndex]] = [selected[randomIndex], selected[index]];
+  }
+  return selected.slice(0, count);
+}
+
 function renderFixedAdSide(containerId, units, offset, configuredCount) {
   const container = document.getElementById(containerId);
   if (!container) return;
@@ -126,6 +136,10 @@ function renderFixedAdSide(containerId, units, offset, configuredCount) {
 }
 
 function stopFixedAdRotation() {
+  if (fixedAdTopRotationTimer) {
+    window.clearInterval(fixedAdTopRotationTimer);
+    fixedAdTopRotationTimer = null;
+  }
   if (fixedAdBottomRotationTimer) {
     window.clearInterval(fixedAdBottomRotationTimer);
     fixedAdBottomRotationTimer = null;
@@ -145,23 +159,26 @@ function startFixedAdRotation(units, config = {}) {
 
   const topVisibleCount = normalizeVisibleAdCount(config.topVisibleCount);
   const bottomVisibleCount = normalizeVisibleAdCount(config.bottomVisibleCount);
-  const bottomRotationMs = normalizeRotationMs(
-    config.bottomRotationMs ?? config.rotationMs,
-    DEFAULT_BOTTOM_FIXED_AD_ROTATION_MS
+  const topRotationMs = normalizeRotationMs(config.topRotationMs, DEFAULT_TOP_FIXED_AD_ROTATION_MS);
+  const bottomRotationMs = normalizeRotationMs(config.bottomRotationMs, DEFAULT_BOTTOM_FIXED_AD_ROTATION_MS);
+  const renderTopAds = () => renderFixedAdSide(
+    'adTopAds',
+    selectRandomAdUnits(units, topVisibleCount),
+    0,
+    topVisibleCount
   );
-  fixedAdTopOffset = 0;
-  fixedAdBottomOffset = 0;
+  const renderBottomAds = () => renderFixedAdSide(
+    'adBottomAds',
+    selectRandomAdUnits(units, bottomVisibleCount),
+    0,
+    bottomVisibleCount
+  );
 
-  // New server config reloads both sides together.
-  renderFixedAdSide('adTopAds', units, fixedAdTopOffset, topVisibleCount);
-  renderFixedAdSide('adBottomAds', units, fixedAdBottomOffset, bottomVisibleCount);
-
-  // Only the three bottom slots rotate automatically every 10 seconds.
+  renderTopAds();
+  renderBottomAds();
   if (units.length > 1) {
-    fixedAdBottomRotationTimer = window.setInterval(() => {
-      fixedAdBottomOffset = (fixedAdBottomOffset + 1) % units.length;
-      renderFixedAdSide('adBottomAds', units, fixedAdBottomOffset, bottomVisibleCount);
-    }, bottomRotationMs);
+    fixedAdTopRotationTimer = window.setInterval(renderTopAds, topRotationMs);
+    fixedAdBottomRotationTimer = window.setInterval(renderBottomAds, bottomRotationMs);
   }
 }
 function getSocialAdStage() {
@@ -219,6 +236,7 @@ function loadConfiguredAds() {
   const fixedConfig = {
     topVisibleCount: State.config?.fixedAdTopCount,
     bottomVisibleCount: State.config?.fixedAdBottomCount,
+    topRotationMs: State.config?.fixedAdTopRotationMs,
     bottomRotationMs: State.config?.fixedAdBottomRotationMs ?? State.config?.fixedAdRotationMs,
   };
   const signature = JSON.stringify({ units, fixedConfig, social: socialScripts });
