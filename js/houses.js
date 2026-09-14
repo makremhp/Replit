@@ -44,6 +44,15 @@ const HOUSES = [
     production: 0.0002,
     perkDesc: { ar: 'إنتاج 0.0002 دولار كل دقيقتين', en: 'Produces $0.0002 every two minutes' },
   },
+  {
+    id: 6,
+    key: 'desert',
+    name: { ar: 'قلعة الصحراء', en: 'Desert Castle' },
+    img: 'asesst/house-desert.png',
+    unlock: { type: 'referrals', need: 3 },
+    coinMultiplier: 0.80,
+    perkDesc: { ar: 'زيادة 80% على أرباح جمع العملات', en: '80% bonus on collected coins' },
+  },
 ];
 
 function hName(house) { return house.name[LANG]; }
