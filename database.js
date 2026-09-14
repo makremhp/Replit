@@ -223,7 +223,7 @@ async function migrateLegacyUsers(client) {
     last_coin_spawn_at: 'BIGINT',
   };
   for (const [name, type] of Object.entries(additions)) {
-    if (!names.has(name)) await client.query(`ALTER TABLE users ADD COLUMN ${name} ${type}`);
+    await client.query(`ALTER TABLE users ADD COLUMN IF NOT EXISTS ${name} ${type}`);
   }
   if (names.has('client_id')) {
     await client.query(
@@ -242,12 +242,8 @@ async function migrateLegacyUsers(client) {
   );
   if (withdrawalColumns.rows.length) {
     const withdrawalNames = new Set(withdrawalColumns.rows.map(row => row.column_name));
-    if (!withdrawalNames.has('telegram_user_id')) {
-      await client.query('ALTER TABLE withdrawals ADD COLUMN telegram_user_id BIGINT');
-    }
-    if (!withdrawalNames.has('fee')) {
-      await client.query('ALTER TABLE withdrawals ADD COLUMN fee NUMERIC(18, 8) NOT NULL DEFAULT 0');
-    }
+    await client.query('ALTER TABLE withdrawals ADD COLUMN IF NOT EXISTS telegram_user_id BIGINT');
+    await client.query('ALTER TABLE withdrawals ADD COLUMN IF NOT EXISTS fee NUMERIC(18, 8) NOT NULL DEFAULT 0');
     if (withdrawalNames.has('client_id')) {
       await client.query(
         `UPDATE withdrawals w SET telegram_user_id = u.telegram_user_id
