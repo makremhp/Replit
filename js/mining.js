@@ -2,7 +2,7 @@
 const stage = document.getElementById('miningStage');
 const activeCoins = new Map();
 let coinAudioContext = null;
-let queuedCoinId = '';
+const collectingCoinIds = new Set();
 
 function playCoinCollectSound() {
   const AudioContext = window.AudioContext || window.webkitAudioContext;
@@ -56,15 +56,15 @@ function removeLocalCoin(id) {
 
 function collectCoinElement(element) {
   const coinId = element.dataset.coinId;
-  if (!coinId || queuedCoinId) return;
-  queuedCoinId = coinId;
+  if (!coinId || collectingCoinIds.has(coinId)) return;
+  collectingCoinIds.add(coinId);
   const x = Number(element.dataset.x) || 0;
   const y = Number(element.dataset.y) || 0;
   const value = Number(element.dataset.value) || 0;
   removeLocalCoin(coinId);
   playCoinCollectSound();
   spawnFloatText(x + 18, y + 18, `+${value.toFixed(5)}$`);
-  collectCoinFromServer(coinId).finally(() => { queuedCoinId = ''; });
+  collectCoinFromServer(coinId).finally(() => { collectingCoinIds.delete(coinId); });
 }
 
 function renderServerCoins(coins) {
