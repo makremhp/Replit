@@ -46,6 +46,9 @@ function renderBoxes() {
     box.addEventListener('click', () => openHouseModal(house));
     wrap.appendChild(box);
   });
+  if (typeof renderedHouseSignature !== 'undefined') {
+    renderedHouseSignature = `${State.activeHouseId}|${State.unlockedHouses.join(',')}`;
+  }
 }
 
 function preloadHouseAssets() {
