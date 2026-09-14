@@ -129,8 +129,20 @@ app.use('/api', asyncRoute(async (request, _response, next) => {
 }));
 
 app.get('/api/health', asyncRoute(async (_request, response) => {
-  await ensureDatabase();
-  response.json({ ok: true, database: 'postgresql', telegramMiniApp: true });
+  try {
+    await ensureDatabase();
+    response.json({ ok: true, database: 'postgresql', telegramMiniApp: true });
+  } catch (error) {
+    const message = String(error?.message || 'Database initialization failed')
+      .replace(/postgres(?:ql)?:\/\/[^\s]+/gi, 'postgresql://<redacted>')
+      .slice(0, 240);
+    response.status(503).json({
+      ok: false,
+      database: 'postgresql',
+      errorCode: error?.code || null,
+      error: message,
+    });
+  }
 }));
 
 app.get('/api/state', asyncRoute(async (request, response) => {
