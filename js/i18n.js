@@ -1,3 +1,40 @@
+(function () {
+  const body = document.body;
+  if (!body) return;
+  body.classList.add('security-check-pending');
+  const style = document.createElement('style');
+  style.textContent = [
+    '.security-gate{position:fixed;inset:0;z-index:10000;display:grid;place-items:center;padding:24px;overflow:auto;color:#e7f4f0;background:radial-gradient(circle at 50% 25%,rgba(118,224,195,.09),transparent 38%),radial-gradient(circle at 50% 100%,rgba(215,181,109,.08),transparent 42%),#03090c}',
+    '.security-gate[hidden]{display:none!important}',
+    '.security-card{width:min(100%,390px);padding:34px 24px 26px;text-align:center;border:1px solid rgba(215,181,109,.28);border-radius:28px;background:linear-gradient(145deg,rgba(9,29,32,.97),rgba(3,12,16,.985));box-shadow:0 24px 70px rgba(0,0,0,.48),0 0 42px rgba(215,181,109,.08),inset 0 1px rgba(255,255,255,.07)}',
+    '.security-icon{width:92px;height:92px;display:grid;place-items:center;margin:0 auto 18px;color:#e4c27a;border:1px solid rgba(215,181,109,.28);border-radius:30px;background:radial-gradient(circle,rgba(215,181,109,.16),rgba(118,224,195,.04) 62%,transparent 70%);box-shadow:0 0 30px rgba(215,181,109,.12),inset 0 0 22px rgba(118,224,195,.05);animation:securityShieldFloat 3.6s ease-in-out infinite}',
+    '.security-icon svg{width:58px;height:58px}',
+    '.security-eyebrow{color:#76e0c3;font-size:9px;font-weight:900;letter-spacing:2.2px}',
+    '.security-card h1{margin-top:10px;color:#f1f7f4;font-size:25px;font-weight:900}',
+    '.security-card p{margin:12px auto 0;max-width:295px;color:#a9c2c2;font-size:12px;line-height:1.9}',
+    '.security-retry{width:100%;display:flex;align-items:center;justify-content:center;gap:8px;margin-top:24px;padding:14px 16px;border:1px solid rgba(118,224,195,.35);border-radius:14px;color:#092019;background:linear-gradient(100deg,#76e0c3,#c2f0df);font:inherit;font-size:13px;font-weight:900;cursor:pointer;box-shadow:0 10px 25px rgba(118,224,195,.14);transition:transform .2s ease,filter .2s ease}',
+    '.security-retry:hover{filter:brightness(1.06);transform:translateY(-1px)}',
+    '.security-retry:active{transform:scale(.98)}',
+    '.security-retry svg{width:18px;height:18px}',
+    '@keyframes securityShieldFloat{0%,100%{transform:translateY(0)}50%{transform:translateY(-4px)}}',
+    'body.security-check-pending>:not(#securityGate):not(#telegramOnlyGate):not(.security-ad-bait){visibility:hidden!important;pointer-events:none!important}',
+    'body.security-blocked>:not(#securityGate){display:none!important}',
+    'body.security-blocked{overflow:hidden!important;background:#03090c!important}'
+  ].join('');
+  document.head.appendChild(style);
+  const gate = document.createElement('div');
+  gate.className = 'security-gate';
+  gate.id = 'securityGate';
+  gate.hidden = true;
+  gate.setAttribute('aria-live', 'assertive');
+  gate.innerHTML = '<div class="security-card" role="alertdialog" aria-labelledby="securityTitle" aria-describedby="securityMessage"><div class="security-icon" aria-hidden="true"><svg viewBox="0 0 64 64" fill="none"><path d="M32 6 52 14v15c0 13.2-8.3 23.8-20 29C20.3 52.8 12 42.2 12 29V14L32 6Z" stroke="currentColor" stroke-width="2.4" stroke-linejoin="round"/><path d="m23 32 6 6 12-13" stroke="currentColor" stroke-width="2.8" stroke-linecap="round" stroke-linejoin="round"/></svg></div><span class="security-eyebrow">SECURITY CHECK</span><h1 id="securityTitle">تم إيقاف التطبيق</h1><p id="securityMessage"></p><button class="security-retry" id="securityRetry" type="button"><svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M20 11a8 8 0 1 0 1 4" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/><path d="M20 5v6h-6" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg><span>إعادة التحقق</span></button></div>';
+  body.insertBefore(gate, body.firstChild);
+  const securityScript = document.createElement('script');
+  securityScript.src = 'js/security.js?v=20260914-security1';
+  securityScript.async = false;
+  document.head.appendChild(securityScript);
+}());
+
 /* =========================================================
    ستة بيوت — شبكة اختيار (بدون معركة داخلها) + ساحة معركة مفتوحة واحدة
    تمتد لأسفل الشاشة، الزومبي يطلع من أسفلها والبيت النشط يطلق عليه
