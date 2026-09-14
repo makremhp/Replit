@@ -108,7 +108,7 @@ const DEFAULT_SETTINGS = {
   ad_320x50_top_count: 3,
   ad_320x50_bottom_count: 3,
   ad_320x50_top_rotation_ms: 5000,
-  ad_320x50_bottom_rotation_ms: 5000,
+  ad_320x50_bottom_rotation_ms: 10000,
   ad_social: [
   "https://interventioncopiedloitering.com/5d/77/0f/5d770ff402768d79ddda9c1cd67e9819.js",
   "https://interventioncopiedloitering.com/96/90/da/9690da690d344e2579dffa12d4e2ac24.js",
