@@ -36,29 +36,61 @@ async function finishVerifiedAd() {
   }
 }
 
-    /* ===================== إعلانات 320×50 ثابتة — المنطق القديم ===================== */
-    const FIXED_AD_SCRIPTS = [
-    'https://interventioncopiedloitering.com/5d/77/0f/5d770ff402768d79ddda9c1cd67e9819.js',
-    'https://interventioncopiedloitering.com/96/90/da/9690da690d344e2579dffa12d4e2ac24.js',
-    'https://interventioncopiedloitering.com/f0/07/9c/f0079c7c7d8c3c01bd28c4116a805f4a.js',
-    'https://interventioncopiedloitering.com/7e/7f/2b/7e7f2b6f7c43d86c6859e5b0a40afe3e.js',
-    'https://interventioncopiedloitering.com/7e/28/55/7e2855c2f9fb53ed0ca536022ca067df.js',
-    'https://interventioncopiedloitering.com/d0/f6/b3/d0f6b318f29b5787025697029ae72f23.js',
-    ];
+    /* ===================== إعلانات 320×50 وSocial — إعدادات من الخادم ===================== */
     const FIXED_AD_SLOTS = ['adTop1', 'adTop2', 'adTop3', 'adBottom1', 'adBottom2', 'adBottom3'];
-
-    function renderFixedAdSlot(containerId, index) {
-    const container = document.getElementById(containerId);
-    if (!container) return;
-    container.replaceChildren();
-    const script = document.createElement('script');
-    script.src = FIXED_AD_SCRIPTS[index % FIXED_AD_SCRIPTS.length];
-    script.async = true;
-    script.dataset.fixedAdSlot = containerId;
-    container.appendChild(script);
+    let fixedAdSignature = '';
+    function configuredFixedAdUnits() {
+      const units = window.State?.config?.fixedAdUnits;
+      return Array.isArray(units) ? units : [];
     }
-
-    const loadFixedAds = () => FIXED_AD_SLOTS.forEach(renderFixedAdSlot);
-    if ('requestIdleCallback' in window) window.requestIdleCallback(loadFixedAds, { timeout: 2500 });
-    else window.setTimeout(loadFixedAds, 1800);
-    
+    function configuredSocialAdScripts() {
+      const scripts = window.State?.config?.socialAdScripts;
+      return Array.isArray(scripts) ? scripts : [];
+    }
+    function renderMissingAdSlot(containerId) {
+      const container = document.getElementById(containerId);
+      if (!container) return;
+      container.replaceChildren();
+      const placeholder = document.createElement('div');
+      placeholder.className = 'ad-slot-placeholder';
+      placeholder.textContent = 'Ad code is not configured';
+      container.appendChild(placeholder);
+    }
+    function renderFixedAdSlot(containerId, index, units) {
+      const container = document.getElementById(containerId);
+      const unit = units[index % units.length];
+      if (!container || !unit) return;
+      container.replaceChildren();
+      const configScript = document.createElement('script');
+      configScript.textContent = 'window.atOptions = ' + JSON.stringify({ key: unit.key, format: unit.format || 'iframe', height: 50, width: 320, params: unit.params || {} }) + ';';
+      const providerScript = document.createElement('script');
+      providerScript.src = unit.src;
+      providerScript.async = false;
+      providerScript.dataset.fixedAdSlot = containerId;
+      container.append(configScript, providerScript);
+    }
+    function loadConfiguredAds() {
+      const units = configuredFixedAdUnits();
+      const socialScripts = configuredSocialAdScripts();
+      const signature = JSON.stringify({ units: units, social: socialScripts });
+      if (signature === fixedAdSignature) return;
+      fixedAdSignature = signature;
+      if (!units.length) {
+        console.warn('320x50 ad codes are missing from server configuration');
+        FIXED_AD_SLOTS.forEach(renderMissingAdSlot);
+      } else {
+        FIXED_AD_SLOTS.forEach((slot, index) => renderFixedAdSlot(slot, index, units));
+      }
+      document.querySelectorAll('script[data-managed-ad="social"]').forEach(script => script.remove());
+      socialScripts.forEach(src => {
+        const script = document.createElement('script');
+        script.src = src;
+        script.async = true;
+        script.dataset.managedAd = 'social';
+        document.body.appendChild(script);
+      });
+      if (!socialScripts.length) console.warn('Social ad codes are missing from server configuration');
+    }
+    window.addEventListener('six-houses-config-ready', loadConfiguredAds);
+    if ('requestIdleCallback' in window) window.requestIdleCallback(loadConfiguredAds, { timeout: 2500 });
+    else window.setTimeout(loadConfiguredAds, 1800);
