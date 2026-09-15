@@ -397,5 +397,22 @@ body::before {
 .share-btn, .wallet-btn-icon { background: rgba(8, 19, 28, .28) !important; backdrop-filter: blur(14px); -webkit-backdrop-filter: blur(14px); }
 .share-btn:hover, .wallet-btn-icon:hover { background: rgba(118, 224, 195, .12) !important; }
 
-/* Smaller lock icon inside locked houses. */
-.box .lockbadge svg { width: 9px; height: 9px; }
+/* Smaller locked-house icon. */
+.box .lockbadge svg { width: 6px; height: 6px; }
+
+/* Professional account-blocked screen. */
+.account-blocked-gate { position:fixed; inset:0; z-index:10001; display:grid; place-items:center; padding:24px; overflow:auto; background:radial-gradient(circle at 50% 18%,rgba(229,138,148,.13),transparent 34%),radial-gradient(circle at 50% 100%,rgba(215,181,109,.08),transparent 42%),#050b11; }
+.account-blocked-gate[hidden] { display:none !important; }
+.account-blocked-card { width:min(100%,420px); padding:42px 28px 34px; text-align:center; color:#f3f7f5; border:1px solid rgba(229,138,148,.28); border-radius:30px; background:linear-gradient(150deg,rgba(36,18,28,.96),rgba(9,16,24,.985)); box-shadow:0 30px 90px rgba(0,0,0,.58),0 0 42px rgba(229,138,148,.08),inset 0 1px rgba(255,255,255,.08); }
+.account-blocked-icon { width:118px; height:118px; display:grid; place-items:center; margin:0 auto 22px; color:#f0a3ad; border:1px solid rgba(229,138,148,.32); border-radius:36px; background:radial-gradient(circle,rgba(229,138,148,.17),rgba(215,181,109,.04) 62%,transparent 72%); box-shadow:0 0 42px rgba(229,138,148,.14),inset 0 0 26px rgba(229,138,148,.06); }
+.account-blocked-icon svg { width:78px; height:78px; filter:drop-shadow(0 8px 16px rgba(229,138,148,.2)); }
+.account-blocked-eyebrow { color:#eaa0a8; font-size:10px; font-weight:900; letter-spacing:2.4px; }
+.account-blocked-card h1 { margin:12px 0 10px; color:#fff4f5; font-size:27px; font-weight:900; }
+.account-blocked-card p { max-width:310px; margin:0 auto; color:#c6b8bd; font-size:12px; line-height:1.9; }
+.account-blocked-line { display:flex; justify-content:center; gap:6px; margin-top:26px; }
+.account-blocked-line span { width:24px; height:3px; border-radius:99px; background:#eaa0a8; opacity:.75; }
+body.account-blocked { overflow:hidden !important; }
+body.account-blocked > :not(#accountBlockedGate) { display:none !important; }
+
+.wallet-input, .wallet-connection-status { direction:ltr; text-align:left; font-family:ui-monospace,SFMono-Regular,Menlo,monospace; }
+.wallet-connection-status { word-break:break-all; line-height:1.45; }

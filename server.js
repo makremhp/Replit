@@ -264,6 +264,7 @@ app.use((error, _request, response, _next) => {
   console.error(error);
   response.status(error.statusCode || 500).json({
     error: error.statusCode ? error.message : 'Internal server error',
+    code: error.statusCode ? (error.code || null) : null,
   });
 });
 

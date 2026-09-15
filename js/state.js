@@ -12,6 +12,21 @@ function showTelegramOnlyGate() {
   if (gate) gate.hidden = false;
 }
 
+
+function showAccountBlockedScreen() {
+  const gate = document.getElementById('accountBlockedGate');
+  const title = document.getElementById('accountBlockedTitle');
+  const message = document.getElementById('accountBlockedMessage');
+  if (title) title.textContent = T.accountBlockedTitle;
+  if (message) message.textContent = T.accountBlockedMessage;
+  if (gate) gate.hidden = false;
+  document.body.classList.add('account-blocked');
+}
+
+function isAccountBlockedError(error) {
+  return error?.code === 'ACCOUNT_BANNED';
+}
+
 function getTelegramInitData() {
   return String(window.Telegram?.WebApp?.initData || '');
 }
@@ -133,7 +148,12 @@ async function apiRequest(path, method = 'GET', body = null, idempotency = '') {
   });
   let data = null;
   try { data = await response.json(); } catch (_) {}
-  if (!response.ok) throw new Error(data?.error || `API returned ${response.status}`);
+  if (!response.ok) {
+    const error = new Error(data?.error || `API returned ${response.status}`);
+    error.status = response.status;
+    error.code = data?.code || '';
+    throw error;
+  }
   return data;
 }
 
@@ -188,6 +208,10 @@ async function loadStateFromServer() {
     return true;
   } catch (error) {
     clearServerState();
+    if (isAccountBlockedError(error)) {
+      showAccountBlockedScreen();
+      return false;
+    }
     renderBalance();
     console.error('Server state unavailable; local balance is disabled.', error);
     if (typeof showToast === 'function') showToast('قاعدة البيانات غير متاحة');
@@ -222,6 +246,7 @@ async function refreshStateFromServer() {
     applyServerState(await apiRequest(STATE_API_URL));
   } catch (error) {
     State.serverConnected = false;
+    if (isAccountBlockedError(error)) showAccountBlockedScreen();
     console.error('Server refresh failed.', error);
   }
 }
@@ -246,6 +271,7 @@ function collectCoinFromServer(coinId) {
       return true;
     } catch (error) {
       console.error('Coin collection rejected by server.', error);
+      if (isAccountBlockedError(error)) showAccountBlockedScreen();
       if (typeof showToast === 'function') showToast(error.message || 'تعذر جمع العملة');
       await refreshStateFromServer();
       return false;

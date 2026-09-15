@@ -146,6 +146,7 @@ const schema = `
     ton_address TEXT,
     device_id TEXT,
     risk_score INTEGER NOT NULL DEFAULT 0,
+    is_banned BOOLEAN NOT NULL DEFAULT FALSE,
     last_ad_completed_at BIGINT,
     last_coin_spawn_at BIGINT,
     created_at BIGINT NOT NULL,
@@ -289,9 +290,10 @@ const schema = `
 
 let initialized = false;
 
-function appError(message, statusCode = 400) {
+function appError(message, statusCode = 400, code = 'APP_ERROR') {
   const error = new Error(message);
   error.statusCode = statusCode;
+  error.code = code;
   return error;
 }
 
@@ -538,6 +540,7 @@ async function getOrCreateUser(telegramUserId, context = {}, client = pool) {
     [userId]
   );
   const user = userResult.rows[0];
+  if (user?.is_banned) throw appError('تم حظر حسابك', 403, 'ACCOUNT_BANNED');
   if (context.deviceId) {
     const device = String(context.deviceId).slice(0, 160);
     await client.query(

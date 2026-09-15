@@ -17,7 +17,7 @@
     '.security-retry:active{transform:scale(.98)}',
     '.security-retry svg{width:18px;height:18px}',
     '@keyframes securityShieldFloat{0%,100%{transform:translateY(0)}50%{transform:translateY(-4px)}}',
-    'body.security-check-pending>:not(#securityGate):not(#telegramOnlyGate):not(.security-ad-bait){visibility:hidden!important;pointer-events:none!important}',
+    'body.security-check-pending>:not(#securityGate):not(#telegramOnlyGate):not(#accountBlockedGate):not(.security-ad-bait){visibility:hidden!important;pointer-events:none!important}',
     'body.security-blocked>:not(#securityGate){display:none!important}',
     'body.security-blocked{overflow:hidden!important;background:#03090c!important}'
   ].join('');
@@ -97,6 +97,8 @@ const I18N = {
     telegramOnlyCollect: 'لجمع العملات، افتح التطبيق من داخل Telegram',
     telegramOnlyAd: 'لمشاهدة الإعلان واحتساب المكافأة، افتح التطبيق من داخل Telegram',
     guestWithdraw: 'السحب متاح من داخل تطبيق Telegram فقط',
+    accountBlockedTitle: 'تم حظر حسابك',
+    accountBlockedMessage: 'تم حظر هذا الحساب من استخدام التطبيق. إذا كنت تعتقد أن هذا حدث بالخطأ، تواصل مع الإدارة.',
     arenaCaption: 'منطقة تعدين العملات',
   },
   en: {
@@ -150,6 +152,8 @@ const I18N = {
     telegramOnlyCollect: 'Open the app inside Telegram to collect coins',
     telegramOnlyAd: 'Open the app inside Telegram to watch ads and receive rewards',
     guestWithdraw: 'Withdrawals are available inside the Telegram app only',
+    accountBlockedTitle: 'Your account has been blocked',
+    accountBlockedMessage: 'This account has been blocked from using the app. Contact the administration if you believe this is a mistake.',
     arenaCaption: 'Coin mining area',
   },
 };
