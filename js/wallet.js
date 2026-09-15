@@ -177,6 +177,10 @@ function openWalletPage() {
   disconnectWalletBtnText.textContent = T.disconnectWallet;
   copyAddressBtn.textContent = T.copyAddress;
   withdrawBtn.innerHTML = `<svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M12 3v12M7 10l5 5 5-5M5 20h14" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/></svg><span>${T.withdrawBtn}</span>`;
+  const guestVisitor = window.isTelegramMiniApp === false;
+  withdrawBtn.disabled = guestVisitor;
+  withdrawBtn.setAttribute('aria-disabled', String(guestVisitor));
+  withdrawBtn.title = guestVisitor ? T.guestWithdraw : '';
   renderBalance();
   renderWalletProgress();
   walletPage.classList.add('show');

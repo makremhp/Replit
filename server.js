@@ -6,6 +6,7 @@ const { verifyTelegramInitData } = require('./telegram-auth');
 const {
   pool,
   initDatabase,
+  readPublicConfig,
   readState,
   writeState,
   collectCoin,
@@ -152,6 +153,13 @@ app.post(
 );
 
 app.use(express.json({ limit: '32kb' }));
+
+// Public display settings are safe to expose to guests; economic actions remain Telegram-authenticated.
+app.get('/api/public-config', asyncRoute(async (_request, response) => {
+  await ensureDatabase();
+  response.set('Cache-Control', 'public, max-age=60, stale-while-revalidate=300');
+  response.json(await readPublicConfig());
+}));
 
 app.put('/api/admin/ad-config', asyncRoute(async (request, response) => {
   requireAdminSettingsToken(request);

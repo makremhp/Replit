@@ -94,6 +94,9 @@ const I18N = {
     withdrawSent: 'تم إرسال طلب السحب ✅',
     noAdAvailable: 'لا يوجد إعلان متاح حاليًا',
     collectCoin: 'اجمع العملة',
+    telegramOnlyCollect: 'لجمع العملات، افتح التطبيق من داخل Telegram',
+    telegramOnlyAd: 'لمشاهدة الإعلان واحتساب المكافأة، افتح التطبيق من داخل Telegram',
+    guestWithdraw: 'السحب متاح من داخل تطبيق Telegram فقط',
     arenaCaption: 'منطقة تعدين العملات',
   },
   en: {
@@ -144,6 +147,9 @@ const I18N = {
     withdrawSent: 'Withdrawal request sent ✅',
     noAdAvailable: 'No ad available right now',
     collectCoin: 'Collect coin',
+    telegramOnlyCollect: 'Open the app inside Telegram to collect coins',
+    telegramOnlyAd: 'Open the app inside Telegram to watch ads and receive rewards',
+    guestWithdraw: 'Withdrawals are available inside the Telegram app only',
     arenaCaption: 'Coin mining area',
   },
 };

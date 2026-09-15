@@ -14,6 +14,10 @@ function renderAdSlot(containerId, key) {
 }
 
 async function startVerifiedAd(houseId) {
+  if (window.isTelegramMiniApp === false) {
+    showToast(T.telegramOnlyAd);
+    return null;
+  }
   const targetHouseId = Number(houseId);
   if (!Number.isInteger(targetHouseId)) return null;
   try {

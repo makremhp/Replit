@@ -722,6 +722,13 @@ async function stateInsideTransaction(userId, client, now) {
   };
 }
 
+async function readPublicConfig() {
+  const result = await pool.query('SELECT key, value FROM system_settings');
+  const settings = { ...DEFAULT_SETTINGS, houses: HOUSES };
+  for (const row of result.rows) settings[row.key] = row.value;
+  return { config: safeConfig(settings) };
+}
+
 async function readState(userId, context = {}) {
   const client = await pool.connect();
   const now = Date.now();
@@ -1043,6 +1050,7 @@ module.exports = {
   HOUSES,
   pool,
   initDatabase,
+  readPublicConfig,
   readState,
   writeState,
   collectCoin,

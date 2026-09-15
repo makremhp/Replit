@@ -3,6 +3,8 @@ const STATE_API_URL = '/api/state';
 const telegramWebApp = window.Telegram?.WebApp || null;
 const hasTelegramSession = Boolean(telegramWebApp?.initData);
 const hasStateApi = window.location.protocol !== 'file:' && hasTelegramSession;
+const isGuestVisitor = !hasTelegramSession;
+window.isTelegramMiniApp = hasTelegramSession;
 const DEVICE_STORAGE_KEY = 'six-houses-device-id';
 
 function showTelegramOnlyGate() {
@@ -40,8 +42,6 @@ function idempotencyKey() {
 if (hasTelegramSession) {
   telegramWebApp.ready();
   telegramWebApp.expand();
-} else {
-  showTelegramOnlyGate();
 }
 
 const State = {
@@ -55,7 +55,14 @@ const State = {
   activeHouseId: 1,
   tonAddress: '',
   collectibles: [],
-  config: { minWithdrawal: 0.01, maxActiveCoins: 10 },
+  config: {
+    minWithdrawal: 0.01,
+    maxActiveCoins: 10,
+    fixedAdUnits: [],
+    socialAdScripts: [],
+    fixedAdTopCount: 3,
+    fixedAdBottomCount: 3,
+  },
   serverConnected: false,
   syncing: false,
 };
@@ -130,9 +137,49 @@ async function apiRequest(path, method = 'GET', body = null, idempotency = '') {
   return data;
 }
 
+
+function guestCollectibles() {
+  return Array.from({ length: 10 }, (_, index) => ({
+    id: `guest-coin-${index + 1}`,
+    value: 0.00005,
+    spawnedAt: Date.now(),
+    expiresAt: Date.now() + 120000,
+  }));
+}
+
+async function loadPublicConfig() {
+  try {
+    const response = await fetch('/api/public-config', { cache: 'no-store', headers: { accept: 'application/json' } });
+    if (!response.ok) throw new Error(`Public config returned ${response.status}`);
+    const payload = await response.json();
+    const config = payload?.config || payload;
+    if (config && typeof config === 'object') State.config = { ...State.config, ...config };
+  } catch (error) {
+    console.warn('Public display config unavailable; using local defaults.', error);
+  }
+}
+
+async function initializeGuestView() {
+  await loadPublicConfig();
+  State.telegramUserId = 'guest';
+  State.clientId = 'guest';
+  State.user = { id: 'guest', name: 'Guest', username: '', photoUrl: '' };
+  State.balance = 0;
+  State.reservedBalance = 0;
+  State.progress = { referrals: 0, ads: 0, adsByHouse: {}, deposit: 0 };
+  State.unlockedHouses = [1];
+  State.tonAddress = '';
+  State.collectibles = guestCollectibles();
+  State.serverConnected = false;
+  window.dispatchEvent(new Event('six-houses-config-ready'));
+  renderBalance();
+  if (typeof renderBoxes === 'function') renderBoxes();
+  if (typeof renderServerCoins === 'function') renderServerCoins(State.collectibles);
+}
+
 async function loadStateFromServer() {
   if (!hasStateApi) {
-    clearServerState();
+    await initializeGuestView();
     return false;
   }
   try {
@@ -180,6 +227,13 @@ async function refreshStateFromServer() {
 }
 
 function collectCoinFromServer(coinId) {
+  if (isGuestVisitor) {
+    showToast(T.telegramOnlyCollect);
+    window.setTimeout(() => {
+      if (typeof renderServerCoins === 'function') renderServerCoins(State.collectibles || []);
+    }, 80);
+    return Promise.resolve(false);
+  }
   const request = collectQueue.then(async () => {
     if (!hasStateApi || !State.serverConnected) return false;
     try {

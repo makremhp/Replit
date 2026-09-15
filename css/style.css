@@ -384,3 +384,6 @@ body::before {
 .modal-share-btn { color:var(--gold-soft); border:1px solid rgba(215,181,109,.32); background:rgba(215,181,109,.08); }
 .modal-ad-btn:hover, .modal-share-btn:hover { filter:brightness(1.08); transform:translateY(-1px); }
 .modal-ad-btn:disabled { opacity:.62; cursor:wait; transform:none; }
+
+/* Guest mode: keep the wallet visible while clearly disabling withdrawals. */
+.wallet-action-btn:disabled { opacity: .45; cursor: not-allowed; filter: grayscale(.35); }
