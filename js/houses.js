@@ -2,7 +2,7 @@ const HOUSES = [
   {
     id: 1,
     key: 'fire',
-    name: { ar: 'قلعة النار', en: 'Fire Castle' },
+    name: { ar: 'المنجم الخشبي', en: 'Wooden Mine' },
     img: 'asesst/house-fire.png',
     unlocked: true,
     coinMultiplier: 0.20,
@@ -11,7 +11,7 @@ const HOUSES = [
   {
     id: 2,
     key: 'light',
-    name: { ar: 'قلعة النور', en: 'Light Castle' },
+    name: { ar: 'منجم النحاس', en: 'Copper Mine' },
     img: 'asesst/house-light.png',
     unlock: { type: 'referrals', need: 3 },
     coinMultiplier: 0.35,
@@ -20,7 +20,7 @@ const HOUSES = [
   {
     id: 3,
     key: 'ice',
-    name: { ar: 'قلعة الجليد', en: 'Ice Castle' },
+    name: { ar: 'منجم الجليد', en: 'Ice Mine' },
     img: 'asesst/house-ice.png',
     unlock: { type: 'referrals', need: 15 },
     coinMultiplier: 0.50,
@@ -29,7 +29,7 @@ const HOUSES = [
   {
     id: 4,
     key: 'nature',
-    name: { ar: 'قلعة الطبيعة', en: 'Nature Castle' },
+    name: { ar: 'منجم الطبيعة', en: 'Nature Mine' },
     img: 'asesst/house-nature.png',
     unlock: { type: 'referrals', need: 45 },
     production: 0.0001,
@@ -38,7 +38,7 @@ const HOUSES = [
   {
     id: 5,
     key: 'dark',
-    name: { ar: 'قلعة الظلام', en: 'Dark Castle' },
+    name: { ar: 'منجم الظلام', en: 'Dark Mine' },
     img: 'asesst/house-dark.png',
     unlock: { type: 'ads', need: 50 },
     production: 0.0002,
@@ -47,7 +47,7 @@ const HOUSES = [
   {
     id: 6,
     key: 'desert',
-    name: { ar: 'قلعة الصحراء', en: 'Desert Castle' },
+    name: { ar: 'منجم الصحراء', en: 'Desert Mine' },
     img: 'asesst/house-desert.png',
     unlock: { type: 'ads', need: 200 },
     coinMultiplier: 0,

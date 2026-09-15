@@ -396,3 +396,6 @@ body::before {
 .balance-pill { background: rgba(8, 19, 28, .24) !important; backdrop-filter: blur(14px); -webkit-backdrop-filter: blur(14px); }
 .share-btn, .wallet-btn-icon { background: rgba(8, 19, 28, .28) !important; backdrop-filter: blur(14px); -webkit-backdrop-filter: blur(14px); }
 .share-btn:hover, .wallet-btn-icon:hover { background: rgba(118, 224, 195, .12) !important; }
+
+/* Smaller lock icon inside locked houses. */
+.box .lockbadge svg { width: 9px; height: 9px; }
