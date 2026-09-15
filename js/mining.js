@@ -55,6 +55,10 @@ function removeLocalCoin(id) {
 }
 
 function collectCoinElement(element) {
+  if (window.isTelegramMiniApp === false) {
+    showToast(T.telegramOnlyCollect);
+    return;
+  }
   const coinId = element.dataset.coinId;
   if (!coinId || collectingCoinIds.has(coinId)) return;
   collectingCoinIds.add(coinId);
