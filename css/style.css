@@ -391,3 +391,8 @@ body::before {
 /* Transparent header card for wallet, share, and balance controls. */
 .topbar { background: transparent !important; border: 0 !important; box-shadow: none !important; backdrop-filter: none !important; }
 .topbar::after { display: none !important; }
+
+/* Glass treatment for the balance pill and its two action buttons. */
+.balance-pill { background: rgba(8, 19, 28, .24) !important; backdrop-filter: blur(14px); -webkit-backdrop-filter: blur(14px); }
+.share-btn, .wallet-btn-icon { background: rgba(8, 19, 28, .28) !important; backdrop-filter: blur(14px); -webkit-backdrop-filter: blur(14px); }
+.share-btn:hover, .wallet-btn-icon:hover { background: rgba(118, 224, 195, .12) !important; }
