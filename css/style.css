@@ -387,3 +387,7 @@ body::before {
 
 /* Guest mode: keep the wallet visible while clearly disabling withdrawals. */
 .wallet-action-btn:disabled { opacity: .45; cursor: not-allowed; filter: grayscale(.35); }
+
+/* Transparent header card for wallet, share, and balance controls. */
+.topbar { background: transparent !important; border: 0 !important; box-shadow: none !important; backdrop-filter: none !important; }
+.topbar::after { display: none !important; }
