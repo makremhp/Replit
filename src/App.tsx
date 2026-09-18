@@ -50,6 +50,7 @@ type Task = {
   title: string;
   description: string;
   reward: number;
+  rewardMax?: number;
   dailyLimit: number;
   completedToday: number;
   channelUrl?: string;
@@ -129,6 +130,10 @@ const copy = {
     historyEyebrow: 'سجل السحوبات',
     historyTitle: 'آخر عمليات السحب',
     historyDescription: 'سجلات عامة مختصرة لآخر خمسة مستخدمين سحبوا USDT.',
+    myHistoryTitle: 'سجل سحوباتك',
+    noUserWithdrawals: 'لا توجد لديك عمليات سحب حتى الآن.',
+    publicHistoryTitle: 'آخر المستخدمين الذين سحبوا',
+    publicHistoryDescription: 'سجلات عامة وهمية للعرض فقط.',
     withdrawalCompleted: 'تم السحب',
     today: 'اليوم',
     total: 'الإجمالي',
@@ -210,6 +215,10 @@ const copy = {
     historyEyebrow: 'WITHDRAWAL LOG',
     historyTitle: 'Latest withdrawals',
     historyDescription: 'A public snapshot of the latest five users who withdrew USDT.',
+    myHistoryTitle: 'Your withdrawal history',
+    noUserWithdrawals: 'You have no withdrawals yet.',
+    publicHistoryTitle: 'Latest users who withdrew',
+    publicHistoryDescription: 'Sample public records for display only.',
     withdrawalCompleted: 'Paid',
     today: 'Today',
     total: 'Total',
@@ -262,18 +271,33 @@ declare global {
 const queryClient = new QueryClient();
 const STORAGE_KEY = 'rewardly-local-state-v2';
 
-const initialTasks: Task[] = Array.from({ length: 10 }, (_, index) => ({
-  id: `adsgram-${index + 1}`,
-  kind: 'ad' as const,
-  provider: 'Adsgram',
-  title: `${copy.adTask} ${index + 1}`,
-  description: copy.adTaskDescription,
-  reward: index % 2 === 0 ? 0.005 : 0.01,
-  dailyLimit: 1,
-  completedToday: 0,
-  duration: index % 2 === 0 ? 15 : 30,
-  status: 'available' as const,
-}));
+const initialTasks: Task[] = [
+  {
+    id: 'adsgram-daily',
+    kind: 'ad',
+    provider: 'Adsgram',
+    title: copy.adTask,
+    description: copy.adTaskDescription,
+    reward: 0.005,
+    rewardMax: 0.01,
+    dailyLimit: 10,
+    completedToday: 0,
+    duration: 30,
+    status: 'available',
+  },
+  {
+    id: 'rewardly-channel',
+    kind: 'channel',
+    title: copy.channelTask,
+    description: copy.channelTaskDescription,
+    reward: 0.01,
+    dailyLimit: 1,
+    completedToday: 0,
+    channelUrl: 'https://t.me/Urumfaucet',
+    duration: 15,
+    status: 'available',
+  },
+];
 
 const initialWallet: Wallet = {
   balance: 0,
@@ -294,6 +318,7 @@ type StoredState = {
   day: string;
   tasks: Task[];
   wallet: Wallet;
+  userWithdrawals?: WithdrawalRecord[];
 };
 
 function todayKey() {
@@ -315,16 +340,16 @@ function getTelegramUser(): { user: TelegramUser; isDemo: boolean } {
   };
 }
 
-function loadState(): { tasks: Task[]; wallet: Wallet } {
+function loadState(): { tasks: Task[]; wallet: Wallet; userWithdrawals: WithdrawalRecord[] } {
   try {
     const saved = JSON.parse(localStorage.getItem(STORAGE_KEY) ?? 'null') as StoredState | null;
     if (saved?.day === todayKey() && saved.tasks && saved.wallet) {
-      return { tasks: saved.tasks, wallet: saved.wallet };
+      return { tasks: saved.tasks, wallet: saved.wallet, userWithdrawals: saved.userWithdrawals ?? [] };
     }
   } catch {
     // localStorage is optional in Telegram webviews.
   }
-  return { tasks: initialTasks, wallet: initialWallet };
+  return { tasks: initialTasks, wallet: initialWallet, userWithdrawals: [] };
 }
 
 function initials(user: TelegramUser) {
@@ -337,6 +362,12 @@ function formatNumber(value: number, maximumFractionDigits = 2) {
 
 function formatUsdt(value: number) {
   return `${formatNumber(value, 3)} USDT`;
+}
+
+function formatReward(task: Task) {
+  return task.rewardMax
+    ? `${formatNumber(task.reward, 3)}–${formatNumber(task.rewardMax, 3)} USDT`
+    : formatUsdt(task.reward);
 }
 
 function displayName(user: TelegramUser) {
@@ -380,7 +411,7 @@ function Avatar({ user, large = false }: { user: TelegramUser; large?: boolean }
 
 function useRewardlyState() {
   const [state, setState] = useState(loadState);
-  const [verification, setVerification] = useState<{ taskId: string; phase: 'waiting' | 'ready' } | null>(null);
+  const [verification, setVerification] = useState<{ taskId: string; phase: 'waiting' } | null>(null);
 
   useEffect(() => {
     try {
@@ -394,6 +425,7 @@ function useRewardlyState() {
     setState((current) => {
       const target = current.tasks.find((task) => task.id === taskId);
       if (!target || target.completedToday >= target.dailyLimit) return current;
+      const reward = target.rewardMax && target.completedToday % 2 === 1 ? target.rewardMax : target.reward;
       return {
         tasks: current.tasks.map((task) =>
           task.id === taskId
@@ -402,10 +434,11 @@ function useRewardlyState() {
         ),
         wallet: {
           ...current.wallet,
-          balance: current.wallet.balance + target.reward,
-          todayEarned: current.wallet.todayEarned + target.reward,
-          totalEarned: current.wallet.totalEarned + target.reward,
+          balance: current.wallet.balance + reward,
+          todayEarned: current.wallet.todayEarned + reward,
+          totalEarned: current.wallet.totalEarned + reward,
         },
+        userWithdrawals: current.userWithdrawals,
       };
     });
     setVerification(null);
@@ -420,6 +453,15 @@ function useRewardlyState() {
             ...current.wallet,
             balance: current.wallet.balance - amount,
           },
+           userWithdrawals: [
+             ...current.userWithdrawals,
+             {
+               id: `my-withdrawal-${Date.now()}`,
+               user: isArabic ? 'أنت' : 'You',
+               amount,
+               time: isArabic ? 'الآن' : 'Just now',
+             },
+           ],
         });
   };
 
@@ -432,11 +474,11 @@ function useRewardlyState() {
         else window.open(task.channelUrl, '_blank', 'noopener,noreferrer');
       }
       setVerification({ taskId: task.id, phase: 'waiting' });
-      window.setTimeout(() => setVerification((current) => current?.taskId === task.id ? { taskId: task.id, phase: 'ready' } : current), 2200);
+      window.setTimeout(() => completeTask(task.id), 2200);
       return;
     }
     setVerification({ taskId: task.id, phase: 'waiting' });
-    window.setTimeout(() => setVerification((current) => current?.taskId === task.id ? { taskId: task.id, phase: 'ready' } : current), 1600);
+    window.setTimeout(() => completeTask(task.id), 1600);
   };
 
   return { ...state, verification, setVerification, startTask, completeTask, requestWithdrawal };
@@ -573,7 +615,7 @@ function BalanceCard({ wallet }: { wallet: Wallet }) {
   );
 }
 
-function TaskCard({ task, onStart, verification, onVerify, onCancel }: { task: Task; onStart: (task: Task) => void; verification: { taskId: string; phase: 'waiting' | 'ready' } | null; onVerify: () => void; onCancel: () => void }) {
+function TaskCard({ task, onStart, verification }: { task: Task; onStart: (task: Task) => void; verification: { taskId: string; phase: 'waiting' } | null }) {
   const limitReached = task.completedToday >= task.dailyLimit;
   const active = verification?.taskId === task.id;
   return (
@@ -589,7 +631,7 @@ function TaskCard({ task, onStart, verification, onVerify, onCancel }: { task: T
               </div>
               <p data-testid={`text-task-description-${task.id}`} className="mt-1 text-xs leading-6 text-[hsl(var(--muted-foreground))]">{task.description}</p>
             </div>
-            <span data-testid={`text-task-reward-${task.id}`} className="shrink-0 rounded-full bg-[hsl(39_94%_62%/.2)] px-2.5 py-1 font-mono text-xs font-bold text-[hsl(34_75%_42%)]">+{formatUsdt(task.reward)}</span>
+            <span data-testid={`text-task-reward-${task.id}`} className="shrink-0 rounded-full bg-[hsl(39_94%_62%/.2)] px-2.5 py-1 font-mono text-xs font-bold text-[hsl(34_75%_42%)]">+{formatReward(task)}</span>
           </div>
           <div className="mt-4 flex items-center justify-between gap-3">
             <div className="flex items-center gap-2 text-[11px] text-[hsl(var(--muted-foreground))]">
@@ -597,7 +639,12 @@ function TaskCard({ task, onStart, verification, onVerify, onCancel }: { task: T
               <span className="text-[hsl(var(--border))]">•</span>
               <span data-testid={`text-task-limit-${task.id}`}>{formatNumber(task.completedToday)} / {formatNumber(task.dailyLimit)} {copy.today}</span>
             </div>
-            {limitReached ? (
+            {active ? (
+              <span data-testid={`status-task-verifying-${task.id}`} className="flex items-center gap-2 text-xs font-bold text-[hsl(34_75%_42%)]">
+                <span className="h-3.5 w-3.5 animate-spin rounded-full border-2 border-[hsl(39_94%_62%/.35)] border-t-[hsl(34_75%_42%)]" />
+                {isArabic ? 'جاري التحقق' : 'Verifying'}
+              </span>
+            ) : limitReached ? (
               <span data-testid={`status-task-completed-${task.id}`} className="flex items-center gap-1.5 text-xs font-bold text-[hsl(155_39%_40%)]"><BadgeCheck size={16} />{copy.completed}</span>
             ) : (
               <button type="button" data-testid={`button-start-task-${task.id}`} onClick={() => onStart(task)} className="flex items-center gap-1.5 rounded-xl bg-[hsl(190_43%_20%)] px-3.5 py-2 text-xs font-bold text-[hsl(42_38%_96%)] transition hover:-translate-y-0.5 hover:bg-[hsl(190_43%_25%)] active:translate-y-0">
@@ -609,27 +656,17 @@ function TaskCard({ task, onStart, verification, onVerify, onCancel }: { task: T
       </div>
       {active && (
         <div data-testid={`panel-verification-${task.id}`} className="mt-4 border-t border-[hsl(var(--border))] pt-4">
-          {task.kind === 'ad' && verification.phase === 'waiting' ? (
-            <div className="flex items-center gap-3 rounded-xl bg-[hsl(39_94%_62%/.12)] p-3 text-xs leading-5 text-[hsl(34_64%_34%)]">
-              <div className="h-4 w-4 animate-pulse rounded-full bg-[hsl(39_94%_62%)]" />
-              <span>{copy.demoAdWaiting}</span>
-            </div>
-          ) : (
-            <div className="flex flex-wrap items-center justify-between gap-3 rounded-xl bg-[hsl(155_39%_46%/.1)] p-3">
-               <span className="text-xs font-medium leading-5 text-[hsl(155_39%_35%)]">{task.kind === 'channel' ? copy.channelConfirm : copy.adConfirm}</span>
-              <div className="flex gap-2">
-                 <button type="button" data-testid={`button-cancel-task-${task.id}`} onClick={onCancel} className="rounded-lg px-2.5 py-1.5 text-xs text-[hsl(var(--muted-foreground))]">{copy.notYet}</button>
-                  <button type="button" data-testid={`button-verify-task-${task.id}`} onClick={onVerify} className="rounded-lg bg-[hsl(155_39%_40%)] px-3 py-1.5 text-xs font-bold text-white">{copy.confirmAdd} {formatUsdt(task.reward)}</button>
-              </div>
-            </div>
-          )}
+          <div className="flex items-center gap-3 rounded-xl bg-[hsl(39_94%_62%/.12)] p-3 text-xs leading-5 text-[hsl(34_64%_34%)]">
+            <div className="h-4 w-4 animate-pulse rounded-full bg-[hsl(39_94%_62%)]" />
+            <span>{task.kind === 'channel' ? (isArabic ? 'جاري التحقق من الانضمام...' : 'Checking your channel join...') : copy.demoAdWaiting}</span>
+          </div>
         </div>
       )}
     </div>
   );
 }
 
-function HomePage({ user, isDemo, tasks, wallet, verification, onStart, onVerify, onCancel }: { user: TelegramUser; isDemo: boolean; tasks: Task[]; wallet: Wallet; verification: { taskId: string; phase: 'waiting' | 'ready' } | null; onStart: (task: Task) => void; onVerify: () => void; onCancel: () => void }) {
+function HomePage({ user, isDemo, tasks, wallet, verification, onStart }: { user: TelegramUser; isDemo: boolean; tasks: Task[]; wallet: Wallet; verification: { taskId: string; phase: 'waiting' } | null; onStart: (task: Task) => void }) {
   const done = tasks.reduce((sum, task) => sum + task.completedToday, 0);
   const possible = tasks.reduce((sum, task) => sum + task.dailyLimit, 0);
   const completion = possible ? Math.round((done / possible) * 100) : 0;
@@ -665,19 +702,19 @@ function HomePage({ user, isDemo, tasks, wallet, verification, onStart, onVerify
       </div>
        <div className="mt-10 flex items-end justify-between"><div><div className="mb-2 text-xs font-bold tracking-[.08em] text-[hsl(34_75%_42%)]">{copy.todayChoices}</div><h2 className="text-2xl font-bold text-[hsl(196_41%_17%)]">{copy.simpleTasks}</h2></div><Link href="/tasks" data-testid="link-all-tasks" className="flex items-center gap-1 text-xs font-bold text-[hsl(34_75%_42%)]">{copy.allTasks} <ChevronLeft size={15} /></Link></div>
       <div className="mt-4 space-y-3">
-        {tasks.slice(0, 2).map((task) => <TaskCard key={task.id} task={task} onStart={onStart} verification={verification} onVerify={onVerify} onCancel={onCancel} />)}
+         {tasks.map((task) => <TaskCard key={task.id} task={task} onStart={onStart} verification={verification} />)}
       </div>
     </div>
   );
 }
 
-function TasksPage({ tasks, verification, onStart, onVerify, onCancel }: { tasks: Task[]; verification: { taskId: string; phase: 'waiting' | 'ready' } | null; onStart: (task: Task) => void; onVerify: () => void; onCancel: () => void }) {
+function TasksPage({ tasks, verification, onStart }: { tasks: Task[]; verification: { taskId: string; phase: 'waiting' } | null; onStart: (task: Task) => void }) {
   const completeCount = tasks.filter((task) => task.completedToday >= task.dailyLimit).length;
   return (
     <div className="screen-enter safe-bottom">
       <PageHeading eyebrow={copy.pageTasksEyebrow} title={copy.pageTasksTitle} description={copy.pageTasksDescription} />
       <div className="mb-6 flex items-center justify-between rounded-2xl border border-[hsl(39_94%_62%/.36)] bg-[hsl(39_94%_62%/.1)] px-4 py-3 text-xs"><span className="flex items-center gap-2 font-semibold text-[hsl(34_64%_34%)]"><Zap size={15} /> {formatNumber(completeCount)} {isArabic ? 'من' : 'of'} {formatNumber(tasks.length)} {copy.completedToday}</span><span className="text-[hsl(34_75%_42%)]">{copy.resetsDaily}</span></div>
-      <div className="space-y-3">{tasks.map((task) => <TaskCard key={task.id} task={task} onStart={onStart} verification={verification} onVerify={onVerify} onCancel={onCancel} />)}</div>
+       <div className="space-y-3">{tasks.map((task) => <TaskCard key={task.id} task={task} onStart={onStart} verification={verification} />)}</div>
        <div data-testid="status-task-rules" className="mt-7 flex gap-3 rounded-2xl bg-[hsl(190_43%_20%)] p-5 text-[hsl(42_38%_96%)]"><LockKeyhole className="mt-0.5 shrink-0 text-[hsl(39_94%_62%)]" size={18} /><div><div className="text-sm font-bold">{copy.whyLimits}</div><p className="mt-1 text-xs leading-6 text-[hsl(42_20%_76%)]">{copy.limitsDescription}</p></div></div>
     </div>
   );
@@ -754,31 +791,54 @@ function WalletPage({ wallet, onWithdraw }: { wallet: Wallet; onWithdraw: (amoun
   );
 }
 
-function WithdrawalHistoryPage() {
+function WithdrawalHistoryPage({ userWithdrawals }: { userWithdrawals: WithdrawalRecord[] }) {
   return (
     <div className="screen-enter safe-bottom">
       <PageHeading eyebrow={copy.historyEyebrow} title={copy.historyTitle} description={copy.historyDescription} />
-      <section className="overflow-hidden rounded-[1.65rem] border border-[hsl(var(--border))] bg-[hsl(var(--card)/.78)]">
+      <section data-testid="card-my-withdrawal-history" className="overflow-hidden rounded-[1.65rem] border border-[hsl(var(--border))] bg-[hsl(var(--card)/.78)]">
         <div className="flex items-center gap-3 border-b border-[hsl(var(--border))] px-5 py-4">
           <span className="flex h-10 w-10 items-center justify-center rounded-xl bg-[hsl(155_39%_46%/.12)] text-[hsl(155_39%_35%)]"><Banknote size={18} /></span>
           <div>
-            <h2 className="text-sm font-bold">{copy.nav.history}</h2>
-            <p className="mt-1 text-xs text-[hsl(var(--muted-foreground))]">{isArabic ? 'خمسة سجلات وهمية للعرض' : 'Five sample records for display'}</p>
+            <h2 className="text-sm font-bold">{copy.myHistoryTitle}</h2>
+            <p className="mt-1 text-xs text-[hsl(var(--muted-foreground))]">{isArabic ? 'هذا السجل خاص بحسابك فقط.' : 'This history belongs to your account only.'}</p>
           </div>
         </div>
         <div className="divide-y divide-[hsl(var(--border))]">
-          {withdrawalRecords.map((record) => (
-            <div key={record.id} data-testid={`withdrawal-record-${record.id}`} className="flex items-center gap-3 px-5 py-4">
-              <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-[hsl(190_43%_20%)] text-xs font-bold text-[hsl(39_94%_62%)]">
-                {record.user.replace('@', '').slice(0, 2).toUpperCase()}
-              </div>
+          {userWithdrawals.length === 0 ? (
+            <div data-testid="status-no-user-withdrawals" className="flex items-center gap-3 px-5 py-7 text-sm text-[hsl(var(--muted-foreground))]">
+              <Info size={18} className="shrink-0 text-[hsl(34_75%_42%)]" />
+              {copy.noUserWithdrawals}
+            </div>
+          ) : userWithdrawals.map((record) => (
+            <div key={record.id} data-testid={`my-withdrawal-record-${record.id}`} className="flex items-center gap-3 px-5 py-4">
+              <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-[hsl(190_43%_20%)] text-xs font-bold text-[hsl(39_94%_62%)]">US</div>
               <div className="min-w-0 flex-1">
                 <div className="truncate text-sm font-bold">{record.user}</div>
                 <div className="mt-1 flex items-center gap-1.5 text-xs text-[hsl(var(--muted-foreground))]"><Clock3 size={12} />{record.time}</div>
               </div>
+              <div className="text-left font-mono text-sm font-bold text-[hsl(155_39%_35%)]">-{formatUsdt(record.amount)}</div>
+            </div>
+          ))}
+        </div>
+      </section>
+      <section data-testid="card-public-withdrawal-history" className="mt-5 max-w-2xl overflow-hidden rounded-2xl border border-[hsl(var(--border))] bg-[hsl(var(--card)/.6)]">
+        <div className="border-b border-[hsl(var(--border))] px-4 py-3">
+          <h2 className="text-xs font-bold">{copy.publicHistoryTitle}</h2>
+          <p className="mt-1 text-[10px] text-[hsl(var(--muted-foreground))]">{copy.publicHistoryDescription}</p>
+        </div>
+        <div className="divide-y divide-[hsl(var(--border))]">
+          {withdrawalRecords.map((record) => (
+            <div key={record.id} data-testid={`withdrawal-record-${record.id}`} className="flex items-center gap-2.5 px-4 py-2.5">
+              <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-[hsl(190_43%_20%)] text-[9px] font-bold text-[hsl(39_94%_62%)]">
+                {record.user.replace('@', '').slice(0, 2).toUpperCase()}
+              </div>
+              <div className="min-w-0 flex-1">
+                <div className="truncate text-xs font-semibold">{record.user}</div>
+                <div className="mt-0.5 flex items-center gap-1 text-[10px] text-[hsl(var(--muted-foreground))]"><Clock3 size={10} />{record.time}</div>
+              </div>
               <div className="text-left">
-                <div className="font-mono text-sm font-bold text-[hsl(155_39%_35%)]">+{formatUsdt(record.amount)}</div>
-                <div className="mt-1 flex items-center justify-end gap-1 text-[10px] font-semibold text-[hsl(155_39%_35%)]"><BadgeCheck size={12} />{copy.withdrawalCompleted}</div>
+                <div className="font-mono text-xs font-bold text-[hsl(155_39%_35%)]">+{formatUsdt(record.amount)}</div>
+                <div className="mt-0.5 flex items-center justify-end gap-1 text-[9px] font-semibold text-[hsl(155_39%_35%)]"><BadgeCheck size={10} />{copy.withdrawalCompleted}</div>
               </div>
             </div>
           ))}
@@ -816,21 +876,18 @@ function HelpPage({ user, isDemo }: { user: TelegramUser; isDemo: boolean }) {
 function RouterContent() {
   const { user, isDemo } = useMemo(getTelegramUser, []);
   const rewardly = useRewardlyState();
-  const { tasks, wallet, verification, startTask, completeTask, setVerification, requestWithdrawal } = rewardly;
-  const verifyActive = () => {
-    if (verification) completeTask(verification.taskId);
-  };
+  const { tasks, wallet, userWithdrawals, verification, startTask, requestWithdrawal } = rewardly;
   return (
     <Shell user={user} isDemo={isDemo} wallet={wallet}>
       <Switch>
         <Route path="/">
-          <HomePage user={user} isDemo={isDemo} tasks={tasks} wallet={wallet} verification={verification} onStart={startTask} onVerify={verifyActive} onCancel={() => setVerification(null)} />
+          <HomePage user={user} isDemo={isDemo} tasks={tasks} wallet={wallet} verification={verification} onStart={startTask} />
         </Route>
         <Route path="/tasks">
-          <TasksPage tasks={tasks} verification={verification} onStart={startTask} onVerify={verifyActive} onCancel={() => setVerification(null)} />
+          <TasksPage tasks={tasks} verification={verification} onStart={startTask} />
         </Route>
         <Route path="/wallet"><WalletPage wallet={wallet} onWithdraw={requestWithdrawal} /></Route>
-        <Route path="/withdrawals"><WithdrawalHistoryPage /></Route>
+        <Route path="/withdrawals"><WithdrawalHistoryPage userWithdrawals={userWithdrawals} /></Route>
         <Route path="/help"><HelpPage user={user} isDemo={isDemo} /></Route>
         <Route>
           <div className="py-20 text-center"><h1 className="text-3xl font-bold">{locale === 'ar' ? 'الصفحة غير موجودة' : 'Page not found'}</h1><Link href="/" data-testid="link-not-found-home" className="mt-5 inline-flex rounded-xl bg-[hsl(190_43%_20%)] px-5 py-3 text-sm font-bold text-white">{copy.nav.home}</Link></div>
