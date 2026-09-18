@@ -72,6 +72,10 @@ type WithdrawalRecord = {
   time: string;
 };
 
+type PublicWithdrawalRecord = WithdrawalRecord & {
+  avatarUrl: string;
+};
+
 type Locale = 'ar' | 'en';
 
 function getBrowserLocale(): Locale {
@@ -148,24 +152,22 @@ const copy = {
     helpLimitsTitle: 'كيف تعمل الحدود اليومية؟',
     helpLimitsText: 'كل مهمة تملك عدداً محدداً من المرات في اليوم. يظهر العدد بجانب المهمة، ويتجدد تلقائياً عند بداية يوم جديد حسب توقيت جهازك.',
     helpRulesTitle: 'متى يضاف USDT؟',
-    helpRulesText: 'تضاف مكافأة USDT فقط بعد إكمال خطوة التحقق الظاهرة. كل إعلان Adsgram يعطي 0.005 أو 0.01 USDT.',
+    helpRulesText: 'تضاف مكافأة USDT بعد اكتمال التحقق التلقائي الذي يستغرق ثانيتين. كل إعلان Adsgram يعطي 0.005 أو 0.01 USDT.',
     helpNeed: 'تحتاج مساعدة؟',
     helpNeedText: 'إذا واجهت إعلاناً لا يعمل كما هو متوقع، أغلقه وحاول مرة أخرى لاحقاً. لا تتكرر المحاولة على حساب رصيدك.',
     adTask: 'إعلان Adsgram',
     adTaskDescription: 'شاهد إعلاناً قصيراً من مزود Adsgram واحصل على مكافأتك.',
     channelTask: 'تعرّف على قناة Urumfaucet',
     channelTaskDescription: 'انضم للقناة الرسمية لتصلك التحديثات.',
-    secondAdTask: 'إعلان Adsgram إضافي',
-    secondAdTaskDescription: 'إعلان يومي إضافي بمكافأة USDT واضحة.',
     seconds: 'ثانية',
     startNow: 'ابدأ الآن',
     openChannel: 'فتح القناة',
     completed: 'اكتملت اليوم',
-    demoAdWaiting: 'جاري تجهيز إعلان Adsgram... يمكنك تأكيد المشاهدة بعد لحظات.',
+    demoAdWaiting: 'جاري التحقق تلقائياً من مكافأة Adsgram. ستضاف بعد ثوانٍ.',
     channelConfirm: 'هل أتممت الانضمام للقناة؟',
-    adConfirm: 'تمت مشاهدة الإعلان التجريبي؟',
     notYet: 'ليس بعد',
-    confirmAdd: 'تأكيد وإضافة',
+    publicTxAction: 'txd',
+    publicTxUnavailable: 'بيانات المعاملة غير متاحة في بيانات العرض.',
   },
   en: {
     nav: { home: 'Home', tasks: 'Ads', wallet: 'Wallet', history: 'Withdrawals', help: 'How it works' },
@@ -233,24 +235,22 @@ const copy = {
     helpLimitsTitle: 'How do daily limits work?',
     helpLimitsText: 'Each task has a fixed number of daily completions. The counter resets automatically at the start of a new day using your device time.',
     helpRulesTitle: 'When is USDT added?',
-    helpRulesText: 'USDT is added only after the visible verification step. Each Adsgram ad gives 0.005 or 0.01 USDT.',
+    helpRulesText: 'USDT is added after automatic verification completes, which takes two seconds. Each Adsgram ad gives 0.005 or 0.01 USDT.',
     helpNeed: 'Need help?',
     helpNeedText: 'If an ad does not work as expected, close it and try again later. Do not repeatedly retry at the cost of your balance.',
     adTask: 'Adsgram ad',
     adTaskDescription: 'Watch a short ad from Adsgram and receive the displayed reward.',
     channelTask: 'Discover the Urumfaucet channel',
     channelTaskDescription: 'Join the official channel for updates.',
-    secondAdTask: 'Another Adsgram ad',
-    secondAdTaskDescription: 'Another daily ad with a clear USDT reward.',
     seconds: 'seconds',
     startNow: 'Start now',
     openChannel: 'Open channel',
     completed: 'Complete today',
-    demoAdWaiting: 'Preparing an Adsgram ad... You can confirm the view in a moment.',
+    demoAdWaiting: 'Preparing your Adsgram reward. Verification completes automatically.',
     channelConfirm: 'Did you join the channel?',
-    adConfirm: 'Did you watch the demo ad?',
     notYet: 'Not yet',
-    confirmAdd: 'Confirm and add',
+    publicTxAction: 'txd',
+    publicTxUnavailable: 'Transaction details are unavailable in demo data.',
   },
 }[locale];
 
@@ -306,12 +306,12 @@ const initialWallet: Wallet = {
   streak: 0,
 };
 
-const withdrawalRecords: WithdrawalRecord[] = [
-  { id: 'withdrawal-1', user: '@user_4821', amount: 2.5, time: isArabic ? 'منذ 12 دقيقة' : '12 minutes ago' },
-  { id: 'withdrawal-2', user: '@reward_user', amount: 1.75, time: isArabic ? 'منذ 38 دقيقة' : '38 minutes ago' },
-  { id: 'withdrawal-3', user: '@user_1904', amount: 4, time: isArabic ? 'منذ ساعة' : '1 hour ago' },
-  { id: 'withdrawal-4', user: '@fast_earner', amount: 1.2, time: isArabic ? 'منذ ساعتين' : '2 hours ago' },
-  { id: 'withdrawal-5', user: '@user_7350', amount: 3.25, time: isArabic ? 'منذ 3 ساعات' : '3 hours ago' },
+const publicWithdrawalRecords: PublicWithdrawalRecord[] = [
+  { id: 'withdrawal-1', user: isArabic ? 'سارة محمد' : 'Sarah Morgan', amount: 2.5, time: isArabic ? 'منذ 12 دقيقة' : '12 minutes ago', avatarUrl: 'https://randomuser.me/api/portraits/women/44.jpg' },
+  { id: 'withdrawal-2', user: isArabic ? 'عمر خالد' : 'Omar Khalid', amount: 1.75, time: isArabic ? 'منذ 38 دقيقة' : '38 minutes ago', avatarUrl: 'https://randomuser.me/api/portraits/men/32.jpg' },
+  { id: 'withdrawal-3', user: isArabic ? 'ليان يوسف' : 'Lina Yusuf', amount: 4, time: isArabic ? 'منذ ساعة' : '1 hour ago', avatarUrl: 'https://randomuser.me/api/portraits/women/68.jpg' },
+  { id: 'withdrawal-4', user: isArabic ? 'آدم رامي' : 'Adam Rami', amount: 1.2, time: isArabic ? 'منذ ساعتين' : '2 hours ago', avatarUrl: 'https://randomuser.me/api/portraits/men/75.jpg' },
+  { id: 'withdrawal-5', user: isArabic ? 'نور علي' : 'Nour Ali', amount: 3.25, time: isArabic ? 'منذ 3 ساعات' : '3 hours ago', avatarUrl: 'https://randomuser.me/api/portraits/women/65.jpg' },
 ];
 
 type StoredState = {
@@ -323,6 +323,33 @@ type StoredState = {
 
 function todayKey() {
   return new Intl.DateTimeFormat('en-CA').format(new Date());
+}
+
+function normalizeTasks(tasks: Task[]) {
+  let hasAdsgram = false;
+  const normalized = tasks.reduce<Task[]>((result, task) => {
+    const isAdsgram = task.kind === 'ad' || task.provider?.toLowerCase() === 'adsgram' || task.title.toLowerCase().includes('adsgram');
+    if (isAdsgram) {
+      if (hasAdsgram) return result;
+      hasAdsgram = true;
+      result.push({
+        ...task,
+        id: 'adsgram-daily',
+        kind: 'ad',
+        provider: 'Adsgram',
+        title: copy.adTask,
+        description: copy.adTaskDescription,
+        dailyLimit: 10,
+        completedToday: Math.min(Math.max(Number(task.completedToday) || 0, 0), 10),
+        status: (task.completedToday >= 10 ? 'completed' : 'available'),
+      });
+      return result;
+    }
+    result.push(task);
+    return result;
+  }, []);
+  if (!hasAdsgram) normalized.unshift({ ...initialTasks[0] });
+  return normalized;
 }
 
 function getTelegramUser(): { user: TelegramUser; isDemo: boolean } {
@@ -344,7 +371,20 @@ function loadState(): { tasks: Task[]; wallet: Wallet; userWithdrawals: Withdraw
   try {
     const saved = JSON.parse(localStorage.getItem(STORAGE_KEY) ?? 'null') as StoredState | null;
     if (saved?.day === todayKey() && saved.tasks && saved.wallet) {
-      return { tasks: saved.tasks, wallet: saved.wallet, userWithdrawals: saved.userWithdrawals ?? [] };
+      return {
+        tasks: normalizeTasks(saved.tasks),
+        wallet: saved.wallet,
+        userWithdrawals: Array.isArray(saved.userWithdrawals)
+          ? saved.userWithdrawals.filter((record) => (
+              record
+              && typeof record.id === 'string'
+              && record.id.startsWith('my-withdrawal-')
+              && typeof record.amount === 'number'
+              && record.amount > 0
+              && typeof record.user === 'string'
+            ))
+          : [],
+      };
     }
   } catch {
     // localStorage is optional in Telegram webviews.
@@ -466,6 +506,7 @@ function useRewardlyState() {
   };
 
   const startTask = (task: Task) => {
+    if (verification) return;
     if (task.completedToday >= task.dailyLimit) return;
     if (task.kind === 'channel') {
       const webApp = window.Telegram?.WebApp;
@@ -478,7 +519,7 @@ function useRewardlyState() {
       return;
     }
     setVerification({ taskId: task.id, phase: 'waiting' });
-    window.setTimeout(() => completeTask(task.id), 1600);
+    window.setTimeout(() => completeTask(task.id), 2000);
   };
 
   return { ...state, verification, setVerification, startTask, completeTask, requestWithdrawal };
@@ -598,7 +639,7 @@ function BalanceCard({ wallet }: { wallet: Wallet }) {
       <div className="absolute -left-1 top-[-5.5rem] h-48 w-48 rounded-full border border-[hsl(39_94%_62%/.14)]" />
       <div className="absolute bottom-0 right-0 h-40 w-40 translate-x-16 translate-y-16 rounded-full bg-[hsl(12_73%_65%/.16)] blur-2xl" />
       <div className="relative flex items-start justify-between">
-        <div>
+             <div className="min-w-0">
           <div className="flex items-center gap-2 text-xs font-medium text-[hsl(42_20%_76%)]"><Coins size={15} className="text-[hsl(39_94%_62%)]" />{copy.availableBalance}</div>
           <div data-testid="text-wallet-balance" className="mt-4 flex items-baseline gap-2">
             <span className="font-mono text-4xl font-bold tracking-[-.07em] sm:text-5xl">{formatNumber(wallet.balance, 3)}</span>
@@ -631,7 +672,7 @@ function TaskCard({ task, onStart, verification }: { task: Task; onStart: (task:
               </div>
               <p data-testid={`text-task-description-${task.id}`} className="mt-1 text-xs leading-6 text-[hsl(var(--muted-foreground))]">{task.description}</p>
             </div>
-            <span data-testid={`text-task-reward-${task.id}`} className="shrink-0 rounded-full bg-[hsl(39_94%_62%/.2)] px-2.5 py-1 font-mono text-xs font-bold text-[hsl(34_75%_42%)]">+{formatReward(task)}</span>
+             <span data-testid={`text-task-reward-${task.id}`} className="w-[6.75rem] shrink-0 rounded-full bg-[hsl(39_94%_62%/.2)] px-1.5 py-1 text-center font-mono text-[10px] font-bold leading-4 text-[hsl(34_75%_42%)] break-words">{`+${formatReward(task)}`}</span>
           </div>
           <div className="mt-4 flex items-center justify-between gap-3">
             <div className="flex items-center gap-2 text-[11px] text-[hsl(var(--muted-foreground))]">
@@ -640,10 +681,10 @@ function TaskCard({ task, onStart, verification }: { task: Task; onStart: (task:
               <span data-testid={`text-task-limit-${task.id}`}>{formatNumber(task.completedToday)} / {formatNumber(task.dailyLimit)} {copy.today}</span>
             </div>
             {active ? (
-              <span data-testid={`status-task-verifying-${task.id}`} className="flex items-center gap-2 text-xs font-bold text-[hsl(34_75%_42%)]">
+              <button type="button" disabled data-testid={`button-start-task-${task.id}`} aria-live="polite" className="flex cursor-wait items-center gap-2 rounded-xl bg-[hsl(39_94%_62%/.18)] px-3.5 py-2 text-xs font-bold text-[hsl(34_75%_42%)]">
                 <span className="h-3.5 w-3.5 animate-spin rounded-full border-2 border-[hsl(39_94%_62%/.35)] border-t-[hsl(34_75%_42%)]" />
-                {isArabic ? 'جاري التحقق' : 'Verifying'}
-              </span>
+                <span data-testid={`status-task-verifying-${task.id}`}>{isArabic ? 'جاري التحقق' : 'Verifying'}</span>
+              </button>
             ) : limitReached ? (
               <span data-testid={`status-task-completed-${task.id}`} className="flex items-center gap-1.5 text-xs font-bold text-[hsl(155_39%_40%)]"><BadgeCheck size={16} />{copy.completed}</span>
             ) : (
@@ -792,6 +833,7 @@ function WalletPage({ wallet, onWithdraw }: { wallet: Wallet; onWithdraw: (amoun
 }
 
 function WithdrawalHistoryPage({ userWithdrawals }: { userWithdrawals: WithdrawalRecord[] }) {
+  const [selectedTransaction, setSelectedTransaction] = useState<string | null>(null);
   return (
     <div className="screen-enter safe-bottom">
       <PageHeading eyebrow={copy.historyEyebrow} title={copy.historyTitle} description={copy.historyDescription} />
@@ -821,28 +863,41 @@ function WithdrawalHistoryPage({ userWithdrawals }: { userWithdrawals: Withdrawa
           ))}
         </div>
       </section>
-      <section data-testid="card-public-withdrawal-history" className="mt-5 max-w-2xl overflow-hidden rounded-2xl border border-[hsl(var(--border))] bg-[hsl(var(--card)/.6)]">
+       <section data-testid="card-public-withdrawal-history" className="mt-5 max-w-2xl overflow-hidden rounded-2xl border border-[hsl(var(--border))] bg-[hsl(var(--card)/.6)]">
         <div className="border-b border-[hsl(var(--border))] px-4 py-3">
           <h2 className="text-xs font-bold">{copy.publicHistoryTitle}</h2>
           <p className="mt-1 text-[10px] text-[hsl(var(--muted-foreground))]">{copy.publicHistoryDescription}</p>
         </div>
-        <div className="divide-y divide-[hsl(var(--border))]">
-          {withdrawalRecords.map((record) => (
-            <div key={record.id} data-testid={`withdrawal-record-${record.id}`} className="flex items-center gap-2.5 px-4 py-2.5">
-              <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-[hsl(190_43%_20%)] text-[9px] font-bold text-[hsl(39_94%_62%)]">
-                {record.user.replace('@', '').slice(0, 2).toUpperCase()}
-              </div>
-              <div className="min-w-0 flex-1">
-                <div className="truncate text-xs font-semibold">{record.user}</div>
-                <div className="mt-0.5 flex items-center gap-1 text-[10px] text-[hsl(var(--muted-foreground))]"><Clock3 size={10} />{record.time}</div>
-              </div>
-              <div className="text-left">
-                <div className="font-mono text-xs font-bold text-[hsl(155_39%_35%)]">+{formatUsdt(record.amount)}</div>
-                <div className="mt-0.5 flex items-center justify-end gap-1 text-[9px] font-semibold text-[hsl(155_39%_35%)]"><BadgeCheck size={10} />{copy.withdrawalCompleted}</div>
-              </div>
-            </div>
-          ))}
-        </div>
+         <div className="divide-y divide-[hsl(var(--border))]" dir="ltr">
+           {publicWithdrawalRecords.map((record) => (
+             <div key={record.id} data-testid={`withdrawal-record-${record.id}`} className="flex items-center gap-2.5 px-4 py-2.5">
+               <img src={record.avatarUrl} alt="" loading="lazy" data-testid={`img-public-avatar-${record.id}`} className="h-7 w-7 shrink-0 rounded-full object-cover ring-1 ring-[hsl(var(--border))]" />
+               <div dir={isArabic ? 'rtl' : 'ltr'} className="min-w-0 flex-1 text-start">
+                 <div className="truncate text-xs font-semibold">{record.user}</div>
+                 <div className="mt-0.5 flex items-center gap-1 text-[10px] text-[hsl(var(--muted-foreground))]"><Clock3 size={10} />{record.time}</div>
+               </div>
+               <div dir={isArabic ? 'rtl' : 'ltr'} className="shrink-0 text-start">
+                 <div className="font-mono text-xs font-bold text-[hsl(155_39%_35%)]">+{formatUsdt(record.amount)}</div>
+                 <div className="mt-0.5 flex items-center gap-1 text-[9px] font-semibold text-[hsl(155_39%_35%)]"><BadgeCheck size={10} />{copy.withdrawalCompleted}</div>
+               </div>
+               <button
+                 type="button"
+                 data-testid={`button-public-tx-${record.id}`}
+                 aria-label={`${copy.publicTxAction} — ${record.user}`}
+                 title={copy.publicTxUnavailable}
+                 onClick={() => setSelectedTransaction(record.id)}
+                 className="shrink-0 rounded-lg border border-[hsl(var(--border))] bg-[hsl(var(--background)/.7)] px-2 py-1 font-mono text-[10px] font-bold lowercase text-[hsl(34_75%_42%)] transition hover:border-[hsl(39_94%_62%)] hover:bg-[hsl(39_94%_62%/.14)] focus:outline-none focus:ring-2 focus:ring-[hsl(39_94%_62%)]"
+               >
+                 {copy.publicTxAction}
+               </button>
+             </div>
+           ))}
+         </div>
+         {selectedTransaction && (
+           <div data-testid="status-public-tx-unavailable" role="status" className="border-t border-[hsl(var(--border))] bg-[hsl(39_94%_62%/.1)] px-4 py-2.5 text-[10px] font-semibold text-[hsl(34_64%_34%)]">
+             {copy.publicTxUnavailable}
+           </div>
+         )}
       </section>
     </div>
   );
