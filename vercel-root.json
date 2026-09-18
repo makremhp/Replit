@@ -1,7 +1,7 @@
 {
   "framework": "vite",
-  "buildCommand": "pnpm --filter @workspace/rewardly-telegram run build",
-  "outputDirectory": "artifacts/rewardly-telegram/dist/public",
+  "buildCommand": "npm run build",
+  "outputDirectory": "dist/public",
   "rewrites": [
     {
       "source": "/(.*)",

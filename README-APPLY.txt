@@ -17,14 +17,13 @@ Rewardly Telegram - آخر الملفات المعدلة
 ملف vercel-root.json يستخدم فقط إذا كان مشروع Vercel يشير إلى جذر monorepo الحالي.
 إذا كان مشروعك القديم عبارة عن مجلد Replit-main مستقل، استخدم vercel.json وضع Root Directory على مجلد المشروع نفسه.
 
-إعدادات Vercel للمشروع الحالي:
-- Root Directory: /
-- Build Command: pnpm --filter @workspace/rewardly-telegram run build
-- Output Directory: artifacts/rewardly-telegram/dist/public
-
-إعدادات Vercel للمجلد المستقل:
-- Build Command: pnpm run build
+إعدادات Vercel للمشروع الحالي المستقل:
+- Root Directory: مجلد المشروع نفسه
+- Build Command: npm run build
 - Output Directory: dist/public
+
+ملف `vercel.json` يحتوي على rewrite إلى `index.html` حتى تعمل مسارات
+`/wallet` و`/tasks` و`/help` عند فتحها مباشرة ولا تظهر صفحة 404.
 
 ملاحظة:
 التحقق الحقيقي من عضوية القناة ومكافآت Adsgram يحتاج Telegram Bot Token وAdsgram Placement ID على الخادم.
