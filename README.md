@@ -4,9 +4,12 @@
 
 ## التشغيل
 
-هذه الملفات مصدر الواجهة المصدّرة من Replit. داخل بيئة المشروع الأصلية شغّل:
+    npm install
+    npm run dev
 
-    pnpm --filter @workspace/rewardly-telegram run dev
+للبناء الإنتاجي:
+
+    npm run build
 
 ## متطلبات Adsgram التي تراعيها الواجهة
 
