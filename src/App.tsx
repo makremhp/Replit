@@ -46,6 +46,7 @@ type TelegramUser = {
 type Task = {
   id: string;
   kind: 'ad' | 'channel';
+  provider?: string;
   title: string;
   description: string;
   reward: number;
@@ -63,6 +64,13 @@ type Wallet = {
   streak: number;
 };
 
+type WithdrawalRecord = {
+  id: string;
+  user: string;
+  amount: number;
+  time: string;
+};
+
 type Locale = 'ar' | 'en';
 
 function getBrowserLocale(): Locale {
@@ -74,8 +82,8 @@ const isArabic = locale === 'ar';
 
 const copy = {
   ar: {
-    nav: { home: 'الرئيسية', tasks: 'المهام', wallet: 'المحفظة', help: 'كيف تعمل؟' },
-    dailyRewards: 'مكافآت يومية',
+    nav: { home: 'الرئيسية', tasks: 'الإعلانات', wallet: 'المحفظة', history: 'سجلات السحب', help: 'كيف تعمل؟' },
+    dailyRewards: 'مكافآت USDT يومية',
     openMenu: 'فتح القائمة',
     demoMode: 'وضع العرض خارج Telegram',
     demoData: 'بيانات العرض',
@@ -84,7 +92,7 @@ const copy = {
     homeTitle: 'يومك يبدأ هنا.',
     demoMessage: 'أنت في وضع العرض. افتح التطبيق من Telegram لعرض ملفك الحقيقي.',
     availableBalance: 'الرصيد المتاح',
-    pointsToday: 'نقطة اليوم',
+    pointsToday: 'USDT اليوم',
     viewWallet: 'عرض المحفظة',
     dailyProgress: 'إنجاز اليوم',
     tasksCount: 'مهام',
@@ -93,7 +101,7 @@ const copy = {
     onTrack: 'أنت على الطريق الصحيح',
     dailyLimitClear: 'كل مهمة لها حد يومي واضح',
     todayChoices: 'اختيارات اليوم',
-    simpleTasks: 'مهام بسيطة، نقاط صادقة',
+    simpleTasks: 'إعلانات Adsgram اليومية',
     allTasks: 'كل المهام',
     pageTasksEyebrow: 'مساحة المهام',
     pageTasksTitle: 'اختر ما يناسبك.',
@@ -108,21 +116,25 @@ const copy = {
     walletBalance: 'الرصيد المتاح',
     tonNetwork: 'شبكة TON',
     withdrawalTitle: 'طلب سحب جديد',
-    withdrawalDescription: 'الحد الأدنى للسحب هو 1.00 USD. تتم مراجعة الطلب قبل الإرسال.',
-    amountLabel: 'مبلغ السحب بالدولار',
-    amountPlaceholder: 'مثال: 1.00',
+    withdrawalDescription: 'الحد الأدنى للسحب هو 1.00 USDT. تتم مراجعة الطلب قبل الإرسال.',
+    amountLabel: 'مبلغ السحب بـ USDT',
+    amountPlaceholder: 'مثال: 1.00 USDT',
     tonAddressLabel: 'عنوان محفظة TON',
     tonAddressPlaceholder: 'أدخل عنوان TON يبدأ بـ U أو E',
     submitWithdrawal: 'إرسال طلب السحب',
-    withdrawalSuccess: 'تم تسجيل طلب السحب للمراجعة.',
-    withdrawalMinError: 'الحد الأدنى لطلب السحب هو 1.00 USD.',
+    withdrawalSuccess: 'تم تسجيل طلب السحب بـ USDT للمراجعة.',
+    withdrawalMinError: 'الحد الأدنى لطلب السحب هو 1.00 USDT.',
     withdrawalBalanceError: 'المبلغ أكبر من رصيدك المتاح.',
     withdrawalAddressError: 'أدخل عنوان TON صحيحاً من 10 أحرف على الأقل.',
+    historyEyebrow: 'سجل السحوبات',
+    historyTitle: 'آخر عمليات السحب',
+    historyDescription: 'سجلات عامة مختصرة لآخر خمسة مستخدمين سحبوا USDT.',
+    withdrawalCompleted: 'تم السحب',
     today: 'اليوم',
     total: 'الإجمالي',
     streak: 'تتابع النشاط',
     days: 'أيام',
-    walletNote: 'بيانات المحفظة محفوظة على هذا الجهاز في وضع العرض. لا يتم خصم الرصيد إلا بعد تسجيل طلب صحيح.',
+    walletNote: 'رصيدك يبدأ من 0 USDT ويزداد فقط بعد إكمال إعلان Adsgram والتحقق منه.',
     helpEyebrow: 'الوضوح أولاً',
     helpTitle: 'كيف يعمل Rewardly؟',
     helpDescription: 'مكان صغير ومفهوم للمكافآت اليومية، من دون وعود كبيرة أو خطوات غامضة.',
@@ -130,29 +142,29 @@ const copy = {
     helpTelegramText: 'نستخدم الاسم واسم المستخدم والصورة التي يسمح بها Telegram لعرض ملفك داخل التطبيق. لا نطلب محادثاتك أو جهات اتصالك.',
     helpLimitsTitle: 'كيف تعمل الحدود اليومية؟',
     helpLimitsText: 'كل مهمة تملك عدداً محدداً من المرات في اليوم. يظهر العدد بجانب المهمة، ويتجدد تلقائياً عند بداية يوم جديد حسب توقيت جهازك.',
-    helpRulesTitle: 'متى تضاف النقاط؟',
-    helpRulesText: 'تضاف النقاط فقط بعد إكمال خطوة التحقق الظاهرة. فتح رابط القناة وحده لا يكفي، ولا نعرض أرقاماً مضمونة أو وعوداً بالدخل.',
+    helpRulesTitle: 'متى يضاف USDT؟',
+    helpRulesText: 'تضاف مكافأة USDT فقط بعد إكمال خطوة التحقق الظاهرة. كل إعلان Adsgram يعطي 0.005 أو 0.01 USDT.',
     helpNeed: 'تحتاج مساعدة؟',
-    helpNeedText: 'إذا واجهت مهمة لا تعمل كما هو متوقع، أغلقها وحاول مرة أخرى لاحقاً. لا تتكرر المحاولة على حساب نقاطك.',
-    adTask: 'شاهد إعلاناً قصيراً',
-    adTaskDescription: 'استراحة سريعة، ومكافأة واضحة بعد المشاهدة.',
+    helpNeedText: 'إذا واجهت إعلاناً لا يعمل كما هو متوقع، أغلقه وحاول مرة أخرى لاحقاً. لا تتكرر المحاولة على حساب رصيدك.',
+    adTask: 'إعلان Adsgram',
+    adTaskDescription: 'شاهد إعلاناً قصيراً من مزود Adsgram واحصل على مكافأتك.',
     channelTask: 'تعرّف على قناة Urumfaucet',
     channelTaskDescription: 'انضم للقناة الرسمية لتصلك التحديثات.',
-    secondAdTask: 'شاهد إعلاناً آخر',
-    secondAdTaskDescription: 'مهمة اختيارية ضمن حدك اليومي.',
+    secondAdTask: 'إعلان Adsgram إضافي',
+    secondAdTaskDescription: 'إعلان يومي إضافي بمكافأة USDT واضحة.',
     seconds: 'ثانية',
     startNow: 'ابدأ الآن',
     openChannel: 'فتح القناة',
     completed: 'اكتملت اليوم',
-    demoAdWaiting: 'نسخة تجريبية: لا يتوفر إعلان الآن. يمكنك تأكيد المشاهدة بعد لحظات.',
+    demoAdWaiting: 'جاري تجهيز إعلان Adsgram... يمكنك تأكيد المشاهدة بعد لحظات.',
     channelConfirm: 'هل أتممت الانضمام للقناة؟',
     adConfirm: 'تمت مشاهدة الإعلان التجريبي؟',
     notYet: 'ليس بعد',
     confirmAdd: 'تأكيد وإضافة',
   },
   en: {
-    nav: { home: 'Home', tasks: 'Tasks', wallet: 'Wallet', help: 'How it works' },
-    dailyRewards: 'DAILY REWARDS',
+    nav: { home: 'Home', tasks: 'Ads', wallet: 'Wallet', history: 'Withdrawals', help: 'How it works' },
+    dailyRewards: 'DAILY USDT REWARDS',
     openMenu: 'Open menu',
     demoMode: 'Demo mode outside Telegram',
     demoData: 'Demo data',
@@ -161,7 +173,7 @@ const copy = {
     homeTitle: 'Your day starts here.',
     demoMessage: 'You are in demo mode. Open the app from Telegram to show your real profile.',
     availableBalance: 'Available balance',
-    pointsToday: 'points today',
+    pointsToday: 'USDT today',
     viewWallet: 'View wallet',
     dailyProgress: 'Today’s progress',
     tasksCount: 'tasks',
@@ -170,7 +182,7 @@ const copy = {
     onTrack: 'You are on the right track',
     dailyLimitClear: 'Every task has a clear daily limit',
     todayChoices: 'Today’s picks',
-    simpleTasks: 'Simple tasks, honest points',
+    simpleTasks: 'Daily Adsgram ads',
     allTasks: 'All tasks',
     pageTasksEyebrow: 'TASK SPACE',
     pageTasksTitle: 'Choose what fits.',
@@ -185,21 +197,25 @@ const copy = {
     walletBalance: 'Available balance',
     tonNetwork: 'TON network',
     withdrawalTitle: 'New withdrawal request',
-    withdrawalDescription: 'Minimum withdrawal is $1.00. Requests are reviewed before sending.',
-    amountLabel: 'Withdrawal amount in USD',
-    amountPlaceholder: 'Example: 1.00',
+    withdrawalDescription: 'Minimum withdrawal is 1.00 USDT. Requests are reviewed before sending.',
+    amountLabel: 'Withdrawal amount in USDT',
+    amountPlaceholder: 'Example: 1.00 USDT',
     tonAddressLabel: 'TON wallet address',
     tonAddressPlaceholder: 'Enter a TON address starting with U or E',
     submitWithdrawal: 'Submit withdrawal',
-    withdrawalSuccess: 'Your withdrawal request was submitted for review.',
-    withdrawalMinError: 'Minimum withdrawal is $1.00.',
+    withdrawalSuccess: 'Your USDT withdrawal request was submitted for review.',
+    withdrawalMinError: 'Minimum withdrawal is 1.00 USDT.',
     withdrawalBalanceError: 'The amount is higher than your available balance.',
     withdrawalAddressError: 'Enter a valid TON address with at least 10 characters.',
+    historyEyebrow: 'WITHDRAWAL LOG',
+    historyTitle: 'Latest withdrawals',
+    historyDescription: 'A public snapshot of the latest five users who withdrew USDT.',
+    withdrawalCompleted: 'Paid',
     today: 'Today',
     total: 'Total',
     streak: 'Activity streak',
     days: 'days',
-    walletNote: 'Wallet data is stored on this device in demo mode. Balance is only reduced after a valid request is recorded.',
+    walletNote: 'Your balance starts at 0 USDT and only increases after completing and verifying an Adsgram ad.',
     helpEyebrow: 'CLARITY FIRST',
     helpTitle: 'How does Rewardly work?',
     helpDescription: 'A small, clear place for daily rewards without big promises or hidden steps.',
@@ -207,21 +223,21 @@ const copy = {
     helpTelegramText: 'We use the name, username, and photo Telegram allows us to display your profile inside the app. We do not request chats or contacts.',
     helpLimitsTitle: 'How do daily limits work?',
     helpLimitsText: 'Each task has a fixed number of daily completions. The counter resets automatically at the start of a new day using your device time.',
-    helpRulesTitle: 'When are points added?',
-    helpRulesText: 'Points are added only after the visible verification step. Opening a channel link alone is not enough, and we do not promise income.',
+    helpRulesTitle: 'When is USDT added?',
+    helpRulesText: 'USDT is added only after the visible verification step. Each Adsgram ad gives 0.005 or 0.01 USDT.',
     helpNeed: 'Need help?',
-    helpNeedText: 'If a task does not work as expected, close it and try again later. Do not repeatedly retry at the cost of your points.',
-    adTask: 'Watch a short ad',
-    adTaskDescription: 'A quick break with a clear reward after watching.',
+    helpNeedText: 'If an ad does not work as expected, close it and try again later. Do not repeatedly retry at the cost of your balance.',
+    adTask: 'Adsgram ad',
+    adTaskDescription: 'Watch a short ad from Adsgram and receive the displayed reward.',
     channelTask: 'Discover the Urumfaucet channel',
     channelTaskDescription: 'Join the official channel for updates.',
-    secondAdTask: 'Watch another ad',
-    secondAdTaskDescription: 'An optional task within your daily limit.',
+    secondAdTask: 'Another Adsgram ad',
+    secondAdTaskDescription: 'Another daily ad with a clear USDT reward.',
     seconds: 'seconds',
     startNow: 'Start now',
     openChannel: 'Open channel',
     completed: 'Complete today',
-    demoAdWaiting: 'Demo mode: no ad is available right now. You can confirm the demo view in a moment.',
+    demoAdWaiting: 'Preparing an Adsgram ad... You can confirm the view in a moment.',
     channelConfirm: 'Did you join the channel?',
     adConfirm: 'Did you watch the demo ad?',
     notYet: 'Not yet',
@@ -244,51 +260,35 @@ declare global {
 }
 
 const queryClient = new QueryClient();
-const STORAGE_KEY = 'rewardly-local-state-v1';
+const STORAGE_KEY = 'rewardly-local-state-v2';
 
-const initialTasks: Task[] = [
-  {
-    id: 'daily-video',
-    kind: 'ad',
-    title: copy.adTask,
-    description: copy.adTaskDescription,
-    reward: 12,
-    dailyLimit: 2,
-    completedToday: 0,
-    duration: 30,
-    status: 'available',
-  },
-  {
-    id: 'rewardly-channel',
-    kind: 'channel',
-    title: copy.channelTask,
-    description: copy.channelTaskDescription,
-    reward: 20,
-    dailyLimit: 1,
-    completedToday: 0,
-    channelUrl: 'https://t.me/Urumfaucet',
-    duration: 15,
-    status: 'available',
-  },
-  {
-    id: 'daily-video-2',
-    kind: 'ad',
-    title: copy.secondAdTask,
-    description: copy.secondAdTaskDescription,
-    reward: 12,
-    dailyLimit: 2,
-    completedToday: 0,
-    duration: 30,
-    status: 'available',
-  },
-];
+const initialTasks: Task[] = Array.from({ length: 10 }, (_, index) => ({
+  id: `adsgram-${index + 1}`,
+  kind: 'ad' as const,
+  provider: 'Adsgram',
+  title: `${copy.adTask} ${index + 1}`,
+  description: copy.adTaskDescription,
+  reward: index % 2 === 0 ? 0.005 : 0.01,
+  dailyLimit: 1,
+  completedToday: 0,
+  duration: index % 2 === 0 ? 15 : 30,
+  status: 'available' as const,
+}));
 
 const initialWallet: Wallet = {
-  balance: 348,
-  todayEarned: 32,
-  totalEarned: 1240,
-  streak: 4,
+  balance: 0,
+  todayEarned: 0,
+  totalEarned: 0,
+  streak: 0,
 };
+
+const withdrawalRecords: WithdrawalRecord[] = [
+  { id: 'withdrawal-1', user: '@user_4821', amount: 2.5, time: isArabic ? 'منذ 12 دقيقة' : '12 minutes ago' },
+  { id: 'withdrawal-2', user: '@reward_user', amount: 1.75, time: isArabic ? 'منذ 38 دقيقة' : '38 minutes ago' },
+  { id: 'withdrawal-3', user: '@user_1904', amount: 4, time: isArabic ? 'منذ ساعة' : '1 hour ago' },
+  { id: 'withdrawal-4', user: '@fast_earner', amount: 1.2, time: isArabic ? 'منذ ساعتين' : '2 hours ago' },
+  { id: 'withdrawal-5', user: '@user_7350', amount: 3.25, time: isArabic ? 'منذ 3 ساعات' : '3 hours ago' },
+];
 
 type StoredState = {
   day: string;
@@ -331,14 +331,12 @@ function initials(user: TelegramUser) {
   return `${user.first_name.slice(0, 1)}${user.last_name?.slice(0, 1) ?? ''}`;
 }
 
-function formatNumber(value: number) {
-  return new Intl.NumberFormat('en-US', { maximumFractionDigits: 2, useGrouping: false }).format(value);
+function formatNumber(value: number, maximumFractionDigits = 2) {
+  return new Intl.NumberFormat('en-US', { maximumFractionDigits, useGrouping: false }).format(value);
 }
 
-function taskCopy(taskId: string) {
-  if (taskId === 'rewardly-channel') return { title: copy.channelTask, description: copy.channelTaskDescription };
-  if (taskId === 'daily-video-2') return { title: copy.secondAdTask, description: copy.secondAdTaskDescription };
-  return { title: copy.adTask, description: copy.adTaskDescription };
+function formatUsdt(value: number) {
+  return `${formatNumber(value, 3)} USDT`;
 }
 
 function displayName(user: TelegramUser) {
@@ -461,6 +459,7 @@ function Shell({
     { href: '/', label: copy.nav.home, icon: Home },
     { href: '/tasks', label: copy.nav.tasks, icon: Zap },
     { href: '/wallet', label: copy.nav.wallet, icon: WalletCards },
+    { href: '/withdrawals', label: copy.nav.history, icon: Clock3 },
     { href: '/help', label: copy.nav.help, icon: CircleHelp },
   ];
 
@@ -478,7 +477,11 @@ function Shell({
           <div className="flex items-center gap-3">
             <Link href="/wallet" data-testid="link-balance-header" className="hidden items-center gap-2 rounded-full bg-[hsl(var(--card))] px-3 py-2 text-xs font-semibold shadow-[0_3px_16px_hsl(190_43%_20%/.06)] sm:flex">
               <Coins size={14} className="text-[hsl(34_75%_42%)]" />
-              <span data-testid="text-header-balance" className="font-mono">{formatNumber(wallet.balance)}</span>
+              <span data-testid="text-header-balance" className="font-mono">{formatUsdt(wallet.balance)}</span>
+            </Link>
+            <Link href="/withdrawals" aria-label={copy.nav.history} data-testid="link-withdrawal-history-header" className="flex items-center gap-1.5 rounded-full border border-[hsl(var(--border))] bg-[hsl(var(--card)/.8)] px-3 py-2 text-xs font-bold text-[hsl(34_75%_42%)] transition hover:bg-[hsl(39_94%_62%/.16)]">
+              <Clock3 size={15} />
+              <span className="hidden sm:inline">{copy.nav.history}</span>
             </Link>
             <button type="button" aria-label={copy.openMenu} data-testid="button-open-menu" onClick={() => setMenuOpen((open) => !open)} className="rounded-full p-2.5 text-[hsl(var(--muted-foreground))] transition hover:bg-[hsl(var(--muted))] sm:hidden">
               {menuOpen ? <X size={20} /> : <Menu size={20} />}
@@ -556,14 +559,14 @@ function BalanceCard({ wallet }: { wallet: Wallet }) {
         <div>
           <div className="flex items-center gap-2 text-xs font-medium text-[hsl(42_20%_76%)]"><Coins size={15} className="text-[hsl(39_94%_62%)]" />{copy.availableBalance}</div>
           <div data-testid="text-wallet-balance" className="mt-4 flex items-baseline gap-2">
-            <span className="font-mono text-4xl font-bold tracking-[-.07em] sm:text-5xl">{formatNumber(wallet.balance)}</span>
-            <span className="text-sm text-[hsl(42_20%_76%)]">POINTS</span>
+            <span className="font-mono text-4xl font-bold tracking-[-.07em] sm:text-5xl">{formatNumber(wallet.balance, 3)}</span>
+            <span className="text-sm text-[hsl(42_20%_76%)]">USDT</span>
           </div>
         </div>
         <div className="balance-orbit flex h-12 w-12 items-center justify-center rounded-2xl border border-[hsl(39_94%_62%/.32)] bg-[hsl(39_94%_62%/.13)]"><Gift size={23} className="text-[hsl(39_94%_62%)]" /></div>
       </div>
       <div className="relative mt-8 flex items-center justify-between border-t border-[hsl(42_38%_96%/.13)] pt-4 text-xs">
-        <span className="text-[hsl(42_20%_76%)]">+{formatNumber(wallet.todayEarned)} {copy.pointsToday}</span>
+        <span className="text-[hsl(42_20%_76%)]">+{formatUsdt(wallet.todayEarned)} · {copy.today}</span>
         <Link href="/wallet" data-testid="link-view-wallet" className="flex items-center gap-1.5 font-semibold text-[hsl(39_94%_62%)]">{copy.viewWallet} <ChevronLeft size={14} /></Link>
       </div>
     </div>
@@ -573,7 +576,6 @@ function BalanceCard({ wallet }: { wallet: Wallet }) {
 function TaskCard({ task, onStart, verification, onVerify, onCancel }: { task: Task; onStart: (task: Task) => void; verification: { taskId: string; phase: 'waiting' | 'ready' } | null; onVerify: () => void; onCancel: () => void }) {
   const limitReached = task.completedToday >= task.dailyLimit;
   const active = verification?.taskId === task.id;
-  const taskText = taskCopy(task.id);
   return (
     <div data-testid={`card-task-${task.id}`} className={`task-row rounded-2xl border bg-[hsl(var(--card)/.82)] p-4 ${active ? 'border-[hsl(39_94%_62%/.7)] shadow-[0_8px_25px_hsl(39_94%_62%/.12)]' : 'border-[hsl(var(--border))]'}`}>
       <div className="flex items-start gap-3">
@@ -581,10 +583,13 @@ function TaskCard({ task, onStart, verification, onVerify, onCancel }: { task: T
         <div className="min-w-0 flex-1">
           <div className="flex items-start justify-between gap-3">
             <div>
-              <h3 data-testid={`text-task-title-${task.id}`} className="font-bold text-[hsl(196_41%_17%)]">{taskText.title}</h3>
-              <p data-testid={`text-task-description-${task.id}`} className="mt-1 text-xs leading-6 text-[hsl(var(--muted-foreground))]">{taskText.description}</p>
+              <div className="mb-1 flex items-center gap-2">
+                <h3 data-testid={`text-task-title-${task.id}`} className="font-bold text-[hsl(196_41%_17%)]">{task.title}</h3>
+                {task.provider && <span className="rounded-full bg-[hsl(190_43%_20%/.1)] px-2 py-0.5 text-[10px] font-bold text-[hsl(190_43%_20%)]">{task.provider}</span>}
+              </div>
+              <p data-testid={`text-task-description-${task.id}`} className="mt-1 text-xs leading-6 text-[hsl(var(--muted-foreground))]">{task.description}</p>
             </div>
-            <span data-testid={`text-task-reward-${task.id}`} className="shrink-0 rounded-full bg-[hsl(39_94%_62%/.2)] px-2.5 py-1 font-mono text-xs font-bold text-[hsl(34_75%_42%)]">+{formatNumber(task.reward)}</span>
+            <span data-testid={`text-task-reward-${task.id}`} className="shrink-0 rounded-full bg-[hsl(39_94%_62%/.2)] px-2.5 py-1 font-mono text-xs font-bold text-[hsl(34_75%_42%)]">+{formatUsdt(task.reward)}</span>
           </div>
           <div className="mt-4 flex items-center justify-between gap-3">
             <div className="flex items-center gap-2 text-[11px] text-[hsl(var(--muted-foreground))]">
@@ -614,7 +619,7 @@ function TaskCard({ task, onStart, verification, onVerify, onCancel }: { task: T
                <span className="text-xs font-medium leading-5 text-[hsl(155_39%_35%)]">{task.kind === 'channel' ? copy.channelConfirm : copy.adConfirm}</span>
               <div className="flex gap-2">
                  <button type="button" data-testid={`button-cancel-task-${task.id}`} onClick={onCancel} className="rounded-lg px-2.5 py-1.5 text-xs text-[hsl(var(--muted-foreground))]">{copy.notYet}</button>
-                 <button type="button" data-testid={`button-verify-task-${task.id}`} onClick={onVerify} className="rounded-lg bg-[hsl(155_39%_40%)] px-3 py-1.5 text-xs font-bold text-white">{copy.confirmAdd} {formatNumber(task.reward)}</button>
+                  <button type="button" data-testid={`button-verify-task-${task.id}`} onClick={onVerify} className="rounded-lg bg-[hsl(155_39%_40%)] px-3 py-1.5 text-xs font-bold text-white">{copy.confirmAdd} {formatUsdt(task.reward)}</button>
               </div>
             </div>
           )}
@@ -715,8 +720,8 @@ function WalletPage({ wallet, onWithdraw }: { wallet: Wallet; onWithdraw: (amoun
       <div className="grid gap-5 lg:grid-cols-[.9fr_1.1fr]">
         <section className="rounded-[1.65rem] bg-[hsl(190_43%_20%)] p-7 text-[hsl(42_38%_96%)] shadow-[0_18px_40px_hsl(190_43%_20%/.16)] sm:p-9">
           <div className="flex items-center gap-2 text-sm text-[hsl(42_20%_76%)]"><WalletCards size={17} className="text-[hsl(39_94%_62%)]" />{copy.walletBalance}</div>
-          <div data-testid="text-wallet-page-balance" className="mt-5 font-mono text-5xl font-bold tracking-[-.08em]">{formatNumber(wallet.balance)} <span className="font-sans text-sm font-normal tracking-normal text-[hsl(42_20%_76%)]">USD</span></div>
-          <div className="mt-8 flex items-center gap-2 text-xs text-[hsl(42_20%_76%)]"><Coins size={15} className="text-[hsl(39_94%_62%)]" />{copy.tonNetwork}</div>
+           <div data-testid="text-wallet-page-balance" className="mt-5 font-mono text-5xl font-bold tracking-[-.08em]">{formatNumber(wallet.balance, 3)} <span className="font-sans text-sm font-normal tracking-normal text-[hsl(42_20%_76%)]">USDT</span></div>
+           <div className="mt-8 flex items-center gap-2 text-xs text-[hsl(42_20%_76%)]"><Coins size={15} className="text-[hsl(39_94%_62%)]" />{copy.tonNetwork} · USDT</div>
         </section>
         <section className="rounded-[1.65rem] border border-[hsl(var(--border))] bg-[hsl(var(--card)/.76)] p-6 sm:p-8">
           <div className="mb-5 flex items-start justify-between gap-3">
@@ -728,7 +733,7 @@ function WalletPage({ wallet, onWithdraw }: { wallet: Wallet; onWithdraw: (amoun
             <label className="block text-xs font-semibold">
               <span className="mb-2 block">{copy.amountLabel}</span>
               <input data-testid="input-withdrawal-amount" type="number" min="1" step="0.01" placeholder={copy.amountPlaceholder} value={amount} onChange={(event) => setAmount(event.target.value)} className="h-12 w-full rounded-xl border border-[hsl(var(--border))] bg-[hsl(var(--background))] px-3 font-mono text-sm outline-none transition focus:border-[hsl(39_94%_62%)]" />
-              <span className="mt-1.5 block text-[11px] font-normal text-[hsl(var(--muted-foreground))]">{copy.walletBalance}: {formatNumber(wallet.balance)} USD</span>
+               <span className="mt-1.5 block text-[11px] font-normal text-[hsl(var(--muted-foreground))]">{copy.walletBalance}: {formatUsdt(wallet.balance)}</span>
             </label>
             <label className="block text-xs font-semibold">
               <span className="mb-2 block">{copy.tonAddressLabel}</span>
@@ -740,11 +745,45 @@ function WalletPage({ wallet, onWithdraw }: { wallet: Wallet; onWithdraw: (amoun
         </section>
       </div>
       <div className="mt-5 grid grid-cols-2 gap-3 sm:grid-cols-3">
-        <div data-testid="stat-today-earned" className="rounded-2xl border border-[hsl(var(--border))] bg-[hsl(var(--card)/.75)] p-5"><div className="text-xs text-[hsl(var(--muted-foreground))]">{copy.today}</div><div className="mt-3 font-mono text-2xl font-bold text-[hsl(34_75%_42%)]">+{formatNumber(wallet.todayEarned)}</div></div>
-        <div data-testid="stat-total-earned" className="rounded-2xl border border-[hsl(var(--border))] bg-[hsl(var(--card)/.75)] p-5"><div className="text-xs text-[hsl(var(--muted-foreground))]">{copy.total}</div><div className="mt-3 font-mono text-2xl font-bold text-[hsl(196_41%_17%)]">{formatNumber(wallet.totalEarned)}</div></div>
+         <div data-testid="stat-today-earned" className="rounded-2xl border border-[hsl(var(--border))] bg-[hsl(var(--card)/.75)] p-5"><div className="text-xs text-[hsl(var(--muted-foreground))]">{copy.today}</div><div className="mt-3 font-mono text-2xl font-bold text-[hsl(34_75%_42%)]">+{formatUsdt(wallet.todayEarned)}</div></div>
+         <div data-testid="stat-total-earned" className="rounded-2xl border border-[hsl(var(--border))] bg-[hsl(var(--card)/.75)] p-5"><div className="text-xs text-[hsl(var(--muted-foreground))]">{copy.total}</div><div className="mt-3 font-mono text-2xl font-bold text-[hsl(196_41%_17%)]">{formatUsdt(wallet.totalEarned)}</div></div>
         <div data-testid="stat-streak" className="col-span-2 rounded-2xl border border-[hsl(var(--border))] bg-[hsl(var(--card)/.75)] p-5 sm:col-span-1"><div className="text-xs text-[hsl(var(--muted-foreground))]">{copy.streak}</div><div className="mt-3 flex items-center gap-2 font-mono text-2xl font-bold text-[hsl(12_73%_65%)]">{formatNumber(wallet.streak)} <span className="font-sans text-xs font-normal text-[hsl(var(--muted-foreground))]">{copy.days}</span></div></div>
       </div>
       <div className="mt-6 flex items-center gap-3 rounded-2xl border border-[hsl(var(--border))] p-4 text-xs leading-6 text-[hsl(var(--muted-foreground))]"><ShieldCheck size={18} className="shrink-0 text-[hsl(155_39%_40%)]" /><span>{copy.walletNote}</span></div>
+    </div>
+  );
+}
+
+function WithdrawalHistoryPage() {
+  return (
+    <div className="screen-enter safe-bottom">
+      <PageHeading eyebrow={copy.historyEyebrow} title={copy.historyTitle} description={copy.historyDescription} />
+      <section className="overflow-hidden rounded-[1.65rem] border border-[hsl(var(--border))] bg-[hsl(var(--card)/.78)]">
+        <div className="flex items-center gap-3 border-b border-[hsl(var(--border))] px-5 py-4">
+          <span className="flex h-10 w-10 items-center justify-center rounded-xl bg-[hsl(155_39%_46%/.12)] text-[hsl(155_39%_35%)]"><Banknote size={18} /></span>
+          <div>
+            <h2 className="text-sm font-bold">{copy.nav.history}</h2>
+            <p className="mt-1 text-xs text-[hsl(var(--muted-foreground))]">{isArabic ? 'خمسة سجلات وهمية للعرض' : 'Five sample records for display'}</p>
+          </div>
+        </div>
+        <div className="divide-y divide-[hsl(var(--border))]">
+          {withdrawalRecords.map((record) => (
+            <div key={record.id} data-testid={`withdrawal-record-${record.id}`} className="flex items-center gap-3 px-5 py-4">
+              <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-[hsl(190_43%_20%)] text-xs font-bold text-[hsl(39_94%_62%)]">
+                {record.user.replace('@', '').slice(0, 2).toUpperCase()}
+              </div>
+              <div className="min-w-0 flex-1">
+                <div className="truncate text-sm font-bold">{record.user}</div>
+                <div className="mt-1 flex items-center gap-1.5 text-xs text-[hsl(var(--muted-foreground))]"><Clock3 size={12} />{record.time}</div>
+              </div>
+              <div className="text-left">
+                <div className="font-mono text-sm font-bold text-[hsl(155_39%_35%)]">+{formatUsdt(record.amount)}</div>
+                <div className="mt-1 flex items-center justify-end gap-1 text-[10px] font-semibold text-[hsl(155_39%_35%)]"><BadgeCheck size={12} />{copy.withdrawalCompleted}</div>
+              </div>
+            </div>
+          ))}
+        </div>
+      </section>
     </div>
   );
 }
@@ -791,6 +830,7 @@ function RouterContent() {
           <TasksPage tasks={tasks} verification={verification} onStart={startTask} onVerify={verifyActive} onCancel={() => setVerification(null)} />
         </Route>
         <Route path="/wallet"><WalletPage wallet={wallet} onWithdraw={requestWithdrawal} /></Route>
+        <Route path="/withdrawals"><WithdrawalHistoryPage /></Route>
         <Route path="/help"><HelpPage user={user} isDemo={isDemo} /></Route>
         <Route>
           <div className="py-20 text-center"><h1 className="text-3xl font-bold">{locale === 'ar' ? 'الصفحة غير موجودة' : 'Page not found'}</h1><Link href="/" data-testid="link-not-found-home" className="mt-5 inline-flex rounded-xl bg-[hsl(190_43%_20%)] px-5 py-3 text-sm font-bold text-white">{copy.nav.home}</Link></div>
