@@ -21,4 +21,5 @@
 الواجهة الحالية Frontend أولي بحالة محلية لأغراض العرض والتكامل اللاحق مع Telegram Bot API وAdsgram.
 
 هذا مشروع مستقل ويستخدم npm. تم استبدال صيغة `catalog:` الخاصة بـ pnpm بإصدارات
-حقيقية في `package.json` حتى يعمل `npm install` مباشرة.
+حقيقية في `package.json`، كما تم حذف lockfile المولّد داخل Replit حتى لا يشير
+إلى مستودع داخلي غير متاح خارج Replit.

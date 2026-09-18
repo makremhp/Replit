@@ -25,5 +25,9 @@ Rewardly Telegram - آخر الملفات المعدلة
 ملف `vercel.json` يحتوي على rewrite إلى `index.html` حتى تعمل مسارات
 `/wallet` و`/tasks` و`/help` عند فتحها مباشرة ولا تظهر صفحة 404.
 
+لا ترفع `package-lock.json` مولداً داخل بيئة Replit إذا كان يحتوي على
+`package-firewall.replit.internal`. المشروع الحالي لا يحتوي lockfile داخلياً؛
+سيولد Vercel lockfile الخاص به من npm العام أثناء النشر.
+
 ملاحظة:
 التحقق الحقيقي من عضوية القناة ومكافآت Adsgram يحتاج Telegram Bot Token وAdsgram Placement ID على الخادم.
