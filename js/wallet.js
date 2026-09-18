@@ -46,46 +46,11 @@ function setConnectionStatus(message, connected = false) {
 }
 
 
-function crc16Ccitt(bytes) {
-  let crc = 0;
-  for (const byte of bytes) {
-    crc ^= byte << 8;
-    for (let bit = 0; bit < 8; bit += 1) {
-      crc = (crc & 0x8000) ? ((crc << 1) ^ 0x1021) & 0xffff : (crc << 1) & 0xffff;
-    }
-  }
-  return crc;
-}
-
-function toFriendlyTonAddress(address) {
-  const value = String(address || '').trim();
-  if (!value) return '';
-  if (!value.includes(':') && /^[A-Za-z0-9_-]{48}$/.test(value)) return value;
-  const [workchainText, hashHex] = value.split(':');
-  if (!/^-?\d+$/.test(workchainText || '') || !/^[a-f0-9]{64}$/i.test(hashHex || '')) return value;
-  const workchain = Number(workchainText);
-  if (workchain !== 0 && workchain !== -1) return value;
-  const payload = new Uint8Array(34);
-  payload[0] = 0x11;
-  payload[1] = workchain === -1 ? 0xff : 0x00;
-  for (let index = 0; index < 32; index += 1) payload[index + 2] = parseInt(hashHex.slice(index * 2, index * 2 + 2), 16);
-  const checksum = crc16Ccitt(payload);
-  const bytes = new Uint8Array(36);
-  bytes.set(payload);
-  bytes[34] = (checksum >> 8) & 0xff;
-  bytes[35] = checksum & 0xff;
-  let binary = '';
-  for (const byte of bytes) binary += String.fromCharCode(byte);
-  return btoa(binary).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/g, '');
-}
-
-function shortTonAddress(address) {
-  return address.length > 18 ? `${address.slice(0, 8)}…${address.slice(-7)}` : address;
-}
 
 function renderConnectedWallet(wallet) {
-  const rawTonAddress = wallet?.account?.address || '';
-  connectedTonAddress = toFriendlyTonAddress(rawTonAddress);
+  // Keep the exact address returned by TON Connect. Do not re-encode it or recalculate its checksum.
+  const rawTonAddress = String(wallet?.account?.address || '').trim();
+  connectedTonAddress = rawTonAddress;
   const connected = Boolean(connectedTonAddress);
   tonAddressInput.value = connectedTonAddress;
   tonAddressInput.classList.toggle('is-connected', connected);
