@@ -72,8 +72,12 @@ type WithdrawalRecord = {
   time: string;
 };
 
-type PublicWithdrawalRecord = WithdrawalRecord & {
-  avatarUrl: string;
+type PublicWithdrawalRecord = {
+  id: string;
+  name: string;
+  avatar: string;
+  amount: number;
+  time: string;
 };
 
 type Locale = 'ar' | 'en';
@@ -137,7 +141,8 @@ const copy = {
     myHistoryTitle: 'سجل سحوباتك',
     noUserWithdrawals: 'لا توجد لديك عمليات سحب حتى الآن.',
     publicHistoryTitle: 'آخر المستخدمين الذين سحبوا',
-    publicHistoryDescription: 'سجلات عامة وهمية للعرض فقط.',
+     publicHistoryDescription: 'ملخص عام محدود للعرض فقط، من دون بيانات معاملات خاصة.',
+     transactionUnavailable: 'transaction details are unavailable in display data',
     withdrawalCompleted: 'تم السحب',
     today: 'اليوم',
     total: 'الإجمالي',
@@ -152,22 +157,24 @@ const copy = {
     helpLimitsTitle: 'كيف تعمل الحدود اليومية؟',
     helpLimitsText: 'كل مهمة تملك عدداً محدداً من المرات في اليوم. يظهر العدد بجانب المهمة، ويتجدد تلقائياً عند بداية يوم جديد حسب توقيت جهازك.',
     helpRulesTitle: 'متى يضاف USDT؟',
-    helpRulesText: 'تضاف مكافأة USDT بعد اكتمال التحقق التلقائي الذي يستغرق ثانيتين. كل إعلان Adsgram يعطي 0.005 أو 0.01 USDT.',
+    helpRulesText: 'تضاف مكافأة USDT فقط بعد إكمال خطوة التحقق الظاهرة. كل إعلان Adsgram يعطي 0.005 أو 0.01 USDT.',
     helpNeed: 'تحتاج مساعدة؟',
     helpNeedText: 'إذا واجهت إعلاناً لا يعمل كما هو متوقع، أغلقه وحاول مرة أخرى لاحقاً. لا تتكرر المحاولة على حساب رصيدك.',
     adTask: 'إعلان Adsgram',
     adTaskDescription: 'شاهد إعلاناً قصيراً من مزود Adsgram واحصل على مكافأتك.',
     channelTask: 'تعرّف على قناة Urumfaucet',
     channelTaskDescription: 'انضم للقناة الرسمية لتصلك التحديثات.',
+    secondAdTask: 'إعلان Adsgram إضافي',
+    secondAdTaskDescription: 'إعلان يومي إضافي بمكافأة USDT واضحة.',
     seconds: 'ثانية',
     startNow: 'ابدأ الآن',
     openChannel: 'فتح القناة',
     completed: 'اكتملت اليوم',
-    demoAdWaiting: 'جاري التحقق تلقائياً من مكافأة Adsgram. ستضاف بعد ثوانٍ.',
+    demoAdWaiting: 'جاري تجهيز إعلان Adsgram... يمكنك تأكيد المشاهدة بعد لحظات.',
     channelConfirm: 'هل أتممت الانضمام للقناة؟',
+    adConfirm: 'تمت مشاهدة الإعلان التجريبي؟',
     notYet: 'ليس بعد',
-    publicTxAction: 'txd',
-    publicTxUnavailable: 'بيانات المعاملة غير متاحة في بيانات العرض.',
+    confirmAdd: 'تأكيد وإضافة',
   },
   en: {
     nav: { home: 'Home', tasks: 'Ads', wallet: 'Wallet', history: 'Withdrawals', help: 'How it works' },
@@ -220,7 +227,8 @@ const copy = {
     myHistoryTitle: 'Your withdrawal history',
     noUserWithdrawals: 'You have no withdrawals yet.',
     publicHistoryTitle: 'Latest users who withdrew',
-    publicHistoryDescription: 'Sample public records for display only.',
+     publicHistoryDescription: 'A limited public display with no private transaction data.',
+     transactionUnavailable: 'transaction details are unavailable in display data',
     withdrawalCompleted: 'Paid',
     today: 'Today',
     total: 'Total',
@@ -235,22 +243,24 @@ const copy = {
     helpLimitsTitle: 'How do daily limits work?',
     helpLimitsText: 'Each task has a fixed number of daily completions. The counter resets automatically at the start of a new day using your device time.',
     helpRulesTitle: 'When is USDT added?',
-    helpRulesText: 'USDT is added after automatic verification completes, which takes two seconds. Each Adsgram ad gives 0.005 or 0.01 USDT.',
+    helpRulesText: 'USDT is added only after the visible verification step. Each Adsgram ad gives 0.005 or 0.01 USDT.',
     helpNeed: 'Need help?',
     helpNeedText: 'If an ad does not work as expected, close it and try again later. Do not repeatedly retry at the cost of your balance.',
     adTask: 'Adsgram ad',
     adTaskDescription: 'Watch a short ad from Adsgram and receive the displayed reward.',
     channelTask: 'Discover the Urumfaucet channel',
     channelTaskDescription: 'Join the official channel for updates.',
+    secondAdTask: 'Another Adsgram ad',
+    secondAdTaskDescription: 'Another daily ad with a clear USDT reward.',
     seconds: 'seconds',
     startNow: 'Start now',
     openChannel: 'Open channel',
     completed: 'Complete today',
-    demoAdWaiting: 'Preparing your Adsgram reward. Verification completes automatically.',
+    demoAdWaiting: 'Preparing an Adsgram ad... You can confirm the view in a moment.',
     channelConfirm: 'Did you join the channel?',
+    adConfirm: 'Did you watch the demo ad?',
     notYet: 'Not yet',
-    publicTxAction: 'txd',
-    publicTxUnavailable: 'Transaction details are unavailable in demo data.',
+    confirmAdd: 'Confirm and add',
   },
 }[locale];
 
@@ -306,12 +316,17 @@ const initialWallet: Wallet = {
   streak: 0,
 };
 
+function faceImage(background: string, skin: string, hair: string, shirt: string) {
+  const svg = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 96 96"><rect width="96" height="96" rx="48" fill="${background}"/><path d="M20 96c2-19 13-29 28-29s26 10 28 29" fill="${shirt}"/><ellipse cx="48" cy="45" rx="21" ry="25" fill="${skin}"/><path d="M27 43c-1-19 8-30 22-30 16 0 25 11 21 31-4-9-11-13-20-14-8 9-14 12-23 13Z" fill="${hair}"/><circle cx="40" cy="47" r="2" fill="#26343a"/><circle cx="56" cy="47" r="2" fill="#26343a"/><path d="M42 59c4 3 8 3 12 0" fill="none" stroke="#9b5e56" stroke-width="2" stroke-linecap="round"/></svg>`;
+  return `data:image/svg+xml,${encodeURIComponent(svg)}`;
+}
+
 const publicWithdrawalRecords: PublicWithdrawalRecord[] = [
-  { id: 'withdrawal-1', user: isArabic ? 'سارة محمد' : 'Sarah Morgan', amount: 2.5, time: isArabic ? 'منذ 12 دقيقة' : '12 minutes ago', avatarUrl: 'https://randomuser.me/api/portraits/women/44.jpg' },
-  { id: 'withdrawal-2', user: isArabic ? 'عمر خالد' : 'Omar Khalid', amount: 1.75, time: isArabic ? 'منذ 38 دقيقة' : '38 minutes ago', avatarUrl: 'https://randomuser.me/api/portraits/men/32.jpg' },
-  { id: 'withdrawal-3', user: isArabic ? 'ليان يوسف' : 'Lina Yusuf', amount: 4, time: isArabic ? 'منذ ساعة' : '1 hour ago', avatarUrl: 'https://randomuser.me/api/portraits/women/68.jpg' },
-  { id: 'withdrawal-4', user: isArabic ? 'آدم رامي' : 'Adam Rami', amount: 1.2, time: isArabic ? 'منذ ساعتين' : '2 hours ago', avatarUrl: 'https://randomuser.me/api/portraits/men/75.jpg' },
-  { id: 'withdrawal-5', user: isArabic ? 'نور علي' : 'Nour Ali', amount: 3.25, time: isArabic ? 'منذ 3 ساعات' : '3 hours ago', avatarUrl: 'https://randomuser.me/api/portraits/women/65.jpg' },
+  { id: 'public-1', name: 'Sarah Morgan', avatar: faceImage('#d8ece9', '#f0bd91', '#59433f', '#35666b'), amount: 2.5, time: isArabic ? 'منذ 12 دقيقة' : '12 minutes ago' },
+  { id: 'public-2', name: 'Omar Khalid', avatar: faceImage('#f2dfc8', '#a96d4c', '#211d22', '#c26a4a'), amount: 1.75, time: isArabic ? 'منذ 38 دقيقة' : '38 minutes ago' },
+  { id: 'public-3', name: 'Lina Yusuf', avatar: faceImage('#e7e0f2', '#d79a75', '#332b3d', '#735f9d'), amount: 4, time: isArabic ? 'منذ ساعة' : '1 hour ago' },
+  { id: 'public-4', name: 'Adam Rami', avatar: faceImage('#f0e4c2', '#c98962', '#49372d', '#4d6c68'), amount: 1.2, time: isArabic ? 'منذ ساعتين' : '2 hours ago' },
+  { id: 'public-5', name: 'Nour Ali', avatar: faceImage('#dce8f0', '#dca17e', '#4b3039', '#a36e5f'), amount: 3.25, time: isArabic ? 'منذ 3 ساعات' : '3 hours ago' },
 ];
 
 type StoredState = {
@@ -323,33 +338,6 @@ type StoredState = {
 
 function todayKey() {
   return new Intl.DateTimeFormat('en-CA').format(new Date());
-}
-
-function normalizeTasks(tasks: Task[]) {
-  let hasAdsgram = false;
-  const normalized = tasks.reduce<Task[]>((result, task) => {
-    const isAdsgram = task.kind === 'ad' || task.provider?.toLowerCase() === 'adsgram' || task.title.toLowerCase().includes('adsgram');
-    if (isAdsgram) {
-      if (hasAdsgram) return result;
-      hasAdsgram = true;
-      result.push({
-        ...task,
-        id: 'adsgram-daily',
-        kind: 'ad',
-        provider: 'Adsgram',
-        title: copy.adTask,
-        description: copy.adTaskDescription,
-        dailyLimit: 10,
-        completedToday: Math.min(Math.max(Number(task.completedToday) || 0, 0), 10),
-        status: (task.completedToday >= 10 ? 'completed' : 'available'),
-      });
-      return result;
-    }
-    result.push(task);
-    return result;
-  }, []);
-  if (!hasAdsgram) normalized.unshift({ ...initialTasks[0] });
-  return normalized;
 }
 
 function getTelegramUser(): { user: TelegramUser; isDemo: boolean } {
@@ -367,24 +355,11 @@ function getTelegramUser(): { user: TelegramUser; isDemo: boolean } {
   };
 }
 
-function loadState(): { tasks: Task[]; wallet: Wallet; userWithdrawals: WithdrawalRecord[] } {
+function loadState(storageKey = STORAGE_KEY): { tasks: Task[]; wallet: Wallet; userWithdrawals: WithdrawalRecord[] } {
   try {
-    const saved = JSON.parse(localStorage.getItem(STORAGE_KEY) ?? 'null') as StoredState | null;
+    const saved = JSON.parse(localStorage.getItem(storageKey) ?? 'null') as StoredState | null;
     if (saved?.day === todayKey() && saved.tasks && saved.wallet) {
-      return {
-        tasks: normalizeTasks(saved.tasks),
-        wallet: saved.wallet,
-        userWithdrawals: Array.isArray(saved.userWithdrawals)
-          ? saved.userWithdrawals.filter((record) => (
-              record
-              && typeof record.id === 'string'
-              && record.id.startsWith('my-withdrawal-')
-              && typeof record.amount === 'number'
-              && record.amount > 0
-              && typeof record.user === 'string'
-            ))
-          : [],
-      };
+      return { tasks: saved.tasks, wallet: saved.wallet, userWithdrawals: saved.userWithdrawals ?? [] };
     }
   } catch {
     // localStorage is optional in Telegram webviews.
@@ -449,23 +424,26 @@ function Avatar({ user, large = false }: { user: TelegramUser; large?: boolean }
   );
 }
 
-function useRewardlyState() {
-  const [state, setState] = useState(loadState);
+function useRewardlyState(userId: number) {
+  const storageKey = `${STORAGE_KEY}-${userId}`;
+  const [state, setState] = useState(() => loadState(storageKey));
   const [verification, setVerification] = useState<{ taskId: string; phase: 'waiting' } | null>(null);
 
   useEffect(() => {
     try {
-      localStorage.setItem(STORAGE_KEY, JSON.stringify({ ...state, day: todayKey() }));
+      localStorage.setItem(storageKey, JSON.stringify({ ...state, day: todayKey() }));
     } catch {
       // App remains usable if storage is blocked.
     }
-  }, [state]);
+  }, [state, storageKey]);
 
   const completeTask = (taskId: string) => {
     setState((current) => {
       const target = current.tasks.find((task) => task.id === taskId);
       if (!target || target.completedToday >= target.dailyLimit) return current;
-      const reward = target.rewardMax && target.completedToday % 2 === 1 ? target.rewardMax : target.reward;
+      const reward = target.rewardMax
+        ? Number((target.reward + Math.random() * (target.rewardMax - target.reward)).toFixed(3))
+        : target.reward;
       return {
         tasks: current.tasks.map((task) =>
           task.id === taskId
@@ -519,7 +497,7 @@ function useRewardlyState() {
       return;
     }
     setVerification({ taskId: task.id, phase: 'waiting' });
-    window.setTimeout(() => completeTask(task.id), 2000);
+      window.setTimeout(() => completeTask(task.id), 2000);
   };
 
   return { ...state, verification, setVerification, startTask, completeTask, requestWithdrawal };
@@ -639,7 +617,7 @@ function BalanceCard({ wallet }: { wallet: Wallet }) {
       <div className="absolute -left-1 top-[-5.5rem] h-48 w-48 rounded-full border border-[hsl(39_94%_62%/.14)]" />
       <div className="absolute bottom-0 right-0 h-40 w-40 translate-x-16 translate-y-16 rounded-full bg-[hsl(12_73%_65%/.16)] blur-2xl" />
       <div className="relative flex items-start justify-between">
-             <div className="min-w-0">
+        <div>
           <div className="flex items-center gap-2 text-xs font-medium text-[hsl(42_20%_76%)]"><Coins size={15} className="text-[hsl(39_94%_62%)]" />{copy.availableBalance}</div>
           <div data-testid="text-wallet-balance" className="mt-4 flex items-baseline gap-2">
             <span className="font-mono text-4xl font-bold tracking-[-.07em] sm:text-5xl">{formatNumber(wallet.balance, 3)}</span>
@@ -659,8 +637,9 @@ function BalanceCard({ wallet }: { wallet: Wallet }) {
 function TaskCard({ task, onStart, verification }: { task: Task; onStart: (task: Task) => void; verification: { taskId: string; phase: 'waiting' } | null }) {
   const limitReached = task.completedToday >= task.dailyLimit;
   const active = verification?.taskId === task.id;
+  const blocked = Boolean(verification && !active);
   return (
-    <div data-testid={`card-task-${task.id}`} className={`task-row rounded-2xl border bg-[hsl(var(--card)/.82)] p-4 ${active ? 'border-[hsl(39_94%_62%/.7)] shadow-[0_8px_25px_hsl(39_94%_62%/.12)]' : 'border-[hsl(var(--border))]'}`}>
+    <div data-testid={`card-task-${task.id}`} className={`task-row rounded-2xl border bg-[hsl(var(--card)/.82)] p-4 ${active ? 'border-[hsl(39_94%_62%/.7)] shadow-[0_8px_25px_hsl(39_94%_62%/.12)]' : 'border-[hsl(var(--border))]'} ${blocked ? 'opacity-60' : ''}`}>
       <div className="flex items-start gap-3">
         <IconBadge kind={task.kind} />
         <div className="min-w-0 flex-1">
@@ -672,7 +651,7 @@ function TaskCard({ task, onStart, verification }: { task: Task; onStart: (task:
               </div>
               <p data-testid={`text-task-description-${task.id}`} className="mt-1 text-xs leading-6 text-[hsl(var(--muted-foreground))]">{task.description}</p>
             </div>
-             <span data-testid={`text-task-reward-${task.id}`} className="w-[6.75rem] shrink-0 rounded-full bg-[hsl(39_94%_62%/.2)] px-1.5 py-1 text-center font-mono text-[10px] font-bold leading-4 text-[hsl(34_75%_42%)] break-words">{`+${formatReward(task)}`}</span>
+             <span data-testid={`text-task-reward-${task.id}`} className="max-w-[7.2rem] shrink-0 whitespace-normal rounded-full bg-[hsl(39_94%_62%/.2)] px-2.5 py-1 text-center font-mono text-[11px] font-bold leading-4 text-[hsl(34_75%_42%)]">+{formatReward(task)}</span>
           </div>
           <div className="mt-4 flex items-center justify-between gap-3">
             <div className="flex items-center gap-2 text-[11px] text-[hsl(var(--muted-foreground))]">
@@ -681,14 +660,14 @@ function TaskCard({ task, onStart, verification }: { task: Task; onStart: (task:
               <span data-testid={`text-task-limit-${task.id}`}>{formatNumber(task.completedToday)} / {formatNumber(task.dailyLimit)} {copy.today}</span>
             </div>
             {active ? (
-              <button type="button" disabled data-testid={`button-start-task-${task.id}`} aria-live="polite" className="flex cursor-wait items-center gap-2 rounded-xl bg-[hsl(39_94%_62%/.18)] px-3.5 py-2 text-xs font-bold text-[hsl(34_75%_42%)]">
+               <button type="button" disabled data-testid={`button-start-task-${task.id}`} className="flex cursor-wait items-center gap-2 rounded-xl bg-[hsl(39_94%_62%/.22)] px-3.5 py-2 text-xs font-bold text-[hsl(34_75%_42%)]">
                 <span className="h-3.5 w-3.5 animate-spin rounded-full border-2 border-[hsl(39_94%_62%/.35)] border-t-[hsl(34_75%_42%)]" />
-                <span data-testid={`status-task-verifying-${task.id}`}>{isArabic ? 'جاري التحقق' : 'Verifying'}</span>
-              </button>
+                 <span data-testid={`status-task-verifying-${task.id}`}>جاري التحقق</span>
+               </button>
             ) : limitReached ? (
               <span data-testid={`status-task-completed-${task.id}`} className="flex items-center gap-1.5 text-xs font-bold text-[hsl(155_39%_40%)]"><BadgeCheck size={16} />{copy.completed}</span>
             ) : (
-              <button type="button" data-testid={`button-start-task-${task.id}`} onClick={() => onStart(task)} className="flex items-center gap-1.5 rounded-xl bg-[hsl(190_43%_20%)] px-3.5 py-2 text-xs font-bold text-[hsl(42_38%_96%)] transition hover:-translate-y-0.5 hover:bg-[hsl(190_43%_25%)] active:translate-y-0">
+              <button type="button" disabled={blocked} data-testid={`button-start-task-${task.id}`} onClick={() => onStart(task)} className="flex items-center gap-1.5 rounded-xl bg-[hsl(190_43%_20%)] px-3.5 py-2 text-xs font-bold text-[hsl(42_38%_96%)] transition hover:-translate-y-0.5 hover:bg-[hsl(190_43%_25%)] active:translate-y-0 disabled:cursor-not-allowed disabled:hover:translate-y-0">
                 {task.kind === 'ad' ? copy.startNow : copy.openChannel} <ArrowLeft size={14} />
               </button>
             )}
@@ -708,8 +687,9 @@ function TaskCard({ task, onStart, verification }: { task: Task; onStart: (task:
 }
 
 function HomePage({ user, isDemo, tasks, wallet, verification, onStart }: { user: TelegramUser; isDemo: boolean; tasks: Task[]; wallet: Wallet; verification: { taskId: string; phase: 'waiting' } | null; onStart: (task: Task) => void }) {
-  const done = tasks.reduce((sum, task) => sum + task.completedToday, 0);
-  const possible = tasks.reduce((sum, task) => sum + task.dailyLimit, 0);
+  const adsgramTask = tasks.find((task) => task.id === 'adsgram-daily');
+  const done = adsgramTask?.completedToday ?? 0;
+  const possible = adsgramTask?.dailyLimit ?? 10;
   const completion = possible ? Math.round((done / possible) * 100) : 0;
   return (
     <div className="screen-enter safe-bottom">
@@ -833,7 +813,7 @@ function WalletPage({ wallet, onWithdraw }: { wallet: Wallet; onWithdraw: (amoun
 }
 
 function WithdrawalHistoryPage({ userWithdrawals }: { userWithdrawals: WithdrawalRecord[] }) {
-  const [selectedTransaction, setSelectedTransaction] = useState<string | null>(null);
+  const [detailNotice, setDetailNotice] = useState<string | null>(null);
   return (
     <div className="screen-enter safe-bottom">
       <PageHeading eyebrow={copy.historyEyebrow} title={copy.historyTitle} description={copy.historyDescription} />
@@ -863,41 +843,28 @@ function WithdrawalHistoryPage({ userWithdrawals }: { userWithdrawals: Withdrawa
           ))}
         </div>
       </section>
-       <section data-testid="card-public-withdrawal-history" className="mt-5 max-w-2xl overflow-hidden rounded-2xl border border-[hsl(var(--border))] bg-[hsl(var(--card)/.6)]">
+      <section data-testid="card-public-withdrawal-history" className="mt-5 max-w-2xl overflow-hidden rounded-2xl border border-[hsl(var(--border))] bg-[hsl(var(--card)/.6)]">
         <div className="border-b border-[hsl(var(--border))] px-4 py-3">
           <h2 className="text-xs font-bold">{copy.publicHistoryTitle}</h2>
           <p className="mt-1 text-[10px] text-[hsl(var(--muted-foreground))]">{copy.publicHistoryDescription}</p>
         </div>
-         <div className="divide-y divide-[hsl(var(--border))]" dir="ltr">
+        <div className="divide-y divide-[hsl(var(--border))]">
            {publicWithdrawalRecords.map((record) => (
-             <div key={record.id} data-testid={`withdrawal-record-${record.id}`} className="flex items-center gap-2.5 px-4 py-2.5">
-               <img src={record.avatarUrl} alt="" loading="lazy" data-testid={`img-public-avatar-${record.id}`} className="h-7 w-7 shrink-0 rounded-full object-cover ring-1 ring-[hsl(var(--border))]" />
-               <div dir={isArabic ? 'rtl' : 'ltr'} className="min-w-0 flex-1 text-start">
-                 <div className="truncate text-xs font-semibold">{record.user}</div>
-                 <div className="mt-0.5 flex items-center gap-1 text-[10px] text-[hsl(var(--muted-foreground))]"><Clock3 size={10} />{record.time}</div>
-               </div>
-               <div dir={isArabic ? 'rtl' : 'ltr'} className="shrink-0 text-start">
-                 <div className="font-mono text-xs font-bold text-[hsl(155_39%_35%)]">+{formatUsdt(record.amount)}</div>
-                 <div className="mt-0.5 flex items-center gap-1 text-[9px] font-semibold text-[hsl(155_39%_35%)]"><BadgeCheck size={10} />{copy.withdrawalCompleted}</div>
-               </div>
-               <button
-                 type="button"
-                 data-testid={`button-public-tx-${record.id}`}
-                 aria-label={`${copy.publicTxAction} — ${record.user}`}
-                 title={copy.publicTxUnavailable}
-                 onClick={() => setSelectedTransaction(record.id)}
-                 className="shrink-0 rounded-lg border border-[hsl(var(--border))] bg-[hsl(var(--background)/.7)] px-2 py-1 font-mono text-[10px] font-bold lowercase text-[hsl(34_75%_42%)] transition hover:border-[hsl(39_94%_62%)] hover:bg-[hsl(39_94%_62%/.14)] focus:outline-none focus:ring-2 focus:ring-[hsl(39_94%_62%)]"
-               >
-                 {copy.publicTxAction}
-               </button>
-             </div>
-           ))}
-         </div>
-         {selectedTransaction && (
-           <div data-testid="status-public-tx-unavailable" role="status" className="border-t border-[hsl(var(--border))] bg-[hsl(39_94%_62%/.1)] px-4 py-2.5 text-[10px] font-semibold text-[hsl(34_64%_34%)]">
-             {copy.publicTxUnavailable}
-           </div>
-         )}
+            <div key={record.id} data-testid={`withdrawal-record-${record.id}`} className="flex items-center gap-2.5 px-4 py-2.5">
+               <img src={record.avatar} alt={record.name} data-testid={`img-public-withdrawal-avatar-${record.id}`} className="h-9 w-9 shrink-0 rounded-full object-cover ring-2 ring-[hsl(39_94%_62%/.2)]" />
+              <div className="min-w-0 flex-1">
+                 <div data-testid={`text-public-withdrawal-name-${record.id}`} className="truncate text-xs font-semibold">{record.name}</div>
+                <div className="mt-0.5 flex items-center gap-1 text-[10px] text-[hsl(var(--muted-foreground))]"><Clock3 size={10} />{record.time}</div>
+              </div>
+              <div className="text-left">
+                <div className="font-mono text-xs font-bold text-[hsl(155_39%_35%)]">+{formatUsdt(record.amount)}</div>
+                <div className="mt-0.5 flex items-center justify-end gap-1 text-[9px] font-semibold text-[hsl(155_39%_35%)]"><BadgeCheck size={10} />{copy.withdrawalCompleted}</div>
+              </div>
+               <button type="button" data-testid={`button-txd-${record.id}`} title={copy.transactionUnavailable} aria-label={copy.transactionUnavailable} onClick={() => setDetailNotice(record.id)} className="rounded-lg border border-[hsl(var(--border))] px-2 py-1 text-[9px] font-bold uppercase tracking-[.08em] text-[hsl(34_75%_42%)] transition hover:border-[hsl(39_94%_62%)] hover:bg-[hsl(39_94%_62%/.1)]">txd</button>
+            </div>
+          ))}
+        </div>
+         {detailNotice && <div data-testid="status-transaction-unavailable" className="border-t border-[hsl(var(--border))] px-4 py-3 text-[10px] leading-5 text-[hsl(var(--muted-foreground))]">{copy.transactionUnavailable}</div>}
       </section>
     </div>
   );
@@ -930,7 +897,7 @@ function HelpPage({ user, isDemo }: { user: TelegramUser; isDemo: boolean }) {
 
 function RouterContent() {
   const { user, isDemo } = useMemo(getTelegramUser, []);
-  const rewardly = useRewardlyState();
+  const rewardly = useRewardlyState(user.id);
   const { tasks, wallet, userWithdrawals, verification, startTask, requestWithdrawal } = rewardly;
   return (
     <Shell user={user} isDemo={isDemo} wallet={wallet}>
