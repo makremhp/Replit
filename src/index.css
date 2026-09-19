@@ -550,6 +550,20 @@
     z-index: 1;
   }
 
+  .adstera-task-card {
+    isolation: isolate;
+    background:
+      radial-gradient(circle at 92% 8%, hsl(0 86% 62% / .3), transparent 9rem),
+      radial-gradient(circle at 8% 100%, hsl(0 78% 40% / .32), transparent 12rem),
+      linear-gradient(135deg, hsl(0 63% 28%) 0%, hsl(0 56% 18%) 55%, hsl(0 52% 12%) 100%);
+    box-shadow: 0 20px 46px hsl(0 56% 20% / .24);
+  }
+
+  .adstera-task-card > * {
+    position: relative;
+    z-index: 1;
+  }
+
   .adsgram-logo-frame {
     background: linear-gradient(145deg, hsl(228 42% 99% / .98), hsl(228 30% 89% / .9));
     box-shadow: 0 8px 18px hsl(226 34% 9% / .3);
@@ -563,6 +577,10 @@
   .adsgram-ad-row:hover {
     transform: translateY(-1px);
     background-color: hsl(228 42% 99% / .13);
+  }
+
+  .adstera-full-page {
+    overscroll-behavior: contain;
   }
 
   .balance-card {

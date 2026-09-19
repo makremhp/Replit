@@ -45,7 +45,7 @@ type TelegramUser = {
 
 type Task = {
   id: string;
-  kind: 'ad' | 'channel';
+  kind: 'ad' | 'adstera' | 'channel';
   provider?: string;
   title: string;
   description: string;
@@ -115,14 +115,14 @@ const copy = {
     todayChoices: 'اختيارات اليوم',
     simpleTasks: 'إعلانات Adsgram اليومية',
     allTasks: 'كل المهام',
-    adsToday: 'إعلانات Adsgram اليوم',
+    adsToday: 'إعلانات المكافآت اليوم',
     pageTasksEyebrow: 'مساحة المهام',
     pageTasksTitle: 'اختر ما يناسبك.',
     pageTasksDescription: 'مهام يومية قليلة وواضحة. لا نطلب منك أكثر مما هو مكتوب.',
     moreTasksNote: 'مزيد من المهام ستظهر هنا.',
-    adsPageEyebrow: 'إعلانات Adsgram',
+    adsPageEyebrow: 'إعلانات Adsgram وAdsterra',
     adsPageTitle: 'شاهد الإعلان واحصل على مكافأتك.',
-    adsPageDescription: 'إعلان يومي واضح، مع حد أقصى ومكافأة ظاهرة قبل البدء.',
+    adsPageDescription: 'إعلانات يومية واضحة، مع الحد الأقصى والمكافأة الظاهرة قبل البدء.',
     completedToday: 'مكتملة اليوم',
     resetsDaily: 'يتجدد يومياً',
     whyLimits: 'لماذا توجد حدود يومية؟',
@@ -165,12 +165,20 @@ const copy = {
     helpLimitsTitle: 'كيف تعمل الحدود اليومية؟',
     helpLimitsText: 'كل مهمة تملك عدداً محدداً من المرات في اليوم. يظهر العدد بجانب المهمة، ويتجدد تلقائياً عند بداية يوم جديد حسب توقيت جهازك.',
     helpRulesTitle: 'متى يضاف USDT؟',
-    helpRulesText: 'تضاف مكافأة USDT فقط بعد إكمال خطوة التحقق الظاهرة. كل إعلان Adsgram يعطي 0.005 أو 0.01 USDT.',
+    helpRulesText: 'تضاف المكافأة فقط بعد إكمال الخطوة المطلوبة. إعلان Adsgram يعطي 0.002$، وتصفح Adsterra يعطي 0.0005$.',
     helpNeed: 'تحتاج مساعدة؟',
     helpNeedText: 'إذا واجهت إعلاناً لا يعمل كما هو متوقع، أغلقه وحاول مرة أخرى لاحقاً. لا تتكرر المحاولة على حساب رصيدك.',
     adTask: 'إعلان Adsgram',
-    adTaskDescription: 'شاهد إعلاناً قصيراً من مزود Adsgram واحصل على مكافأتك.',
+    adTaskDescription: 'شاهد إعلاناً قصيراً من مزود Adsgram واحصل على مكافأة 0.002$.',
     adLabel: 'إعلان قصير',
+    adsteraTask: 'تصفح إعلانات Adsterra',
+    adsteraTaskDescription: 'تصفح صفحة Adsterra لمدة 30 ثانية واحصل على مكافأة 0.0005$.',
+    adsteraLabel: 'تصفح لمدة 30 ثانية',
+    adsteraPageEyebrow: 'تصفح Adsterra',
+    adsteraPageTitle: 'أكمل وقت التصفح واحصل على مكافأتك.',
+    adsteraPageDescription: 'ابقَ في هذه الصفحة حتى انتهاء العداد للحصول على 0.0005$.',
+    adsteraCongratulations: 'تهانينا، لقد أكملت عملية التصفح',
+    adsteraClaim: 'حصول',
      channelReward: '+0.005$',
     channelTask: 'تعرّف على قناة Urumfaucet',
     channelTaskDescription: 'انضم للقناة الرسمية لتصلك التحديثات.',
@@ -245,12 +253,12 @@ const copy = {
     todayChoices: 'Today’s picks',
     simpleTasks: 'Daily Adsgram ads',
     allTasks: 'All tasks',
-    adsToday: 'Adsgram ads today',
+    adsToday: 'reward ads today',
     pageTasksEyebrow: 'TASK SPACE',
     pageTasksTitle: 'Choose what fits.',
     pageTasksDescription: 'A few clear daily tasks. Nothing is hidden.',
     moreTasksNote: 'More tasks will appear here.',
-    adsPageEyebrow: 'ADSGRAM ADS',
+    adsPageEyebrow: 'ADSGRAM & ADSTERRA',
     adsPageTitle: 'Watch the ad and earn your reward.',
     adsPageDescription: 'One clear daily ad, with the limit and reward shown before you start.',
     completedToday: 'complete today',
@@ -295,12 +303,20 @@ const copy = {
     helpLimitsTitle: 'How do daily limits work?',
     helpLimitsText: 'Each task has a fixed number of daily completions. The counter resets automatically at the start of a new day using your device time.',
     helpRulesTitle: 'When is USDT added?',
-    helpRulesText: 'USDT is added only after the visible verification step. Each Adsgram ad gives 0.005 or 0.01 USDT.',
+    helpRulesText: 'The reward is added only after the required step is complete. Each Adsgram ad gives 0.002$, and Adsterra browsing gives 0.0005$.',
     helpNeed: 'Need help?',
     helpNeedText: 'If an ad does not work as expected, close it and try again later. Do not repeatedly retry at the cost of your balance.',
     adTask: 'Adsgram ad',
-    adTaskDescription: 'Watch a short ad from Adsgram and receive the displayed reward.',
+    adTaskDescription: 'Watch a short ad from Adsgram and receive a 0.002$ reward.',
     adLabel: 'Short ad',
+    adsteraTask: 'Browse Adsterra',
+    adsteraTaskDescription: 'Browse the Adsterra page for 30 seconds and receive 0.0005$.',
+    adsteraLabel: '30-second browse',
+    adsteraPageEyebrow: 'ADSTERRA BROWSING',
+    adsteraPageTitle: 'Finish the browsing time to earn your reward.',
+    adsteraPageDescription: 'Stay on this page until the countdown ends to receive 0.0005$.',
+    adsteraCongratulations: 'Congratulations, you completed the browsing session',
+    adsteraClaim: 'Claim',
      channelReward: '+0.005$',
     channelTask: 'Discover the Urumfaucet channel',
     channelTaskDescription: 'Join the official channel for updates.',
@@ -377,8 +393,20 @@ const initialTasks: Task[] = [
     provider: 'Adsgram',
     title: copy.adTask,
     description: copy.adTaskDescription,
-     reward: 0.005,
+    reward: 0.002,
     dailyLimit: 10,
+    completedToday: 0,
+    duration: 30,
+    status: 'available',
+  },
+  {
+    id: 'adstera-daily',
+    kind: 'adstera',
+    provider: 'Adsterra',
+    title: copy.adsteraTask,
+    description: copy.adsteraTaskDescription,
+    reward: 0.0005,
+    dailyLimit: 100,
     completedToday: 0,
     duration: 30,
     status: 'available',
@@ -435,10 +463,12 @@ function loadState(storageKey = STORAGE_KEY): { tasks: Task[]; wallet: Wallet; u
   try {
     const saved = JSON.parse(localStorage.getItem(storageKey) ?? 'null') as StoredState | null;
     if (saved?.day === todayKey() && saved.tasks && saved.wallet) {
-      const savedAdsgramTask = saved.tasks.find((task) => task.id === 'adsgram-daily');
-      const tasks = savedAdsgramTask
-         ? [{ ...initialTasks[0], ...savedAdsgramTask, dailyLimit: 10, reward: 0.005, rewardMax: undefined }]
-        : initialTasks;
+      const tasks = initialTasks.map((initialTask) => {
+        const savedTask = saved.tasks.find((task) => task.id === initialTask.id);
+        return savedTask
+          ? { ...initialTask, ...savedTask, dailyLimit: initialTask.dailyLimit, reward: initialTask.reward, rewardMax: undefined }
+          : initialTask;
+      });
       return { tasks, wallet: saved.wallet, userWithdrawals: saved.userWithdrawals ?? [] };
     }
   } catch {
@@ -456,13 +486,14 @@ function formatNumber(value: number, maximumFractionDigits = 2) {
 }
 
 function formatUsdt(value: number) {
-  return `${formatNumber(value, 3)} USDT`;
+  return `${formatNumber(value, 4)} USDT`;
 }
 
 function formatReward(task: Task) {
+  const fractionDigits = task.reward < 0.001 || (task.rewardMax ?? 0) < 0.001 ? 4 : 3;
   return task.rewardMax
-    ? `${formatNumber(task.reward, 3)}–${formatNumber(task.rewardMax, 3)}$`
-    : `${formatNumber(task.reward, 3)}$`;
+    ? `${formatNumber(task.reward, fractionDigits)}–${formatNumber(task.rewardMax, fractionDigits)}$`
+    : `${formatNumber(task.reward, fractionDigits)}$`;
 }
 
 function displayName(user: TelegramUser) {
@@ -471,8 +502,8 @@ function displayName(user: TelegramUser) {
 
 function IconBadge({ kind }: { kind: Task['kind'] }) {
   return (
-    <span className={`flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl ${kind === 'ad' ? 'bg-[hsl(39_94%_62%/.22)] text-[hsl(34_64%_34%)]' : 'bg-[hsl(190_43%_20%/.1)] text-[hsl(190_43%_20%)]'}`}>
-      {kind === 'ad' ? <Play size={18} fill="currentColor" strokeWidth={1.5} /> : <ArrowUpLeft size={20} strokeWidth={1.8} />}
+    <span className={`flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl ${kind === 'channel' ? 'bg-[hsl(190_43%_20%/.1)] text-[hsl(190_43%_20%)]' : 'bg-[hsl(39_94%_62%/.22)] text-[hsl(34_64%_34%)]'}`}>
+      {kind === 'channel' ? <ArrowUpLeft size={20} strokeWidth={1.8} /> : <Play size={18} fill="currentColor" strokeWidth={1.5} />}
     </span>
   );
 }
@@ -517,6 +548,7 @@ function useRewardlyState(userId: number) {
   const storageKey = `${STORAGE_KEY}-${userId}`;
   const [state, setState] = useState(() => loadState(storageKey));
   const [verification, setVerification] = useState<{ taskId: string; phase: 'watching' | 'waiting' } | null>(null);
+  const [, setLocation] = useLocation();
 
   useEffect(() => {
     try {
@@ -575,6 +607,10 @@ function useRewardlyState(userId: number) {
   const startTask = (task: Task) => {
     if (verification) return;
     if (task.completedToday >= task.dailyLimit) return;
+    if (task.kind === 'adstera') {
+      setLocation('/adstera');
+      return;
+    }
     if (task.kind === 'channel') {
       const webApp = window.Telegram?.WebApp;
       if (task.channelUrl) {
@@ -776,18 +812,20 @@ function TaskCard({ task, onStart, verification }: { task: Task; onStart: (task:
   const blocked = Boolean(verification && !active);
   const progress = task.dailyLimit ? Math.round((task.completedToday / task.dailyLimit) * 100) : 0;
   return (
-     <div data-testid={`card-task-${task.id}`} className={`adsgram-feature-card task-row relative overflow-hidden rounded-[1.45rem] border p-3.5 text-[hsl(228_42%_99%)] ${active ? 'border-[hsl(42_94%_63%/.8)] shadow-[0_14px_34px_hsl(42_94%_63%/.16)]' : 'border-[hsl(226_25%_34%)]'} ${blocked ? 'opacity-60' : ''}`}>
+     <div data-testid={`card-task-${task.id}`} className={`${task.kind === 'adstera' ? 'adstera-task-card' : 'adsgram-feature-card'} task-row relative overflow-hidden rounded-[1.45rem] border p-3.5 text-[hsl(228_42%_99%)] ${active ? 'border-[hsl(42_94%_63%/.8)] shadow-[0_14px_34px_hsl(42_94%_63%/.16)]' : task.kind === 'adstera' ? 'border-[hsl(0_72%_52%/.7)]' : 'border-[hsl(226_25%_34%)]'} ${blocked ? 'opacity-60' : ''}`}>
        <div className="adsgram-ad-row flex items-center gap-3 rounded-[1.15rem] px-3">
         <div className="adsgram-logo-frame flex h-12 w-12 shrink-0 items-center justify-center overflow-hidden rounded-xl">
-          {task.kind === 'ad' ? (
+            {task.kind === 'ad' ? (
             <img src="/assets/adsgram-logo.jpg" alt="Adsgram" data-testid="img-adsgram-logo" className="h-full w-full object-cover" />
+            ) : task.kind === 'adstera' ? (
+              <img src="/assets/adstera-logo.jpeg" alt="Adsterra" data-testid="img-adstera-logo" className="h-full w-full object-cover" />
           ) : (
             <ArrowUpLeft size={20} className="text-[hsl(226_34%_15%)]" />
           )}
         </div>
         <div className="min-w-0 flex-1">
           <div className="mb-0.5 flex flex-wrap items-center gap-2">
-            <span className="text-[9px] font-bold uppercase tracking-[.13em] text-[hsl(42_94%_63%)]">{copy.adLabel}</span>
+            <span className="text-[9px] font-bold uppercase tracking-[.13em] text-[hsl(42_94%_63%)]">{task.kind === 'adstera' ? copy.adsteraLabel : copy.adLabel}</span>
             {task.provider && <span className="rounded-full bg-[hsl(228_42%_99%/.12)] px-2 py-0.5 text-[9px] font-bold text-[hsl(228_20%_80%)]">{task.provider}</span>}
           </div>
           <h3 data-testid={`text-task-title-${task.id}`} className="truncate text-sm font-bold text-[hsl(228_42%_99%)]">{task.title}</h3>
@@ -820,7 +858,7 @@ function TaskCard({ task, onStart, verification }: { task: Task; onStart: (task:
           <span data-testid={`status-task-completed-${task.id}`} className="flex min-h-10 items-center gap-1.5 text-xs font-bold text-[hsl(155_58%_67%)]"><BadgeCheck size={16} />{copy.completed}</span>
         ) : (
           <button type="button" disabled={blocked} data-testid={`button-start-task-${task.id}`} onClick={() => onStart(task)} className="flex min-h-10 items-center gap-2 rounded-xl bg-[hsl(42_94%_63%)] px-4 text-xs font-bold text-[hsl(226_34%_15%)] transition hover:-translate-y-0.5 hover:bg-[hsl(42_94%_70%)] active:translate-y-0 disabled:cursor-not-allowed disabled:hover:translate-y-0">
-            {task.kind === 'ad' ? copy.startNow : copy.openChannel} <ArrowLeft size={14} />
+            {task.kind === 'channel' ? copy.openChannel : copy.startNow} <ArrowLeft size={14} />
           </button>
         )}
       </div>
@@ -886,8 +924,9 @@ function ChannelJoinCard() {
 
 function HomePage({ user, isDemo, tasks, wallet }: { user: TelegramUser; isDemo: boolean; tasks: Task[]; wallet: Wallet }) {
   const adsgramTask = tasks.find((task) => task.id === 'adsgram-daily');
-  const done = adsgramTask?.completedToday ?? 0;
-  const possible = adsgramTask?.dailyLimit ?? 10;
+  const rewardTasks = tasks.filter((task) => task.kind === 'ad' || task.kind === 'adstera');
+  const done = rewardTasks.reduce((total, task) => total + task.completedToday, 0);
+  const possible = rewardTasks.reduce((total, task) => total + task.dailyLimit, 0) || 10;
   const completion = possible ? Math.round((done / possible) * 100) : 0;
   return (
     <div className="screen-enter safe-bottom">
@@ -941,15 +980,49 @@ function TasksPage() {
 }
 
 function AdsPage({ tasks, verification, onStart }: { tasks: Task[]; verification: { taskId: string; phase: 'watching' | 'waiting' } | null; onStart: (task: Task) => void }) {
-  const adsgramTask = tasks.find((task) => task.id === 'adsgram-daily');
-  const completeCount = adsgramTask?.completedToday ?? 0;
-  const dailyLimit = adsgramTask?.dailyLimit ?? 10;
+  const rewardTasks = tasks.filter((task) => task.kind === 'ad' || task.kind === 'adstera');
+  const completeCount = rewardTasks.reduce((total, task) => total + task.completedToday, 0);
+  const dailyLimit = rewardTasks.reduce((total, task) => total + task.dailyLimit, 0) || 10;
   return (
     <div className="screen-enter safe-bottom">
       <PageHeading eyebrow={copy.adsPageEyebrow} title={copy.adsPageTitle} description={copy.adsPageDescription} />
       <div className="mb-6 flex items-center justify-between rounded-2xl border border-[hsl(39_94%_62%/.36)] bg-[hsl(39_94%_62%/.1)] px-4 py-3 text-xs"><span className="flex items-center gap-2 font-semibold text-[hsl(34_64%_34%)]"><Zap size={15} /> {formatNumber(completeCount)} {isArabic ? 'من' : 'of'} {formatNumber(dailyLimit)} {copy.adsToday}</span><span className="text-[hsl(34_75%_42%)]">{copy.resetsDaily}</span></div>
-      <div className="space-y-3">{tasks.filter((task) => task.kind === 'ad').map((task) => <TaskCard key={task.id} task={task} onStart={onStart} verification={verification} />)}</div>
+       <div className="space-y-3">{rewardTasks.map((task) => <TaskCard key={task.id} task={task} onStart={onStart} verification={verification} />)}</div>
        <div data-testid="status-task-rules" className="mt-7 flex gap-3 rounded-2xl bg-[hsl(190_43%_20%)] p-5 text-[hsl(42_38%_96%)]"><LockKeyhole className="mt-0.5 shrink-0 text-[hsl(39_94%_62%)]" size={18} /><div><div className="text-sm font-bold">{copy.whyLimits}</div><p className="mt-1 text-xs leading-6 text-[hsl(42_20%_76%)]">{copy.limitsDescription}</p></div></div>
+    </div>
+  );
+}
+
+function AdsteraPage({ task, onClaim }: { task: Task; onClaim: () => void }) {
+  const [remaining, setRemaining] = useState(30);
+
+  useEffect(() => {
+    if (remaining <= 0) return;
+    const timer = window.setTimeout(() => setRemaining((value) => Math.max(value - 1, 0)), 1000);
+    return () => window.clearTimeout(timer);
+  }, [remaining]);
+
+  const finished = remaining === 0;
+  return (
+    <div dir={isArabic ? 'rtl' : 'ltr'} className="adstera-full-page fixed inset-0 z-[70] min-h-dvh overflow-hidden bg-[hsl(226_34%_11%)] text-[hsl(228_42%_99%)]">
+      <div data-testid="text-adstera-countdown" className="absolute left-1/2 top-9 -translate-x-1/2 rounded-2xl border border-[hsl(42_94%_63%/.35)] bg-[hsl(42_94%_63%/.12)] px-6 py-3 text-center">
+        <div className="font-mono text-2xl font-bold text-[hsl(42_94%_63%)]">{remaining}</div>
+        <div className="text-[9px] text-[hsl(228_20%_76%)]">{copy.seconds}</div>
+      </div>
+
+      {finished && (
+        <div data-testid="modal-adstera-complete" className="absolute inset-0 flex items-center justify-center bg-[hsl(226_34%_11%/.82)] p-5 backdrop-blur-sm">
+          <section className="w-full max-w-sm rounded-[1.6rem] border border-[hsl(42_94%_63%/.3)] bg-[hsl(190_43%_14%)] p-6 text-center shadow-[0_24px_70px_hsl(0_0%_0%/.35)]">
+            <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-2xl bg-[hsl(155_58%_67%/.14)] text-[hsl(155_58%_67%)]"><BadgeCheck size={28} /></div>
+            <h2 className="mt-5 text-lg font-bold">{copy.adsteraCongratulations}</h2>
+            <p className="mt-2 text-xs leading-6 text-[hsl(42_20%_76%)]">+{formatReward(task)}</p>
+            <button type="button" data-testid="button-claim-adstera" onClick={onClaim} className="mt-6 flex h-12 w-full items-center justify-center gap-2 rounded-xl bg-[hsl(42_94%_63%)] text-sm font-bold text-[hsl(226_34%_15%)] transition hover:bg-[hsl(42_94%_70%)]">
+              <Gift size={17} />
+              {copy.adsteraClaim}
+            </button>
+          </section>
+        </div>
+      )}
     </div>
   );
 }
@@ -991,7 +1064,7 @@ function WalletPage({ wallet, onWithdraw }: { wallet: Wallet; onWithdraw: (amoun
       <div className="grid gap-5 lg:grid-cols-[.9fr_1.1fr]">
         <section className="rounded-[1.65rem] bg-[hsl(190_43%_20%)] p-7 text-[hsl(42_38%_96%)] shadow-[0_18px_40px_hsl(190_43%_20%/.16)] sm:p-9">
           <div className="flex items-center gap-2 text-sm text-[hsl(42_20%_76%)]"><WalletCards size={17} className="text-[hsl(39_94%_62%)]" />{copy.walletBalance}</div>
-           <div data-testid="text-wallet-page-balance" className="mt-5 font-mono text-5xl font-bold tracking-[-.08em]">{formatNumber(wallet.balance, 3)} <span className="font-sans text-sm font-normal tracking-normal text-[hsl(42_20%_76%)]">USDT</span></div>
+            <div data-testid="text-wallet-page-balance" className="mt-5 font-mono text-5xl font-bold tracking-[-.08em]">{formatNumber(wallet.balance, 4)} <span className="font-sans text-sm font-normal tracking-normal text-[hsl(42_20%_76%)]">USDT</span></div>
            <div className="mt-8 flex items-center gap-2 text-xs text-[hsl(42_20%_76%)]"><Coins size={15} className="text-[hsl(39_94%_62%)]" />{copy.tonNetwork} · USDT</div>
         </section>
         <section className="rounded-[1.65rem] border border-[hsl(var(--border))] bg-[hsl(var(--card)/.76)] p-6 sm:p-8">
@@ -1158,7 +1231,9 @@ function PolicyPage({ kind }: { kind: PolicyKind }) {
 function RouterContent() {
   const { user, isDemo } = useMemo(getTelegramUser, []);
   const rewardly = useRewardlyState(user.id);
-  const { tasks, wallet, userWithdrawals, verification, startTask, requestWithdrawal } = rewardly;
+  const { tasks, wallet, userWithdrawals, verification, startTask, completeTask, requestWithdrawal } = rewardly;
+  const [, setLocation] = useLocation();
+  const adsteraTask = tasks.find((task) => task.id === 'adstera-daily') ?? initialTasks[1];
   return (
     <Shell user={user} isDemo={isDemo} wallet={wallet}>
       <Switch>
@@ -1170,6 +1245,9 @@ function RouterContent() {
         </Route>
         <Route path="/ads">
           <AdsPage tasks={tasks} verification={verification} onStart={startTask} />
+        </Route>
+        <Route path="/adstera">
+          <AdsteraPage task={adsteraTask} onClaim={() => { completeTask(adsteraTask.id); setLocation('/ads'); }} />
         </Route>
         <Route path="/wallet"><WalletPage wallet={wallet} onWithdraw={requestWithdrawal} /></Route>
         <Route path="/withdrawals"><WithdrawalHistoryPage userWithdrawals={userWithdrawals} /></Route>
