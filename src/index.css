@@ -79,72 +79,72 @@
   --elevate-1: rgba(0, 0, 0, 0.03);
   --elevate-2: rgba(0, 0, 0, 0.08);
 
-  --background: 42 38% 96%;
+  --background: 228 34% 96%;
 
-  --foreground: 196 41% 17%;
+  --foreground: 225 28% 15%;
 
-  --border: 42 23% 87%;
+  --border: 226 24% 87%;
 
-  --card: 40 45% 98%;
+  --card: 228 42% 99%;
 
-  --card-foreground: 196 41% 17%;
+  --card-foreground: 225 28% 15%;
 
-  --card-border: 42 23% 87%;
+  --card-border: 226 24% 87%;
 
-  --sidebar: 190 43% 20%;
+  --sidebar: 226 34% 15%;
 
-  --sidebar-foreground: 42 38% 96%;
+  --sidebar-foreground: 228 42% 99%;
 
-  --sidebar-border: 190 36% 28%;
+  --sidebar-border: 226 25% 24%;
 
-  --sidebar-primary: 39 94% 62%;
+  --sidebar-primary: 42 94% 63%;
 
-  --sidebar-primary-foreground: 196 41% 17%;
+  --sidebar-primary-foreground: 225 28% 15%;
 
-  --sidebar-accent: 190 36% 28%;
+  --sidebar-accent: 226 25% 24%;
 
-  --sidebar-accent-foreground: 42 38% 96%;
+  --sidebar-accent-foreground: 228 42% 99%;
 
-  --sidebar-ring: 39 94% 62%;
+  --sidebar-ring: 42 94% 63%;
 
-  --popover: 40 45% 98%;
+  --popover: 228 42% 99%;
 
-  --popover-foreground: 196 41% 17%;
+  --popover-foreground: 225 28% 15%;
 
-  --popover-border: 42 23% 87%;
+  --popover-border: 226 24% 87%;
 
-  --primary: 190 43% 20%;
+  --primary: 226 34% 15%;
 
-  --primary-foreground: 42 38% 96%;
+  --primary-foreground: 228 42% 99%;
 
-  --secondary: 39 94% 62%;
+  --secondary: 42 94% 63%;
 
-  --secondary-foreground: 196 41% 17%;
+  --secondary-foreground: 225 28% 15%;
 
-  --muted: 42 24% 91%;
+  --muted: 226 24% 92%;
 
-  --muted-foreground: 196 16% 43%;
+  --muted-foreground: 225 13% 44%;
 
-  --accent: 12 73% 65%;
+  --accent: 329 79% 61%;
 
-  --accent-foreground: 196 41% 17%;
+  --accent-foreground: 228 42% 99%;
 
   --destructive: 4 70% 54%;
 
   --destructive-foreground: 40 45% 98%;
 
-  --input: 42 23% 82%;
-  --ring: 39 94% 62%;
-  --chart-1: 190 43% 20%;
-  --chart-2: 39 94% 62%;
-  --chart-3: 12 73% 65%;
-  --chart-4: 155 39% 46%;
-  --chart-5: 196 16% 43%;
+  --input: 226 24% 82%;
+  --ring: 42 94% 63%;
+  --chart-1: 226 34% 15%;
+  --chart-2: 42 94% 63%;
+  --chart-3: 329 79% 61%;
+  --chart-4: 190 79% 53%;
+  --chart-5: 225 13% 44%;
 
   --app-font-sans: 'IBM Plex Sans Arabic', Tahoma, sans-serif;
   --app-font-serif: Georgia, serif;
   --app-font-mono: 'Space Mono', monospace;
-  --radius: 1rem;
+  --radius: 1.1rem;
   --shadow-2xs: 0px 2px 0px 0px hsl(202.8169 89.1213% 53.1373% / 0); /*replace with H S L */
   --shadow-xs: 0px 2px 0px 0px hsl(202.8169 89.1213% 53.1373% / 0); /*replace with H S L */
   --shadow-sm:
@@ -536,41 +536,41 @@
     background-color: hsl(190 43% 24%);
   }
 
+  .adsgram-feature-card {
+    isolation: isolate;
+    background:
+      radial-gradient(circle at 91% 10%, hsl(190 91% 58% / .22), transparent 9rem),
+      radial-gradient(circle at 9% 95%, hsl(329 79% 61% / .18), transparent 12rem),
+      linear-gradient(135deg, hsl(226 34% 15%) 0%, hsl(240 32% 22%) 54%, hsl(226 40% 11%) 100%);
+    box-shadow: 0 20px 46px hsl(226 34% 15% / .2);
+  }
+
+  .adsgram-feature-card > * {
+    position: relative;
+    z-index: 1;
+  }
+
+  .adsgram-logo-frame {
+    background: linear-gradient(145deg, hsl(228 42% 99% / .98), hsl(228 30% 89% / .9));
+    box-shadow: 0 8px 18px hsl(226 34% 9% / .3);
+  }
+
+  .adsgram-ad-row {
+    min-height: 70px;
+    transition: transform 180ms ease, background-color 180ms ease;
+  }
+
+  .adsgram-ad-row:hover {
+    transform: translateY(-1px);
+    background-color: hsl(228 42% 99% / .13);
+  }
+
   .balance-card {
     isolation: isolate;
     background:
-      radial-gradient(circle at 82% 18%, hsl(39 94% 62% / .2), transparent 8.5rem),
-      radial-gradient(circle at 12% 112%, hsl(12 73% 65% / .2), transparent 13rem),
-      linear-gradient(135deg, hsl(190 43% 20%) 0%, hsl(193 47% 27%) 52%, hsl(190 43% 16%) 100%);
-  }
-
-  .balance-card::before {
-    content: '';
-    position: absolute;
-    inset: -45% -25%;
-    z-index: 0;
-    pointer-events: none;
-    background: linear-gradient(
-      112deg,
-      transparent 38%,
-      hsl(42 38% 96% / .02) 43%,
-      hsl(42 38% 96% / .2) 48%,
-      hsl(39 94% 62% / .08) 52%,
-      transparent 58%
-    );
-    transform: translateX(-58%) rotate(-8deg);
-    animation: balance-glint 6.5s cubic-bezier(.4,0,.2,1) infinite;
-  }
-
-  .balance-card::after {
-    content: '';
-    position: absolute;
-    inset: 1px;
-    z-index: 0;
-    pointer-events: none;
-    border: 1px solid hsl(42 38% 96% / .08);
-    border-radius: inherit;
-    box-shadow: inset 0 1px 0 hsl(42 38% 96% / .09);
+      radial-gradient(circle at 84% 18%, hsl(190 91% 58% / .22), transparent 9rem),
+      radial-gradient(circle at 12% 114%, hsl(329 79% 61% / .3), transparent 13rem),
+      linear-gradient(135deg, hsl(226 34% 15%) 0%, hsl(237 37% 25%) 52%, hsl(226 40% 10%) 100%);
   }
 
   .balance-card > * {
@@ -580,19 +580,10 @@
   .channel-card {
     position: relative;
     isolation: isolate;
-  }
-
-  .channel-card::after {
-    content: '';
-    position: absolute;
-    width: 13rem;
-    height: 13rem;
-    top: -7rem;
-    left: -4rem;
-    border: 1px solid hsl(39 94% 62% / .16);
-    border-radius: 999px;
-    pointer-events: none;
-    z-index: -1;
+    border: 1px solid hsl(39 94% 62% / .24);
+    background:
+      radial-gradient(circle at 92% 0%, hsl(39 94% 62% / .17), transparent 9rem),
+      linear-gradient(135deg, hsl(190 43% 20%) 0%, hsl(196 48% 24%) 100%);
   }
 
   .policy-card {
@@ -631,12 +622,6 @@
 @keyframes balance-orbit {
   0%, 100% { transform: rotate(0deg); }
   50% { transform: rotate(2deg); }
-}
-
-@keyframes balance-glint {
-  0%, 28% { transform: translateX(-58%) rotate(-8deg); opacity: 0; }
-  42% { opacity: .9; }
-  62%, 100% { transform: translateX(58%) rotate(-8deg); opacity: 0; }
 }
 
 @keyframes progress-sweep {
