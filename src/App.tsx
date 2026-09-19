@@ -93,6 +93,8 @@ const copy = {
   ar: {
     nav: { home: 'الرئيسية', tasks: 'المهمات', ads: 'الإعلانات', wallet: 'المحفظة', history: 'السجل', help: 'كيف تعمل؟' },
     dailyRewards: 'مكافآت USDT يومية',
+    bootTagline: 'مكافآت يومية، بخطوات واضحة',
+    bootStatus: 'جارٍ تجهيز مساحة المكافآت',
     openMenu: 'فتح القائمة',
     demoMode: 'وضع العرض خارج Telegram',
     demoData: 'بيانات العرض',
@@ -231,6 +233,8 @@ const copy = {
   en: {
     nav: { home: 'Home', tasks: 'Tasks', ads: 'Ads', wallet: 'Wallet', history: 'History', help: 'How it works' },
     dailyRewards: 'DAILY USDT REWARDS',
+    bootTagline: 'Daily rewards, clearly earned',
+    bootStatus: 'Preparing your rewards space',
     openMenu: 'Open menu',
     demoMode: 'Demo mode outside Telegram',
     demoData: 'Demo data',
@@ -860,7 +864,7 @@ function BalanceCard({ wallet }: { wallet: Wallet }) {
 
 function AdsgramPreviewCard({ task }: { task: Task }) {
   return (
-    <section data-testid="card-adsgram-preview" className="adsgram-feature-card relative mt-5 overflow-hidden rounded-[1.45rem] border border-[hsl(226_25%_34%)] p-3.5 text-[hsl(228_42%_99%)]">
+    <section data-testid="card-adsgram-preview" className="adsgram-feature-card relative mt-5 overflow-hidden rounded-2xl border border-[hsl(226_25%_34%)] p-2.5 text-[hsl(228_42%_99%)]">
       <div className="mb-2 flex items-center justify-between px-1">
         <div className="flex items-center gap-2 text-[10px] font-bold uppercase tracking-[.13em] text-[hsl(228_20%_76%)]">
           <span className="h-1.5 w-1.5 rounded-full bg-[hsl(42_94%_63%)]" />
@@ -868,8 +872,8 @@ function AdsgramPreviewCard({ task }: { task: Task }) {
         </div>
         <span className="text-[10px] font-semibold text-[hsl(190_79%_68%)]">{copy.simpleTasks}</span>
       </div>
-       <Link href="/ads" data-testid="link-adsgram-preview" className="adsgram-ad-row flex items-center gap-3 rounded-[1.15rem] px-3">
-        <div className="adsgram-logo-frame flex h-12 w-12 shrink-0 items-center justify-center overflow-hidden rounded-xl">
+        <Link href="/ads" data-testid="link-adsgram-preview" className="adsgram-ad-row flex items-center gap-2.5 rounded-xl px-2.5">
+         <div className="adsgram-logo-frame flex h-10 w-10 shrink-0 items-center justify-center overflow-hidden rounded-[0.7rem]">
           <img src="/assets/adsgram-logo.jpg" alt="Adsgram" data-testid="img-adsgram-preview-logo" className="h-full w-full object-cover" />
         </div>
         <div className="min-w-0 flex-1">
@@ -880,7 +884,7 @@ function AdsgramPreviewCard({ task }: { task: Task }) {
             <span>{formatNumber(task.completedToday)} / {formatNumber(task.dailyLimit)} {copy.today}</span>
           </div>
         </div>
-        <div className="flex shrink-0 items-center gap-1.5 rounded-xl bg-[hsl(42_94%_63%)] px-2.5 py-2 font-mono text-[10px] font-bold text-[hsl(226_34%_15%)]">
+         <div className="flex shrink-0 items-center gap-1 rounded-lg bg-[hsl(42_94%_63%)] px-2 py-1.5 font-mono text-[10px] font-bold text-[hsl(226_34%_15%)]">
           +{formatReward(task)}
           <ChevronLeft size={13} />
         </div>
@@ -895,9 +899,9 @@ function TaskCard({ task, onStart, verification }: { task: Task; onStart: (task:
   const blocked = Boolean(verification && !active);
   const progress = task.dailyLimit ? Math.round((task.completedToday / task.dailyLimit) * 100) : 0;
   return (
-     <div data-testid={`card-task-${task.id}`} className={`${task.kind === 'adstera' ? 'adstera-task-card' : 'adsgram-feature-card'} task-row relative overflow-hidden rounded-[1.45rem] border p-3.5 text-[hsl(228_42%_99%)] ${active ? 'border-[hsl(42_94%_63%/.8)] shadow-[0_14px_34px_hsl(42_94%_63%/.16)]' : task.kind === 'adstera' ? 'border-[hsl(0_72%_52%/.7)]' : 'border-[hsl(226_25%_34%)]'} ${blocked ? 'opacity-60' : ''}`}>
-       <div className="adsgram-ad-row flex items-center gap-3 rounded-[1.15rem] px-3">
-        <div className="adsgram-logo-frame flex h-12 w-12 shrink-0 items-center justify-center overflow-hidden rounded-xl">
+      <div data-testid={`card-task-${task.id}`} className={`${task.kind === 'adstera' ? 'adstera-task-card' : 'adsgram-feature-card'} task-row relative overflow-hidden rounded-2xl border p-2.5 text-[hsl(228_42%_99%)] ${active ? 'border-[hsl(42_94%_63%/.8)] shadow-[0_14px_34px_hsl(42_94%_63%/.16)]' : task.kind === 'adstera' ? 'border-[hsl(0_72%_52%/.7)]' : 'border-[hsl(226_25%_34%)]'} ${blocked ? 'opacity-60' : ''}`}>
+       <div className="adsgram-ad-row flex items-center gap-2.5 rounded-xl px-2.5">
+         <div className="adsgram-logo-frame flex h-10 w-10 shrink-0 items-center justify-center overflow-hidden rounded-[0.7rem]">
             {task.kind === 'ad' ? (
             <img src="/assets/adsgram-logo.jpg" alt="Adsgram" data-testid="img-adsgram-logo" className="h-full w-full object-cover" />
             ) : task.kind === 'adstera' ? (
@@ -915,38 +919,38 @@ function TaskCard({ task, onStart, verification }: { task: Task; onStart: (task:
         </div>
         <span data-testid={`text-task-reward-${task.id}`} className="shrink-0 rounded-xl bg-[hsl(42_94%_63%)] px-2.5 py-1.5 text-center font-mono text-[10px] font-bold leading-3 text-[hsl(226_34%_15%)]">+{formatReward(task)}</span>
       </div>
-      <div className="relative mt-4 px-1">
-        <p data-testid={`text-task-description-${task.id}`} className="line-clamp-2 text-xs leading-5 text-[hsl(228_20%_78%)]">{task.description}</p>
+       <div className="relative mt-2 px-1">
+         <p data-testid={`text-task-description-${task.id}`} className="truncate text-[11px] leading-4 text-[hsl(228_20%_78%)]">{task.description}</p>
       </div>
-      <div className="relative mt-4 px-1">
-        <div className="mb-2 flex items-center justify-between text-[10px] font-semibold text-[hsl(228_20%_73%)]">
+       <div className="relative mt-2 px-1">
+         <div className="mb-1.5 flex items-center justify-between text-[10px] font-semibold text-[hsl(228_20%_73%)]">
           <span className="flex items-center gap-1.5"><Clock3 size={13} className="text-[hsl(190_79%_68%)]" />{task.duration} {copy.seconds}</span>
           <span data-testid={`text-task-limit-${task.id}`} className="font-mono">{formatNumber(task.completedToday)} / {formatNumber(task.dailyLimit)} {copy.today}</span>
         </div>
         <div className="h-1.5 overflow-hidden rounded-full bg-[hsl(228_42%_99%/.13)]"><div className="ads-task-progress h-full rounded-full bg-[hsl(42_94%_63%)] transition-[width] duration-500" style={{ width: `${Math.max(progress, progress > 0 ? 4 : 2)}%` }} /></div>
       </div>
-      <div className="relative mt-4 flex items-center justify-between gap-3 px-1">
+       <div className="relative mt-2 flex items-center justify-between gap-3 px-1">
         <span className="text-[10px] text-[hsl(228_20%_73%)]">{copy.resetsDaily}</span>
          {active && verification?.phase === 'waiting' ? (
-          <button type="button" disabled data-testid={`button-start-task-${task.id}`} className="flex min-h-10 cursor-wait items-center gap-2 rounded-xl bg-[hsl(42_94%_63%/.18)] px-4 text-xs font-bold text-[hsl(42_94%_63%)]">
+           <button type="button" disabled data-testid={`button-start-task-${task.id}`} className="flex min-h-8 cursor-wait items-center gap-2 rounded-lg bg-[hsl(42_94%_63%/.18)] px-3 text-[11px] font-bold text-[hsl(42_94%_63%)]">
             <span className="h-3.5 w-3.5 animate-spin rounded-full border-2 border-[hsl(42_94%_63%/.35)] border-t-[hsl(42_94%_63%)]" />
             <span data-testid={`status-task-verifying-${task.id}`}>{isArabic ? 'جاري التحقق' : 'Verifying'}</span>
           </button>
          ) : active ? (
-           <button type="button" disabled data-testid={`button-start-task-${task.id}`} className="flex min-h-10 cursor-wait items-center gap-2 rounded-xl bg-[hsl(190_79%_68%/.14)] px-4 text-xs font-bold text-[hsl(190_79%_68%)]">
+           <button type="button" disabled data-testid={`button-start-task-${task.id}`} className="flex min-h-8 cursor-wait items-center gap-2 rounded-lg bg-[hsl(190_79%_68%/.14)] px-3 text-[11px] font-bold text-[hsl(190_79%_68%)]">
              <Clock3 size={14} />
              <span>{isArabic ? 'جارٍ عرض الإعلان' : 'Ad in progress'}</span>
            </button>
         ) : limitReached ? (
           <span data-testid={`status-task-completed-${task.id}`} className="flex min-h-10 items-center gap-1.5 text-xs font-bold text-[hsl(155_58%_67%)]"><BadgeCheck size={16} />{copy.completed}</span>
         ) : (
-          <button type="button" disabled={blocked} data-testid={`button-start-task-${task.id}`} onClick={() => onStart(task)} className="flex min-h-10 items-center gap-2 rounded-xl bg-[hsl(42_94%_63%)] px-4 text-xs font-bold text-[hsl(226_34%_15%)] transition hover:-translate-y-0.5 hover:bg-[hsl(42_94%_70%)] active:translate-y-0 disabled:cursor-not-allowed disabled:hover:translate-y-0">
+           <button type="button" disabled={blocked} data-testid={`button-start-task-${task.id}`} onClick={() => onStart(task)} className="flex min-h-8 items-center gap-2 rounded-lg bg-[hsl(42_94%_63%)] px-3 text-[11px] font-bold text-[hsl(226_34%_15%)] transition hover:-translate-y-0.5 hover:bg-[hsl(42_94%_70%)] active:translate-y-0 disabled:cursor-not-allowed disabled:hover:translate-y-0">
             {task.kind === 'channel' ? copy.openChannel : copy.startNow} <ArrowLeft size={14} />
           </button>
         )}
       </div>
        {active && (
-        <div data-testid={`panel-verification-${task.id}`} className="mt-4 border-t border-[hsl(228_42%_99%/.12)] pt-4">
+         <div data-testid={`panel-verification-${task.id}`} className="mt-3 border-t border-[hsl(228_42%_99%/.12)] pt-3">
           <div className="flex items-center gap-3 rounded-xl bg-[hsl(42_94%_63%/.12)] p-3 text-xs leading-5 text-[hsl(228_20%_87%)]">
              {verification?.phase === 'waiting' ? (
                <div className="h-4 w-4 animate-spin rounded-full border-2 border-[hsl(42_94%_63%/.35)] border-t-[hsl(42_94%_63%)]" />
@@ -1433,6 +1437,39 @@ function PolicyPage({ kind }: { kind: PolicyKind }) {
   );
 }
 
+function BootLoader({ stage }: { stage: 'loading' | 'exiting' }) {
+  return (
+    <div
+      data-testid="screen-boot-loader"
+      className={`app-boot-loader ${stage === 'exiting' ? 'app-boot-loader-exiting' : ''}`}
+      role="status"
+      aria-live="polite"
+    >
+      <div className="app-boot-glow app-boot-glow-one" />
+      <div className="app-boot-glow app-boot-glow-two" />
+      <div className="app-boot-grid" />
+      <div className="app-boot-content">
+        <div className="app-boot-mark" aria-hidden="true">
+          <div className="app-boot-mark-ring app-boot-mark-ring-one" />
+          <div className="app-boot-mark-ring app-boot-mark-ring-two" />
+          <div className="app-boot-mark-core">
+            <Gift size={25} strokeWidth={2.2} />
+          </div>
+        </div>
+        <div className="app-boot-brand">Rewardly</div>
+        <div className="app-boot-tagline">{copy.bootTagline}</div>
+        <div className="app-boot-progress" aria-hidden="true">
+          <span />
+        </div>
+        <div className="app-boot-status">
+          <span className="app-boot-status-dot" />
+          {copy.bootStatus}
+        </div>
+      </div>
+    </div>
+  );
+}
+
 function RouterContent() {
   const { user, isDemo } = useMemo(getTelegramUser, []);
   const rewardly = useRewardlyState(user.id);
@@ -1486,12 +1523,20 @@ function RouterContent() {
 }
 
 function App() {
+  const [bootStage, setBootStage] = useState<'loading' | 'exiting' | 'done'>('loading');
+
   useEffect(() => {
     const webApp = window.Telegram?.WebApp;
     webApp?.ready?.();
     webApp?.expand?.();
     document.documentElement.lang = locale;
     document.documentElement.dir = isArabic ? 'rtl' : 'ltr';
+    const exitTimer = window.setTimeout(() => setBootStage('exiting'), 6600);
+    const doneTimer = window.setTimeout(() => setBootStage('done'), 7000);
+    return () => {
+      window.clearTimeout(exitTimer);
+      window.clearTimeout(doneTimer);
+    };
   }, []);
 
   return (
@@ -1503,6 +1548,7 @@ function App() {
           </ErrorBoundary>
         </WouterRouter>
         <Toaster />
+         {bootStage !== 'done' && <BootLoader stage={bootStage === 'exiting' ? 'exiting' : 'loading'} />}
       </TooltipProvider>
     </QueryClientProvider>
   );

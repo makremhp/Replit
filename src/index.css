@@ -486,6 +486,162 @@
     animation: screen-enter 420ms cubic-bezier(.2,.8,.2,1) both;
   }
 
+  .app-boot-loader {
+    position: fixed;
+    inset: 0;
+    z-index: 200;
+    display: grid;
+    place-items: center;
+    overflow: hidden;
+    background:
+      radial-gradient(circle at 50% 42%, hsl(190 45% 22% / .28), transparent 18rem),
+      linear-gradient(145deg, hsl(226 40% 10%) 0%, hsl(190 43% 10%) 52%, hsl(226 40% 8%) 100%);
+    color: hsl(42 38% 96%);
+    animation: boot-loader-in 500ms ease-out both;
+  }
+
+  .app-boot-loader-exiting {
+    pointer-events: none;
+    animation: boot-loader-out 400ms cubic-bezier(.4,0,.2,1) both;
+  }
+
+  .app-boot-content {
+    position: relative;
+    z-index: 2;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+    animation: boot-content-rise 900ms cubic-bezier(.2,.8,.2,1) both;
+  }
+
+  .app-boot-mark {
+    position: relative;
+    display: grid;
+    place-items: center;
+    width: 96px;
+    height: 96px;
+    margin-bottom: 1.35rem;
+  }
+
+  .app-boot-mark-ring,
+  .app-boot-mark-core {
+    position: absolute;
+    display: grid;
+    place-items: center;
+    border-radius: 1.8rem;
+  }
+
+  .app-boot-mark-ring {
+    inset: 6px;
+    border: 1px solid hsl(39 94% 62% / .24);
+    transform: rotate(45deg);
+    animation: boot-ring-spin 8s linear infinite;
+  }
+
+  .app-boot-mark-ring-two {
+    inset: 15px;
+    border-color: hsl(190 79% 68% / .34);
+    border-radius: 50%;
+    transform: rotate(-30deg);
+    animation-duration: 5s;
+    animation-direction: reverse;
+  }
+
+  .app-boot-mark-core {
+    width: 58px;
+    height: 58px;
+    color: hsl(226 34% 15%);
+    background: linear-gradient(145deg, hsl(42 94% 70%), hsl(39 94% 53%));
+    box-shadow:
+      0 0 0 7px hsl(42 94% 63% / .08),
+      0 13px 30px hsl(39 94% 45% / .24);
+    animation: boot-core-pulse 2.4s ease-in-out infinite;
+  }
+
+  .app-boot-brand {
+    font-size: 1.45rem;
+    font-weight: 700;
+    letter-spacing: -.04em;
+  }
+
+  .app-boot-tagline {
+    margin-top: .42rem;
+    color: hsl(42 20% 76%);
+    font-size: .72rem;
+    letter-spacing: .04em;
+  }
+
+  .app-boot-progress {
+    width: 150px;
+    height: 3px;
+    margin-top: 2.1rem;
+    overflow: hidden;
+    border-radius: 999px;
+    background: hsl(228 42% 99% / .12);
+  }
+
+  .app-boot-progress span {
+    display: block;
+    width: 42%;
+    height: 100%;
+    border-radius: inherit;
+    background: linear-gradient(90deg, hsl(190 79% 68%), hsl(42 94% 63%));
+    box-shadow: 0 0 14px hsl(42 94% 63% / .5);
+    animation: boot-progress 1.4s cubic-bezier(.4,0,.2,1) infinite;
+  }
+
+  .app-boot-status {
+    display: flex;
+    align-items: center;
+    gap: .45rem;
+    margin-top: .75rem;
+    color: hsl(42 20% 68%);
+    font-size: .65rem;
+  }
+
+  .app-boot-status-dot {
+    width: 5px;
+    height: 5px;
+    border-radius: 50%;
+    background: hsl(155 58% 67%);
+    box-shadow: 0 0 0 4px hsl(155 58% 67% / .1), 0 0 12px hsl(155 58% 67% / .6);
+    animation: boot-status-pulse 1.2s ease-in-out infinite;
+  }
+
+  .app-boot-glow {
+    position: absolute;
+    width: 22rem;
+    height: 22rem;
+    border-radius: 50%;
+    filter: blur(60px);
+    opacity: .16;
+    pointer-events: none;
+  }
+
+  .app-boot-glow-one {
+    top: -12rem;
+    right: -8rem;
+    background: hsl(39 94% 62%);
+  }
+
+  .app-boot-glow-two {
+    bottom: -14rem;
+    left: -9rem;
+    background: hsl(190 79% 68%);
+  }
+
+  .app-boot-grid {
+    position: absolute;
+    inset: 0;
+    opacity: .15;
+    background-image:
+      linear-gradient(hsl(228 42% 99% / .05) 1px, transparent 1px),
+      linear-gradient(90deg, hsl(228 42% 99% / .05) 1px, transparent 1px);
+    background-size: 42px 42px;
+    mask-image: linear-gradient(to bottom, transparent, black 30%, black 70%, transparent);
+  }
+
   .rise-in {
     animation: rise-in 560ms cubic-bezier(.2,.8,.2,1) both;
   }
@@ -539,10 +695,9 @@
   .adsgram-feature-card {
     isolation: isolate;
     background:
-      radial-gradient(circle at 91% 10%, hsl(190 91% 58% / .22), transparent 9rem),
-      radial-gradient(circle at 9% 95%, hsl(329 79% 61% / .18), transparent 12rem),
-      linear-gradient(135deg, hsl(226 34% 15%) 0%, hsl(240 32% 22%) 54%, hsl(226 40% 11%) 100%);
-    box-shadow: 0 20px 46px hsl(226 34% 15% / .2);
+      radial-gradient(circle at 92% 0%, hsl(190 91% 58% / .18), transparent 8rem),
+      linear-gradient(135deg, hsl(226 34% 17%) 0%, hsl(232 31% 19%) 58%, hsl(226 40% 11%) 100%);
+    box-shadow: 0 12px 28px hsl(226 34% 15% / .18);
   }
 
   .adsgram-feature-card > * {
@@ -553,10 +708,9 @@
   .adstera-task-card {
     isolation: isolate;
     background:
-      radial-gradient(circle at 92% 8%, hsl(0 86% 62% / .3), transparent 9rem),
-      radial-gradient(circle at 8% 100%, hsl(0 78% 40% / .32), transparent 12rem),
-      linear-gradient(135deg, hsl(0 63% 28%) 0%, hsl(0 56% 18%) 55%, hsl(0 52% 12%) 100%);
-    box-shadow: 0 20px 46px hsl(0 56% 20% / .24);
+      radial-gradient(circle at 94% 0%, hsl(0 86% 62% / .23), transparent 8rem),
+      linear-gradient(135deg, hsl(0 54% 24%) 0%, hsl(0 47% 17%) 58%, hsl(0 48% 11%) 100%);
+    box-shadow: 0 12px 28px hsl(0 56% 20% / .2);
   }
 
   .adstera-task-card > * {
@@ -570,7 +724,7 @@
   }
 
   .adsgram-ad-row {
-    min-height: 70px;
+    min-height: 54px;
     transition: transform 180ms ease, background-color 180ms ease;
   }
 
@@ -670,6 +824,40 @@
 @keyframes screen-enter {
   from { opacity: 0; transform: translateY(8px); }
   to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes boot-loader-in {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes boot-loader-out {
+  from { opacity: 1; transform: scale(1); }
+  to { opacity: 0; transform: scale(1.025); visibility: hidden; }
+}
+
+@keyframes boot-content-rise {
+  from { opacity: 0; transform: translateY(12px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes boot-ring-spin {
+  to { transform: rotate(405deg); }
+}
+
+@keyframes boot-core-pulse {
+  0%, 100% { transform: scale(1); }
+  50% { transform: scale(1.045); }
+}
+
+@keyframes boot-progress {
+  from { transform: translateX(-160%); }
+  to { transform: translateX(380%); }
+}
+
+@keyframes boot-status-pulse {
+  0%, 100% { opacity: .5; transform: scale(.8); }
+  50% { opacity: 1; transform: scale(1); }
 }
 
 @keyframes rise-in {
