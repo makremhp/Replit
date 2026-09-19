@@ -452,6 +452,13 @@
   button, a {
     -webkit-tap-highlight-color: transparent;
   }
+
+  button:focus-visible,
+  a:focus-visible,
+  input:focus-visible {
+    outline: 2px solid hsl(var(--ring));
+    outline-offset: 3px;
+  }
 }
 
 @layer utilities {
@@ -495,6 +502,103 @@
     transform: scale(.985);
   }
 
+  .ads-task-card {
+    isolation: isolate;
+    transition: transform 180ms ease, border-color 180ms ease, box-shadow 180ms ease;
+  }
+
+  .ads-task-card::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    border-radius: inherit;
+    border: 1px solid hsl(39 94% 62% / .08);
+    opacity: 0;
+    transition: opacity 180ms ease;
+  }
+
+  .ads-task-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 14px 30px hsl(190 43% 20% / .08);
+  }
+
+  .ads-task-card:hover::before {
+    opacity: 1;
+  }
+
+  .ads-task-icon {
+    transition: transform 220ms cubic-bezier(.2,.8,.2,1), background-color 180ms ease;
+  }
+
+  .ads-task-card:hover .ads-task-icon {
+    transform: rotate(-4deg) scale(1.04);
+    background-color: hsl(190 43% 24%);
+  }
+
+  .balance-card {
+    isolation: isolate;
+    background:
+      radial-gradient(circle at 82% 18%, hsl(39 94% 62% / .2), transparent 8.5rem),
+      radial-gradient(circle at 12% 112%, hsl(12 73% 65% / .2), transparent 13rem),
+      linear-gradient(135deg, hsl(190 43% 20%) 0%, hsl(193 47% 27%) 52%, hsl(190 43% 16%) 100%);
+  }
+
+  .balance-card::before {
+    content: '';
+    position: absolute;
+    inset: -45% -25%;
+    z-index: 0;
+    pointer-events: none;
+    background: linear-gradient(
+      112deg,
+      transparent 38%,
+      hsl(42 38% 96% / .02) 43%,
+      hsl(42 38% 96% / .2) 48%,
+      hsl(39 94% 62% / .08) 52%,
+      transparent 58%
+    );
+    transform: translateX(-58%) rotate(-8deg);
+    animation: balance-glint 6.5s cubic-bezier(.4,0,.2,1) infinite;
+  }
+
+  .balance-card::after {
+    content: '';
+    position: absolute;
+    inset: 1px;
+    z-index: 0;
+    pointer-events: none;
+    border: 1px solid hsl(42 38% 96% / .08);
+    border-radius: inherit;
+    box-shadow: inset 0 1px 0 hsl(42 38% 96% / .09);
+  }
+
+  .balance-card > * {
+    z-index: 1;
+  }
+
+  .channel-card {
+    position: relative;
+    isolation: isolate;
+  }
+
+  .channel-card::after {
+    content: '';
+    position: absolute;
+    width: 13rem;
+    height: 13rem;
+    top: -7rem;
+    left: -4rem;
+    border: 1px solid hsl(39 94% 62% / .16);
+    border-radius: 999px;
+    pointer-events: none;
+    z-index: -1;
+  }
+
+  .policy-card {
+    animation: rise-in 480ms cubic-bezier(.2,.8,.2,1) both;
+  }
+
   .balance-orbit {
     animation: balance-orbit 10s linear infinite;
     transform-origin: center;
@@ -529,7 +633,24 @@
   50% { transform: rotate(2deg); }
 }
 
+@keyframes balance-glint {
+  0%, 28% { transform: translateX(-58%) rotate(-8deg); opacity: 0; }
+  42% { opacity: .9; }
+  62%, 100% { transform: translateX(58%) rotate(-8deg); opacity: 0; }
+}
+
 @keyframes progress-sweep {
   from { transform: scaleX(0); opacity: .2; }
   to { transform: scaleX(1); opacity: 1; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    scroll-behavior: auto !important;
+    animation-duration: .01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: .01ms !important;
+  }
 }

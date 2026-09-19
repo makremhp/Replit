@@ -91,7 +91,7 @@ const isArabic = locale === 'ar';
 
 const copy = {
   ar: {
-    nav: { home: 'الرئيسية', tasks: 'الإعلانات', wallet: 'المحفظة', history: 'سجلات السحب', help: 'كيف تعمل؟' },
+    nav: { home: 'الرئيسية', tasks: 'المهمات', ads: 'الإعلانات', wallet: 'المحفظة', history: 'السجل', help: 'كيف تعمل؟' },
     dailyRewards: 'مكافآت USDT يومية',
     openMenu: 'فتح القائمة',
     demoMode: 'وضع العرض خارج Telegram',
@@ -109,12 +109,20 @@ const copy = {
     allTasksDone: 'اكتملت كل مهامك',
     onTrack: 'أنت على الطريق الصحيح',
     dailyLimitClear: 'كل مهمة لها حد يومي واضح',
+    trustVerified: 'خطوات واضحة',
+    trustLimit: 'حد يومي ثابت',
+    trustPrivacy: 'خصوصيتك أولاً',
     todayChoices: 'اختيارات اليوم',
     simpleTasks: 'إعلانات Adsgram اليومية',
     allTasks: 'كل المهام',
+    adsToday: 'إعلانات Adsgram اليوم',
     pageTasksEyebrow: 'مساحة المهام',
     pageTasksTitle: 'اختر ما يناسبك.',
     pageTasksDescription: 'مهام يومية قليلة وواضحة. لا نطلب منك أكثر مما هو مكتوب.',
+    moreTasksNote: 'مزيد من المهام ستظهر هنا.',
+    adsPageEyebrow: 'إعلانات Adsgram',
+    adsPageTitle: 'شاهد الإعلان واحصل على مكافأتك.',
+    adsPageDescription: 'إعلان يومي واضح، مع حد أقصى ومكافأة ظاهرة قبل البدء.',
     completedToday: 'مكتملة اليوم',
     resetsDaily: 'يتجدد يومياً',
     whyLimits: 'لماذا توجد حدود يومية؟',
@@ -162,8 +170,15 @@ const copy = {
     helpNeedText: 'إذا واجهت إعلاناً لا يعمل كما هو متوقع، أغلقه وحاول مرة أخرى لاحقاً. لا تتكرر المحاولة على حساب رصيدك.',
     adTask: 'إعلان Adsgram',
     adTaskDescription: 'شاهد إعلاناً قصيراً من مزود Adsgram واحصل على مكافأتك.',
+    adLabel: 'إعلان قصير',
+    channelReward: '+0.005 USDT',
     channelTask: 'تعرّف على قناة Urumfaucet',
     channelTaskDescription: 'انضم للقناة الرسمية لتصلك التحديثات.',
+    channelCardEyebrow: 'تحديثات Rewardly',
+    channelCardTitle: 'انضم إلى القناة الرسمية',
+    channelCardDescription: 'تابع أخبار Rewardly والتنبيهات المهمة من الرابط الرسمي فقط.',
+    channelCardMeta: 'رابط Telegram الرسمي',
+    joinChannel: 'انضم للقناة',
     secondAdTask: 'إعلان Adsgram إضافي',
     secondAdTaskDescription: 'إعلان يومي إضافي بمكافأة USDT واضحة.',
     seconds: 'ثانية',
@@ -175,9 +190,38 @@ const copy = {
     adConfirm: 'تمت مشاهدة الإعلان التجريبي؟',
     notYet: 'ليس بعد',
     confirmAdd: 'تأكيد وإضافة',
+    policyEyebrow: 'معلومات Rewardly',
+    privacyTitle: 'سياسة الخصوصية',
+    privacyDescription: 'نوضح هنا ما نستخدمه من بيانات Telegram وكيف نحافظ على خصوصية حسابك.',
+    privacyBlocks: [
+      ['البيانات التي نستخدمها', 'نستخدم الاسم والصورة وTelegram ID الذي يسمح به Telegram لعرض حسابك وربط المكافآت بحسابك فقط. لا نطلب محادثاتك أو جهات اتصالك.'],
+      ['الرصيد والسجل', 'يظهر سجل السحوبات الخاص بك داخل حسابك فقط. لا نعرض عنوان محفظتك أو أي بيانات خاصة في السجل العام.'],
+      ['الشفافية', 'يمكنك معرفة سبب إضافة المكافأة وحدودها اليومية من داخل التطبيق، ولا نعد بدخل مضمون.'],
+    ],
+    termsTitle: 'شروط الاستخدام',
+    termsDescription: 'استخدام Rewardly يعني الموافقة على هذه القواعد الأساسية.',
+    termsBlocks: [
+      ['الاستخدام العادل', 'يسمح بحساب واحد لكل مستخدم. يمنع استخدام الأدوات الآلية أو محاولات تكرار المشاهدة أو التلاعب بالمكافآت.'],
+      ['المكافآت', 'تضاف المكافأة بعد إكمال خطوة الإعلان والتحقق منها، وقد تخضع الطلبات للمراجعة قبل السحب.'],
+      ['السحب', 'يجب إدخال عنوان TON صحيح، ويطبق الحد الأدنى الظاهر في صفحة المحفظة.'],
+    ],
+    rewardsPolicyTitle: 'سياسة المكافآت',
+    rewardsPolicyDescription: 'قواعد بسيطة تشرح متى يظهر الرصيد وكيف تعمل الحدود اليومية.',
+    rewardsPolicyBlocks: [
+      ['متى يضاف الرصيد؟', 'لا يزداد الرصيد بمجرد الضغط على الزر. تتم إضافة المكافأة بعد اكتمال الإعلان وظهور حالة التحقق بنجاح.'],
+      ['الحد اليومي', 'إعلانات Adsgram لها حد يومي واضح قدره 10 مرات، ويظهر العداد داخل بطاقة الإعلان.'],
+      ['عند فشل التحقق', 'إذا لم تكتمل المشاهدة أو لم تصل نتيجة التحقق، لا تتم إضافة مكافأة.'],
+    ],
+    supportTitle: 'الدعم والمساعدة',
+    supportDescription: 'نريد أن تكون كل خطوة مفهومة. استخدم القناة الرسمية لمتابعة التنبيهات واطلب المساعدة عند الحاجة.',
+    supportBlocks: [
+      ['قبل التواصل', 'تأكد من فتح Rewardly من داخل Telegram ومن إدخال عنوان TON يبدأ بـ U أو E عند طلب السحب.'],
+      ['مشاكل الإعلان', 'إذا لم يكتمل الإعلان، أغلقه وحاول لاحقاً. لا تكرر المحاولة بشكل متواصل إذا لم تظهر نتيجة التحقق.'],
+      ['التحديثات', 'ننشر التنبيهات والتغييرات المهمة عبر قناة Rewardly الرسمية.'],
+    ],
   },
   en: {
-    nav: { home: 'Home', tasks: 'Ads', wallet: 'Wallet', history: 'Withdrawals', help: 'How it works' },
+    nav: { home: 'Home', tasks: 'Tasks', ads: 'Ads', wallet: 'Wallet', history: 'History', help: 'How it works' },
     dailyRewards: 'DAILY USDT REWARDS',
     openMenu: 'Open menu',
     demoMode: 'Demo mode outside Telegram',
@@ -195,12 +239,20 @@ const copy = {
     allTasksDone: 'All tasks complete',
     onTrack: 'You are on the right track',
     dailyLimitClear: 'Every task has a clear daily limit',
+    trustVerified: 'Clear steps',
+    trustLimit: 'Fixed daily limit',
+    trustPrivacy: 'Privacy first',
     todayChoices: 'Today’s picks',
     simpleTasks: 'Daily Adsgram ads',
     allTasks: 'All tasks',
+    adsToday: 'Adsgram ads today',
     pageTasksEyebrow: 'TASK SPACE',
     pageTasksTitle: 'Choose what fits.',
     pageTasksDescription: 'A few clear daily tasks. Nothing is hidden.',
+    moreTasksNote: 'More tasks will appear here.',
+    adsPageEyebrow: 'ADSGRAM ADS',
+    adsPageTitle: 'Watch the ad and earn your reward.',
+    adsPageDescription: 'One clear daily ad, with the limit and reward shown before you start.',
     completedToday: 'complete today',
     resetsDaily: 'resets daily',
     whyLimits: 'Why are there daily limits?',
@@ -248,8 +300,15 @@ const copy = {
     helpNeedText: 'If an ad does not work as expected, close it and try again later. Do not repeatedly retry at the cost of your balance.',
     adTask: 'Adsgram ad',
     adTaskDescription: 'Watch a short ad from Adsgram and receive the displayed reward.',
+    adLabel: 'Short ad',
+    channelReward: '+0.005 USDT',
     channelTask: 'Discover the Urumfaucet channel',
     channelTaskDescription: 'Join the official channel for updates.',
+    channelCardEyebrow: 'REWARDLY UPDATES',
+    channelCardTitle: 'Join the official channel',
+    channelCardDescription: 'Follow Rewardly news and important updates from the official Telegram link.',
+    channelCardMeta: 'Official Telegram link',
+    joinChannel: 'Join channel',
     secondAdTask: 'Another Adsgram ad',
     secondAdTaskDescription: 'Another daily ad with a clear USDT reward.',
     seconds: 'seconds',
@@ -261,6 +320,35 @@ const copy = {
     adConfirm: 'Did you watch the demo ad?',
     notYet: 'Not yet',
     confirmAdd: 'Confirm and add',
+    policyEyebrow: 'REWARDLY INFORMATION',
+    privacyTitle: 'Privacy policy',
+    privacyDescription: 'A clear summary of the Telegram data we use and how we protect your account.',
+    privacyBlocks: [
+      ['Data we use', 'We use the name, photo, and Telegram ID that Telegram makes available to display your account and connect rewards to your account. We do not request chats or contacts.'],
+      ['Balance and history', 'Your private withdrawal history belongs to your account only. Wallet addresses and private details are not shown in the public feed.'],
+      ['Transparency', 'Reward rules and daily limits are visible inside the app. Rewardly does not promise guaranteed income.'],
+    ],
+    termsTitle: 'Terms of use',
+    termsDescription: 'Using Rewardly means agreeing to these basic rules.',
+    termsBlocks: [
+      ['Fair use', 'One account per user is allowed. Automated tools, repeated view attempts, and reward manipulation are not allowed.'],
+      ['Rewards', 'Rewards are added after the ad step is completed and verified. Requests may be reviewed before withdrawal.'],
+      ['Withdrawals', 'Use a valid TON address and follow the minimum shown on the wallet page.'],
+    ],
+    rewardsPolicyTitle: 'Reward policy',
+    rewardsPolicyDescription: 'Simple rules explaining when your balance changes and how daily limits work.',
+    rewardsPolicyBlocks: [
+      ['When does the balance change?', 'Pressing the button is not enough. A reward is added only after the ad is completed and verification succeeds.'],
+      ['Daily limit', 'Adsgram ads have a clear daily limit of 10 views, shown inside the ad card.'],
+      ['When verification fails', 'If the view is incomplete or no verification result arrives, no reward is added.'],
+    ],
+    supportTitle: 'Support',
+    supportDescription: 'Every step should be understandable. Use the official channel for updates and ask for help when needed.',
+    supportBlocks: [
+      ['Before contacting support', 'Open Rewardly from Telegram and use a TON address that starts with U or E when requesting a withdrawal.'],
+      ['Ad issues', 'If an ad does not complete, close it and try again later. Do not repeatedly retry when no verification result appears.'],
+      ['Updates', 'Important changes and notices are shared through the official Rewardly Telegram channel.'],
+    ],
   },
 }[locale];
 
@@ -280,6 +368,7 @@ declare global {
 
 const queryClient = new QueryClient();
 const STORAGE_KEY = 'rewardly-local-state-v2';
+const CHANNEL_URL = 'https://t.me/Urumfaucet';
 
 const initialTasks: Task[] = [
   {
@@ -288,23 +377,10 @@ const initialTasks: Task[] = [
     provider: 'Adsgram',
     title: copy.adTask,
     description: copy.adTaskDescription,
-    reward: 0.005,
-    rewardMax: 0.01,
+    reward: 0.002,
     dailyLimit: 10,
     completedToday: 0,
     duration: 30,
-    status: 'available',
-  },
-  {
-    id: 'rewardly-channel',
-    kind: 'channel',
-    title: copy.channelTask,
-    description: copy.channelTaskDescription,
-    reward: 0.01,
-    dailyLimit: 1,
-    completedToday: 0,
-    channelUrl: 'https://t.me/Urumfaucet',
-    duration: 15,
     status: 'available',
   },
 ];
@@ -359,7 +435,11 @@ function loadState(storageKey = STORAGE_KEY): { tasks: Task[]; wallet: Wallet; u
   try {
     const saved = JSON.parse(localStorage.getItem(storageKey) ?? 'null') as StoredState | null;
     if (saved?.day === todayKey() && saved.tasks && saved.wallet) {
-      return { tasks: saved.tasks, wallet: saved.wallet, userWithdrawals: saved.userWithdrawals ?? [] };
+      const savedAdsgramTask = saved.tasks.find((task) => task.id === 'adsgram-daily');
+      const tasks = savedAdsgramTask
+        ? [{ ...initialTasks[0], ...savedAdsgramTask, dailyLimit: 10, reward: 0.002, rewardMax: undefined }]
+        : initialTasks;
+      return { tasks, wallet: saved.wallet, userWithdrawals: saved.userWithdrawals ?? [] };
     }
   } catch {
     // localStorage is optional in Telegram webviews.
@@ -422,6 +502,15 @@ function Avatar({ user, large = false }: { user: TelegramUser; large?: boolean }
       {initials(user)}
     </span>
   );
+}
+
+function openOfficialChannel() {
+  const webApp = window.Telegram?.WebApp;
+  if (webApp?.openTelegramLink) {
+    webApp.openTelegramLink(CHANNEL_URL);
+    return;
+  }
+  window.open(CHANNEL_URL, '_blank', 'noopener,noreferrer');
 }
 
 function useRewardlyState(userId: number) {
@@ -518,11 +607,23 @@ function Shell({
   const [menuOpen, setMenuOpen] = useState(false);
   const navItems = [
     { href: '/', label: copy.nav.home, icon: Home },
-    { href: '/tasks', label: copy.nav.tasks, icon: Zap },
+    { href: '/tasks', label: copy.nav.tasks, icon: BadgeCheck },
+    { href: '/ads', label: copy.nav.ads, icon: Zap },
     { href: '/wallet', label: copy.nav.wallet, icon: WalletCards },
     { href: '/withdrawals', label: copy.nav.history, icon: Clock3 },
     { href: '/help', label: copy.nav.help, icon: CircleHelp },
   ];
+
+  useEffect(() => {
+    if (!menuOpen) return;
+    const closeMenuOnScroll = () => setMenuOpen(false);
+    window.addEventListener('scroll', closeMenuOnScroll, { passive: true });
+    return () => window.removeEventListener('scroll', closeMenuOnScroll);
+  }, [menuOpen]);
+
+  useEffect(() => {
+    setMenuOpen(false);
+  }, [location]);
 
   return (
     <div dir={isArabic ? 'rtl' : 'ltr'} className="app-shell text-[hsl(var(--foreground))]">
@@ -544,7 +645,7 @@ function Shell({
               <Clock3 size={15} />
               <span className="hidden sm:inline">{copy.nav.history}</span>
             </Link>
-            <button type="button" aria-label={copy.openMenu} data-testid="button-open-menu" onClick={() => setMenuOpen((open) => !open)} className="rounded-full p-2.5 text-[hsl(var(--muted-foreground))] transition hover:bg-[hsl(var(--muted))] sm:hidden">
+            <button type="button" aria-label={copy.openMenu} aria-expanded={menuOpen} aria-controls="mobile-nav-menu" data-testid="button-open-menu" onClick={() => setMenuOpen((open) => !open)} className="rounded-full p-2.5 text-[hsl(var(--muted-foreground))] transition hover:bg-[hsl(var(--muted))] sm:hidden">
               {menuOpen ? <X size={20} /> : <Menu size={20} />}
             </button>
             <Link href="/wallet" data-testid="link-avatar-header"><Avatar user={user} /></Link>
@@ -553,7 +654,7 @@ function Shell({
       </header>
 
       {menuOpen && (
-        <div className="fixed inset-x-4 top-[5rem] z-50 rounded-2xl border border-[hsl(var(--border))] bg-[hsl(var(--card))] p-2 shadow-xl sm:hidden">
+        <div id="mobile-nav-menu" className="fixed inset-x-4 top-[5rem] z-50 rounded-2xl border border-[hsl(var(--border))] bg-[hsl(var(--card))] p-2 shadow-xl sm:hidden">
           {navItems.map(({ href, label, icon: NavIcon }) => (
             <Link key={href} href={href} data-testid={`mobile-nav-${label}`} onClick={() => setMenuOpen(false)} className={`flex items-center gap-3 rounded-xl px-4 py-3 text-sm ${location === href ? 'bg-[hsl(var(--muted))] font-bold text-[hsl(190_43%_20%)]' : 'text-[hsl(var(--muted-foreground))]'}`}>
               <NavIcon size={18} />
@@ -584,9 +685,9 @@ function Shell({
       </div>
 
       <nav className="nav-safe fixed inset-x-0 bottom-0 z-40 border-t border-[hsl(var(--border)/.8)] bg-[hsl(42_38%_96%/.94)] px-3 pt-2 backdrop-blur-xl sm:hidden" aria-label={copy.nav.home}>
-        <div className="mx-auto flex max-w-lg items-center justify-around">
+        <div className="mx-auto flex max-w-lg items-center justify-between gap-1">
           {navItems.map(({ href, label, icon: NavIcon }) => (
-            <Link key={href} href={href} data-testid={`bottom-nav-${href === '/' ? 'home' : href.slice(1)}`} className={`flex min-w-[4.3rem] flex-col items-center gap-1 rounded-xl px-2 py-2 text-[10px] ${location === href ? 'font-bold text-[hsl(190_43%_20%)]' : 'text-[hsl(var(--muted-foreground))]'}`}>
+            <Link key={href} href={href} data-testid={`bottom-nav-${href === '/' ? 'home' : href.slice(1)}`} className={`flex min-w-0 flex-1 flex-col items-center gap-1 rounded-xl px-1 py-2 text-[9px] ${location === href ? 'font-bold text-[hsl(190_43%_20%)]' : 'text-[hsl(var(--muted-foreground))]'}`}>
               <NavIcon size={19} strokeWidth={location === href ? 2.4 : 1.8} />
               {label}
             </Link>
@@ -612,7 +713,7 @@ function PageHeading({ eyebrow, title, description, action }: { eyebrow: string;
 
 function BalanceCard({ wallet }: { wallet: Wallet }) {
   return (
-    <div className="relative overflow-hidden rounded-[1.65rem] bg-[hsl(190_43%_20%)] p-6 text-[hsl(42_38%_96%)] shadow-[0_18px_40px_hsl(190_43%_20%/.18)] sm:p-8">
+    <div className="balance-card relative overflow-hidden rounded-[1.65rem] p-6 text-[hsl(42_38%_96%)] shadow-[0_18px_40px_hsl(190_43%_20%/.2)] sm:p-8">
       <div className="absolute -left-10 -top-14 h-48 w-48 rounded-full border border-[hsl(39_94%_62%/.22)]" />
       <div className="absolute -left-1 top-[-5.5rem] h-48 w-48 rounded-full border border-[hsl(39_94%_62%/.14)]" />
       <div className="absolute bottom-0 right-0 h-40 w-40 translate-x-16 translate-y-16 rounded-full bg-[hsl(12_73%_65%/.16)] blur-2xl" />
@@ -638,41 +739,49 @@ function TaskCard({ task, onStart, verification }: { task: Task; onStart: (task:
   const limitReached = task.completedToday >= task.dailyLimit;
   const active = verification?.taskId === task.id;
   const blocked = Boolean(verification && !active);
+  const progress = task.dailyLimit ? Math.round((task.completedToday / task.dailyLimit) * 100) : 0;
   return (
-    <div data-testid={`card-task-${task.id}`} className={`task-row rounded-2xl border bg-[hsl(var(--card)/.82)] p-4 ${active ? 'border-[hsl(39_94%_62%/.7)] shadow-[0_8px_25px_hsl(39_94%_62%/.12)]' : 'border-[hsl(var(--border))]'} ${blocked ? 'opacity-60' : ''}`}>
-      <div className="flex items-start gap-3">
-        <IconBadge kind={task.kind} />
+    <div data-testid={`card-task-${task.id}`} className={`ads-task-card task-row relative overflow-hidden rounded-[1.45rem] border bg-[hsl(var(--card)/.88)] p-5 ${active ? 'border-[hsl(39_94%_62%/.75)] shadow-[0_12px_32px_hsl(39_94%_62%/.14)]' : 'border-[hsl(var(--border))]'} ${blocked ? 'opacity-60' : ''}`}>
+      <div className="ads-task-glow absolute -right-16 -top-20 h-48 w-48 rounded-full bg-[hsl(39_94%_62%/.12)] blur-3xl" />
+      <div className="relative flex items-start gap-3.5">
+        <div className="ads-task-icon flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-[hsl(190_43%_20%)] text-[hsl(39_94%_62%)] shadow-[0_8px_18px_hsl(190_43%_20%/.16)]">
+          <Play size={19} fill="currentColor" strokeWidth={1.5} />
+        </div>
         <div className="min-w-0 flex-1">
           <div className="flex items-start justify-between gap-3">
-            <div>
-              <div className="mb-1 flex items-center gap-2">
-                <h3 data-testid={`text-task-title-${task.id}`} className="font-bold text-[hsl(196_41%_17%)]">{task.title}</h3>
+            <div className="min-w-0">
+              <div className="mb-1.5 flex flex-wrap items-center gap-2">
+                <span className="text-[10px] font-bold tracking-[.06em] text-[hsl(34_75%_42%)]">{copy.adLabel}</span>
                 {task.provider && <span className="rounded-full bg-[hsl(190_43%_20%/.1)] px-2 py-0.5 text-[10px] font-bold text-[hsl(190_43%_20%)]">{task.provider}</span>}
               </div>
-              <p data-testid={`text-task-description-${task.id}`} className="mt-1 text-xs leading-6 text-[hsl(var(--muted-foreground))]">{task.description}</p>
+              <h3 data-testid={`text-task-title-${task.id}`} className="truncate text-base font-bold text-[hsl(196_41%_17%)]">{task.title}</h3>
             </div>
-             <span data-testid={`text-task-reward-${task.id}`} className="max-w-[7.2rem] shrink-0 whitespace-normal rounded-full bg-[hsl(39_94%_62%/.2)] px-2.5 py-1 text-center font-mono text-[11px] font-bold leading-4 text-[hsl(34_75%_42%)]">+{formatReward(task)}</span>
+            <span data-testid={`text-task-reward-${task.id}`} className="shrink-0 rounded-xl bg-[hsl(39_94%_62%/.2)] px-2.5 py-1.5 text-center font-mono text-[10px] font-bold leading-3 text-[hsl(34_75%_42%)]">+{formatReward(task)}</span>
           </div>
-          <div className="mt-4 flex items-center justify-between gap-3">
-            <div className="flex items-center gap-2 text-[11px] text-[hsl(var(--muted-foreground))]">
-              <span className="flex items-center gap-1"><Clock3 size={13} />{task.duration} {copy.seconds}</span>
-              <span className="text-[hsl(var(--border))]">•</span>
-              <span data-testid={`text-task-limit-${task.id}`}>{formatNumber(task.completedToday)} / {formatNumber(task.dailyLimit)} {copy.today}</span>
-            </div>
-            {active ? (
-               <button type="button" disabled data-testid={`button-start-task-${task.id}`} className="flex cursor-wait items-center gap-2 rounded-xl bg-[hsl(39_94%_62%/.22)] px-3.5 py-2 text-xs font-bold text-[hsl(34_75%_42%)]">
-                <span className="h-3.5 w-3.5 animate-spin rounded-full border-2 border-[hsl(39_94%_62%/.35)] border-t-[hsl(34_75%_42%)]" />
-                 <span data-testid={`status-task-verifying-${task.id}`}>جاري التحقق</span>
-               </button>
-            ) : limitReached ? (
-              <span data-testid={`status-task-completed-${task.id}`} className="flex items-center gap-1.5 text-xs font-bold text-[hsl(155_39%_40%)]"><BadgeCheck size={16} />{copy.completed}</span>
-            ) : (
-              <button type="button" disabled={blocked} data-testid={`button-start-task-${task.id}`} onClick={() => onStart(task)} className="flex items-center gap-1.5 rounded-xl bg-[hsl(190_43%_20%)] px-3.5 py-2 text-xs font-bold text-[hsl(42_38%_96%)] transition hover:-translate-y-0.5 hover:bg-[hsl(190_43%_25%)] active:translate-y-0 disabled:cursor-not-allowed disabled:hover:translate-y-0">
-                {task.kind === 'ad' ? copy.startNow : copy.openChannel} <ArrowLeft size={14} />
-              </button>
-            )}
-          </div>
+          <p data-testid={`text-task-description-${task.id}`} className="mt-2 line-clamp-2 text-xs leading-5 text-[hsl(var(--muted-foreground))]">{task.description}</p>
         </div>
+      </div>
+      <div className="relative mt-5">
+        <div className="mb-2 flex items-center justify-between text-[10px] font-semibold text-[hsl(var(--muted-foreground))]">
+          <span className="flex items-center gap-1.5"><Clock3 size={13} />{task.duration} {copy.seconds}</span>
+          <span data-testid={`text-task-limit-${task.id}`} className="font-mono">{formatNumber(task.completedToday)} / {formatNumber(task.dailyLimit)} {copy.today}</span>
+        </div>
+        <div className="h-1.5 overflow-hidden rounded-full bg-[hsl(190_43%_20%/.1)]"><div className="ads-task-progress h-full rounded-full bg-[hsl(39_94%_62%)] transition-[width] duration-500" style={{ width: `${Math.max(progress, progress > 0 ? 4 : 2)}%` }} /></div>
+      </div>
+      <div className="relative mt-5 flex items-center justify-between gap-3">
+        <span className="text-[10px] text-[hsl(var(--muted-foreground))]">{copy.resetsDaily}</span>
+        {active ? (
+          <button type="button" disabled data-testid={`button-start-task-${task.id}`} className="flex min-h-11 cursor-wait items-center gap-2 rounded-xl bg-[hsl(39_94%_62%/.22)] px-4 text-xs font-bold text-[hsl(34_75%_42%)]">
+            <span className="h-3.5 w-3.5 animate-spin rounded-full border-2 border-[hsl(39_94%_62%/.35)] border-t-[hsl(34_75%_42%)]" />
+            <span data-testid={`status-task-verifying-${task.id}`}>{isArabic ? 'جاري التحقق' : 'Verifying'}</span>
+          </button>
+        ) : limitReached ? (
+          <span data-testid={`status-task-completed-${task.id}`} className="flex min-h-11 items-center gap-1.5 text-xs font-bold text-[hsl(155_39%_40%)]"><BadgeCheck size={16} />{copy.completed}</span>
+        ) : (
+          <button type="button" disabled={blocked} data-testid={`button-start-task-${task.id}`} onClick={() => onStart(task)} className="flex min-h-11 items-center gap-2 rounded-xl bg-[hsl(190_43%_20%)] px-4 text-xs font-bold text-[hsl(42_38%_96%)] transition hover:-translate-y-0.5 hover:bg-[hsl(190_43%_25%)] active:translate-y-0 disabled:cursor-not-allowed disabled:hover:translate-y-0">
+            {task.kind === 'ad' ? copy.startNow : copy.openChannel} <ArrowLeft size={14} />
+          </button>
+        )}
       </div>
       {active && (
         <div data-testid={`panel-verification-${task.id}`} className="mt-4 border-t border-[hsl(var(--border))] pt-4">
@@ -686,7 +795,47 @@ function TaskCard({ task, onStart, verification }: { task: Task; onStart: (task:
   );
 }
 
-function HomePage({ user, isDemo, tasks, wallet, verification, onStart }: { user: TelegramUser; isDemo: boolean; tasks: Task[]; wallet: Wallet; verification: { taskId: string; phase: 'waiting' } | null; onStart: (task: Task) => void }) {
+function TrustStrip() {
+  const items = [
+    { icon: ShieldCheck, label: copy.trustVerified },
+    { icon: Clock3, label: copy.trustLimit },
+    { icon: LockKeyhole, label: copy.trustPrivacy },
+  ];
+  return (
+    <div className="trust-strip mt-3 grid gap-2 sm:grid-cols-3" aria-label={copy.helpEyebrow}>
+      {items.map(({ icon: TrustIcon, label }) => (
+        <div key={label} className="flex items-center gap-2 rounded-xl border border-[hsl(var(--border))] bg-[hsl(var(--card)/.62)] px-3 py-2.5 text-[11px] font-semibold text-[hsl(var(--muted-foreground))]">
+          <TrustIcon size={15} className="text-[hsl(155_39%_40%)]" />
+          {label}
+        </div>
+      ))}
+    </div>
+  );
+}
+
+function ChannelJoinCard() {
+  return (
+    <section data-testid="card-channel-join" className="channel-card relative mt-4 flex h-[50px] items-center gap-3 overflow-hidden rounded-2xl bg-[hsl(190_43%_20%)] px-3 text-[hsl(42_38%_96%)] shadow-[0_12px_26px_hsl(190_43%_20%/.16)]">
+      <div className="absolute -left-8 -top-12 h-28 w-28 rounded-full border border-[hsl(39_94%_62%/.2)]" />
+      <div className="relative flex h-8 w-8 shrink-0 items-center justify-center rounded-xl border border-[hsl(39_94%_62%/.3)] bg-[hsl(39_94%_62%/.13)] text-[hsl(39_94%_62%)]">
+        <ArrowUpLeft size={16} />
+      </div>
+      <div className="relative min-w-0 flex-1">
+        <h3 className="truncate text-xs font-bold">{copy.channelCardTitle}</h3>
+        <div className="mt-0.5 flex items-center gap-2 text-[9px] text-[hsl(42_20%_76%)]">
+          <span className="flex items-center gap-1"><ShieldCheck size={11} className="text-[hsl(155_58%_67%)]" />{copy.channelCardMeta}</span>
+          <span className="font-mono font-bold text-[hsl(39_94%_62%)]">{copy.channelReward}</span>
+        </div>
+      </div>
+      <button type="button" data-testid="button-join-channel" onClick={openOfficialChannel} className="relative inline-flex shrink-0 items-center gap-1.5 rounded-lg bg-[hsl(39_94%_62%)] px-3 py-2 text-[10px] font-bold text-[hsl(196_41%_17%)] transition hover:bg-[hsl(39_94%_70%)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[hsl(39_94%_62%)] focus-visible:ring-offset-2 focus-visible:ring-offset-[hsl(190_43%_20%)]">
+        {copy.joinChannel}
+        <ArrowLeft size={12} />
+      </button>
+    </section>
+  );
+}
+
+function HomePage({ user, isDemo, tasks, wallet }: { user: TelegramUser; isDemo: boolean; tasks: Task[]; wallet: Wallet }) {
   const adsgramTask = tasks.find((task) => task.id === 'adsgram-daily');
   const done = adsgramTask?.completedToday ?? 0;
   const possible = adsgramTask?.dailyLimit ?? 10;
@@ -701,14 +850,17 @@ function HomePage({ user, isDemo, tasks, wallet, verification, onStart }: { user
         </div>
         <div className="hidden rounded-2xl bg-[hsl(12_73%_65%/.12)] p-3 text-[hsl(12_73%_65%)] sm:block"><Sparkles size={22} /></div>
       </div>
-      <div data-testid="card-telegram-profile" className="mb-5 flex items-center gap-3 rounded-2xl border border-[hsl(var(--border))] bg-[hsl(var(--card)/.6)] px-4 py-3">
-        <Avatar user={user} />
-        <div className="min-w-0 flex-1">
-          <div data-testid="text-telegram-name" className="truncate text-sm font-bold">{displayName(user)}</div>
-          <div data-testid="text-telegram-username" className="mt-0.5 truncate text-xs text-[hsl(var(--muted-foreground))]">@{user.username ?? 'telegram_user'}</div>
-        </div>
-        <div className="flex items-center gap-1.5 text-[10px] font-semibold text-[hsl(155_39%_40%)]"><BadgeCheck size={15} /> {isDemo ? copy.demoData : copy.fromTelegram}</div>
-      </div>
+       <div className="mb-6">
+         <div data-testid="card-telegram-profile" className="flex min-h-[4.5rem] items-center gap-3 rounded-2xl border border-[hsl(var(--border))] bg-[hsl(var(--card)/.6)] px-4 py-3">
+           <Avatar user={user} />
+           <div className="min-w-0 flex-1">
+             <div data-testid="text-telegram-name" className="truncate text-sm font-bold">{displayName(user)}</div>
+             <div data-testid="text-telegram-username" className="mt-0.5 truncate text-xs text-[hsl(var(--muted-foreground))]">@{user.username ?? 'telegram_user'}</div>
+           </div>
+           <div className="flex shrink-0 items-center gap-1.5 text-[10px] font-semibold text-[hsl(155_39%_40%)]"><BadgeCheck size={15} /> {isDemo ? copy.demoData : copy.fromTelegram}</div>
+         </div>
+         <TrustStrip />
+       </div>
       <div className="grid gap-5 lg:grid-cols-[1.08fr_.92fr]">
         <div className="rise-in"><BalanceCard wallet={wallet} /></div>
         <div className="rise-in delay-1 rounded-[1.65rem] border border-[hsl(var(--border))] bg-[hsl(var(--card)/.72)] p-6 sm:p-7">
@@ -721,21 +873,32 @@ function HomePage({ user, isDemo, tasks, wallet, verification, onStart }: { user
           <div className="mt-6 flex items-center gap-2 border-t border-[hsl(var(--border))] pt-4 text-xs text-[hsl(var(--muted-foreground))]"><ShieldCheck size={15} className="text-[hsl(155_39%_40%)]" /> {copy.dailyLimitClear}</div>
         </div>
       </div>
-       <div className="mt-10 flex items-end justify-between"><div><div className="mb-2 text-xs font-bold tracking-[.08em] text-[hsl(34_75%_42%)]">{copy.todayChoices}</div><h2 className="text-2xl font-bold text-[hsl(196_41%_17%)]">{copy.simpleTasks}</h2></div><Link href="/tasks" data-testid="link-all-tasks" className="flex items-center gap-1 text-xs font-bold text-[hsl(34_75%_42%)]">{copy.allTasks} <ChevronLeft size={15} /></Link></div>
-      <div className="mt-4 space-y-3">
-         {tasks.map((task) => <TaskCard key={task.id} task={task} onStart={onStart} verification={verification} />)}
+    </div>
+  );
+}
+
+function TasksPage() {
+  return (
+    <div className="screen-enter safe-bottom">
+      <PageHeading eyebrow={copy.pageTasksEyebrow} title={copy.pageTasksTitle} description={copy.pageTasksDescription} />
+      <ChannelJoinCard />
+      <div className="mt-4 flex items-center gap-2 rounded-xl border border-dashed border-[hsl(var(--border))] px-4 py-3 text-xs text-[hsl(var(--muted-foreground))]">
+        <Sparkles size={15} className="shrink-0 text-[hsl(34_75%_42%)]" />
+        {copy.moreTasksNote}
       </div>
     </div>
   );
 }
 
-function TasksPage({ tasks, verification, onStart }: { tasks: Task[]; verification: { taskId: string; phase: 'waiting' } | null; onStart: (task: Task) => void }) {
-  const completeCount = tasks.filter((task) => task.completedToday >= task.dailyLimit).length;
+function AdsPage({ tasks, verification, onStart }: { tasks: Task[]; verification: { taskId: string; phase: 'waiting' } | null; onStart: (task: Task) => void }) {
+  const adsgramTask = tasks.find((task) => task.id === 'adsgram-daily');
+  const completeCount = adsgramTask?.completedToday ?? 0;
+  const dailyLimit = adsgramTask?.dailyLimit ?? 10;
   return (
     <div className="screen-enter safe-bottom">
-      <PageHeading eyebrow={copy.pageTasksEyebrow} title={copy.pageTasksTitle} description={copy.pageTasksDescription} />
-      <div className="mb-6 flex items-center justify-between rounded-2xl border border-[hsl(39_94%_62%/.36)] bg-[hsl(39_94%_62%/.1)] px-4 py-3 text-xs"><span className="flex items-center gap-2 font-semibold text-[hsl(34_64%_34%)]"><Zap size={15} /> {formatNumber(completeCount)} {isArabic ? 'من' : 'of'} {formatNumber(tasks.length)} {copy.completedToday}</span><span className="text-[hsl(34_75%_42%)]">{copy.resetsDaily}</span></div>
-       <div className="space-y-3">{tasks.map((task) => <TaskCard key={task.id} task={task} onStart={onStart} verification={verification} />)}</div>
+      <PageHeading eyebrow={copy.adsPageEyebrow} title={copy.adsPageTitle} description={copy.adsPageDescription} />
+      <div className="mb-6 flex items-center justify-between rounded-2xl border border-[hsl(39_94%_62%/.36)] bg-[hsl(39_94%_62%/.1)] px-4 py-3 text-xs"><span className="flex items-center gap-2 font-semibold text-[hsl(34_64%_34%)]"><Zap size={15} /> {formatNumber(completeCount)} {isArabic ? 'من' : 'of'} {formatNumber(dailyLimit)} {copy.adsToday}</span><span className="text-[hsl(34_75%_42%)]">{copy.resetsDaily}</span></div>
+      <div className="space-y-3">{tasks.filter((task) => task.kind === 'ad').map((task) => <TaskCard key={task.id} task={task} onStart={onStart} verification={verification} />)}</div>
        <div data-testid="status-task-rules" className="mt-7 flex gap-3 rounded-2xl bg-[hsl(190_43%_20%)] p-5 text-[hsl(42_38%_96%)]"><LockKeyhole className="mt-0.5 shrink-0 text-[hsl(39_94%_62%)]" size={18} /><div><div className="text-sm font-bold">{copy.whyLimits}</div><p className="mt-1 text-xs leading-6 text-[hsl(42_20%_76%)]">{copy.limitsDescription}</p></div></div>
     </div>
   );
@@ -891,6 +1054,53 @@ function HelpPage({ user, isDemo }: { user: TelegramUser; isDemo: boolean }) {
         })}
       </div>
        <div className="mt-8 rounded-2xl bg-[hsl(12_73%_65%/.1)] p-5"><div className="flex items-center gap-2 text-sm font-bold text-[hsl(12_66%_45%)]"><HelpCircle size={18} /> {copy.helpNeed}</div><p className="mt-2 text-xs leading-6 text-[hsl(var(--muted-foreground))]">{copy.helpNeedText}</p></div>
+       <div className="mt-5 grid gap-2 sm:grid-cols-2">
+         {[
+           { href: '/privacy', label: copy.privacyTitle, icon: ShieldCheck },
+           { href: '/terms', label: copy.termsTitle, icon: LockKeyhole },
+           { href: '/rewards', label: copy.rewardsPolicyTitle, icon: BadgeCheck },
+           { href: '/support', label: copy.supportTitle, icon: HelpCircle },
+         ].map(({ href, label, icon: PolicyIcon }) => (
+           <Link key={href} href={href} className="group flex items-center justify-between rounded-2xl border border-[hsl(var(--border))] bg-[hsl(var(--card)/.72)] px-4 py-3 text-xs font-bold transition hover:-translate-y-0.5 hover:border-[hsl(39_94%_62%/.55)] hover:bg-[hsl(39_94%_62%/.08)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[hsl(var(--ring))]">
+             <span className="flex items-center gap-2"><PolicyIcon size={15} className="text-[hsl(34_75%_42%)]" />{label}</span>
+             <ChevronLeft size={15} className="text-[hsl(var(--muted-foreground))] transition-transform group-hover:-translate-x-0.5" />
+           </Link>
+         ))}
+       </div>
+    </div>
+  );
+}
+
+type PolicyKind = 'privacy' | 'terms' | 'rewards' | 'support';
+
+function PolicyPage({ kind }: { kind: PolicyKind }) {
+  const content = {
+    privacy: { title: copy.privacyTitle, description: copy.privacyDescription, blocks: copy.privacyBlocks },
+    terms: { title: copy.termsTitle, description: copy.termsDescription, blocks: copy.termsBlocks },
+    rewards: { title: copy.rewardsPolicyTitle, description: copy.rewardsPolicyDescription, blocks: copy.rewardsPolicyBlocks },
+    support: { title: copy.supportTitle, description: copy.supportDescription, blocks: copy.supportBlocks },
+  }[kind];
+
+  return (
+    <div className="screen-enter safe-bottom">
+      <PageHeading eyebrow={copy.policyEyebrow} title={content.title} description={content.description} />
+      <div className="space-y-3">
+        {content.blocks.map(([title, text], index) => (
+          <section key={title} className="policy-card rounded-2xl border border-[hsl(var(--border))] bg-[hsl(var(--card)/.72)] p-5" style={{ animationDelay: `${index * 70}ms` }}>
+            <div className="flex items-start gap-3">
+              <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-xl bg-[hsl(39_94%_62%/.16)] text-[hsl(34_75%_42%)]">{index + 1}</span>
+              <div>
+                <h2 className="text-sm font-bold">{title}</h2>
+                <p className="mt-2 text-xs leading-7 text-[hsl(var(--muted-foreground))]">{text}</p>
+              </div>
+            </div>
+          </section>
+        ))}
+      </div>
+      <Link href="/help" className="mt-6 inline-flex items-center gap-2 text-xs font-bold text-[hsl(34_75%_42%)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[hsl(var(--ring))]">
+        <ArrowLeft size={14} />
+        {copy.nav.help}
+      </Link>
     </div>
   );
 }
@@ -903,14 +1113,21 @@ function RouterContent() {
     <Shell user={user} isDemo={isDemo} wallet={wallet}>
       <Switch>
         <Route path="/">
-          <HomePage user={user} isDemo={isDemo} tasks={tasks} wallet={wallet} verification={verification} onStart={startTask} />
+          <HomePage user={user} isDemo={isDemo} tasks={tasks} wallet={wallet} />
         </Route>
         <Route path="/tasks">
-          <TasksPage tasks={tasks} verification={verification} onStart={startTask} />
+          <TasksPage />
+        </Route>
+        <Route path="/ads">
+          <AdsPage tasks={tasks} verification={verification} onStart={startTask} />
         </Route>
         <Route path="/wallet"><WalletPage wallet={wallet} onWithdraw={requestWithdrawal} /></Route>
         <Route path="/withdrawals"><WithdrawalHistoryPage userWithdrawals={userWithdrawals} /></Route>
         <Route path="/help"><HelpPage user={user} isDemo={isDemo} /></Route>
+        <Route path="/privacy"><PolicyPage kind="privacy" /></Route>
+        <Route path="/terms"><PolicyPage kind="terms" /></Route>
+        <Route path="/rewards"><PolicyPage kind="rewards" /></Route>
+        <Route path="/support"><PolicyPage kind="support" /></Route>
         <Route>
           <div className="py-20 text-center"><h1 className="text-3xl font-bold">{locale === 'ar' ? 'الصفحة غير موجودة' : 'Page not found'}</h1><Link href="/" data-testid="link-not-found-home" className="mt-5 inline-flex rounded-xl bg-[hsl(190_43%_20%)] px-5 py-3 text-sm font-bold text-white">{copy.nav.home}</Link></div>
         </Route>
