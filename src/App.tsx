@@ -414,9 +414,6 @@ const ADSTERRA_SCRIPT_BATCH: AdScriptDefinition[] = [
   { src: 'https://interventioncopiedloitering.com/8c0574e870e5a3843e89d947bd38aaff/invoke.js', options: { key: '8c0574e870e5a3843e89d947bd38aaff', format: 'iframe', height: 50, width: 320, params: {} } },
   { src: 'https://interventioncopiedloitering.com/9f6fe4084cb3d8a8eb4d8246ee57ed25/invoke.js', options: { key: '9f6fe4084cb3d8a8eb4d8246ee57ed25', format: 'iframe', height: 50, width: 320, params: {} } },
   { src: 'https://interventioncopiedloitering.com/5d/77/0f/5d770ff402768d79ddda9c1cd67e9819.js' },
-  { src: 'https://interventioncopiedloitering.com/96/90/da/9690da690d344e2579dffa12d4e2ac24.js' },
-  { src: 'https://interventioncopiedloitering.com/f0/07/9c/f0079c7c7d8c3c01bd28c4116a805f4a.js' },
-  { src: 'https://interventioncopiedloitering.com/7e/7f/2b/7e7f2b6f7c43d86c6859e5b0a40afe3e.js' },
 ];
 
 const ADSTERRA_BANNER_BATCH = ADSTERRA_SCRIPT_BATCH.filter(
