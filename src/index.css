@@ -650,6 +650,97 @@
   .delay-2 { animation-delay: 140ms; }
   .delay-3 { animation-delay: 210ms; }
 
+  .shine-card {
+    isolation: isolate;
+  }
+
+  .shine-card::after {
+    content: '';
+    position: absolute;
+    top: -35%;
+    bottom: -35%;
+    left: -42%;
+    z-index: 0;
+    width: 34%;
+    pointer-events: none;
+    transform: translateX(-230%) skewX(-18deg);
+    background: linear-gradient(
+      100deg,
+      transparent 0%,
+      hsl(0 0% 100% / .04) 24%,
+      hsl(0 0% 100% / .72) 50%,
+      hsl(39 94% 76% / .2) 67%,
+      transparent 100%
+    );
+    filter: blur(1px);
+    opacity: 0;
+    animation: card-shine 2s ease-in-out infinite;
+  }
+
+  .shine-card > *:not(.absolute) {
+    position: relative;
+    z-index: 1;
+  }
+
+  .notification-panel {
+    animation: notification-panel-in 220ms cubic-bezier(.2,.8,.2,1) both;
+  }
+
+  .notification-item {
+    border: 1px solid transparent;
+    text-align: start;
+  }
+
+  .notification-success {
+    color: hsl(155 39% 30%);
+    background: linear-gradient(135deg, hsl(155 58% 67% / .18), hsl(155 58% 67% / .07));
+    border-color: hsl(155 58% 55% / .2);
+  }
+
+  .notification-success .notification-icon {
+    color: hsl(155 39% 34%);
+    background: hsl(155 58% 67% / .25);
+  }
+
+  .notification-info {
+    color: hsl(196 41% 25%);
+    background: linear-gradient(135deg, hsl(190 79% 68% / .18), hsl(190 79% 68% / .06));
+    border-color: hsl(190 79% 53% / .2);
+  }
+
+  .notification-info .notification-icon {
+    color: hsl(190 60% 34%);
+    background: hsl(190 79% 68% / .25);
+  }
+
+  .notification-warning {
+    color: hsl(26 65% 31%);
+    background: linear-gradient(135deg, hsl(39 94% 62% / .23), hsl(39 94% 62% / .07));
+    border-color: hsl(39 94% 52% / .24);
+  }
+
+  .notification-warning .notification-icon {
+    color: hsl(34 75% 37%);
+    background: hsl(39 94% 62% / .28);
+  }
+
+  .notification-reward {
+    color: hsl(329 57% 35%);
+    background: linear-gradient(135deg, hsl(329 79% 61% / .19), hsl(329 79% 61% / .06));
+    border-color: hsl(329 79% 61% / .2);
+  }
+
+  .notification-reward .notification-icon {
+    color: hsl(329 64% 46%);
+    background: hsl(329 79% 61% / .24);
+  }
+
+  .notification-dot {
+    background: currentColor;
+    box-shadow: 0 0 0 4px currentColor;
+    opacity: .18;
+  }
+
   .task-row {
     transition: transform 180ms ease, background-color 180ms ease, border-color 180ms ease;
   }
@@ -873,6 +964,33 @@
 @keyframes progress-sweep {
   from { transform: scaleX(0); opacity: .2; }
   to { transform: scaleX(1); opacity: 1; }
+}
+
+@keyframes card-shine {
+  0%,
+  12% {
+    transform: translateX(-230%) skewX(-18deg);
+    opacity: 0;
+  }
+  22% {
+    opacity: 1;
+  }
+  54%,
+  100% {
+    transform: translateX(470%) skewX(-18deg);
+    opacity: 0;
+  }
+}
+
+@keyframes notification-panel-in {
+  from {
+    opacity: 0;
+    transform: translateY(-8px) scale(.98);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
 }
 
 @media (prefers-reduced-motion: reduce) {

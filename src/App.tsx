@@ -9,7 +9,10 @@ import {
   BadgeCheck,
   Banknote,
   BarChart3,
+  Bell,
+  BellRing,
   ChevronLeft,
+  CheckCircle2,
   CircleHelp,
   Clock3,
   Coins,
@@ -23,6 +26,7 @@ import {
   ShieldCheck,
   Sparkles,
   WalletCards,
+  AlertTriangle,
   X,
   Zap,
 } from 'lucide-react';
@@ -82,6 +86,21 @@ type PublicWithdrawalRecord = {
 
 type Locale = 'ar' | 'en';
 
+type NotificationKind = 'success' | 'info' | 'warning' | 'reward';
+
+type NotificationItem = {
+  id: string;
+  kind: NotificationKind;
+  title: string;
+  body: string;
+  time: string;
+  read: boolean;
+};
+
+type RewardEvent =
+  | { type: 'reward'; taskTitle: string; amount: number; id: number }
+  | { type: 'withdrawal'; amount: number; id: number };
+
 function getBrowserLocale(): Locale {
   return typeof navigator !== 'undefined' && navigator.language.toLowerCase().startsWith('ar') ? 'ar' : 'en';
 }
@@ -96,6 +115,16 @@ const copy = {
     bootTagline: 'مكافآت يومية، بخطوات واضحة',
     bootStatus: 'جارٍ تجهيز مساحة المكافآت',
     openMenu: 'فتح القائمة',
+    notifications: 'الإشعارات',
+    markAllRead: 'تحديد الكل كمقروء',
+    noNotifications: 'لا توجد إشعارات جديدة',
+    welcomeNotificationTitle: 'مرحباً بك في Rewardly',
+    welcomeNotificationBody: 'تابع مهامك اليومية واحصل على مكافآتك بوضوح.',
+    rewardNotificationTitle: 'تمت إضافة مكافأة',
+    rewardNotificationBody: 'تم تحديث رصيدك بعد إكمال المهمة بنجاح.',
+    withdrawalNotificationTitle: 'تم إرسال طلب السحب',
+    withdrawalNotificationBody: 'طلبك قيد المراجعة وسيظهر في سجل السحوبات.',
+    justNow: 'الآن',
     demoMode: 'وضع العرض خارج Telegram',
     demoData: 'بيانات العرض',
     fromTelegram: 'من Telegram',
@@ -236,6 +265,16 @@ const copy = {
     bootTagline: 'Daily rewards, clearly earned',
     bootStatus: 'Preparing your rewards space',
     openMenu: 'Open menu',
+    notifications: 'Notifications',
+    markAllRead: 'Mark all as read',
+    noNotifications: 'No new notifications',
+    welcomeNotificationTitle: 'Welcome to Rewardly',
+    welcomeNotificationBody: 'Follow your daily tasks and track every reward clearly.',
+    rewardNotificationTitle: 'Reward added',
+    rewardNotificationBody: 'Your balance was updated after completing the task.',
+    withdrawalNotificationTitle: 'Withdrawal submitted',
+    withdrawalNotificationBody: 'Your request is under review and is now in your withdrawal history.',
+    justNow: 'Just now',
     demoMode: 'Demo mode outside Telegram',
     demoData: 'Demo data',
     fromTelegram: 'From Telegram',
@@ -635,6 +674,7 @@ function useRewardlyState(userId: number) {
   const storageKey = `${STORAGE_KEY}-${userId}`;
   const [state, setState] = useState(() => loadState(storageKey));
   const [verification, setVerification] = useState<{ taskId: string; phase: 'watching' | 'waiting' } | null>(null);
+  const [lastEvent, setLastEvent] = useState<RewardEvent | null>(null);
   const [, setLocation] = useLocation();
 
   useEffect(() => {
@@ -646,6 +686,8 @@ function useRewardlyState(userId: number) {
   }, [state, storageKey]);
 
   const completeTask = (taskId: string) => {
+    const target = state.tasks.find((task) => task.id === taskId);
+    if (!target || target.completedToday >= target.dailyLimit) return;
     setState((current) => {
       const target = current.tasks.find((task) => task.id === taskId);
       if (!target || target.completedToday >= target.dailyLimit) return current;
@@ -667,10 +709,12 @@ function useRewardlyState(userId: number) {
         userWithdrawals: current.userWithdrawals,
       };
     });
+    setLastEvent({ type: 'reward', taskTitle: target.title, amount: target.reward, id: Date.now() });
     setVerification(null);
   };
 
   const requestWithdrawal = (amount: number) => {
+    if (state.wallet.balance < amount) return;
     setState((current) => current.wallet.balance < amount
       ? current
       : {
@@ -689,6 +733,7 @@ function useRewardlyState(userId: number) {
              },
            ],
         });
+    setLastEvent({ type: 'withdrawal', amount, id: Date.now() });
   };
 
   const startTask = (task: Task) => {
@@ -718,7 +763,93 @@ function useRewardlyState(userId: number) {
      }, 1800);
   };
 
-  return { ...state, verification, setVerification, startTask, completeTask, requestWithdrawal };
+  return { ...state, verification, setVerification, startTask, completeTask, requestWithdrawal, lastEvent };
+}
+
+function NotificationIcon({ kind }: { kind: NotificationKind }) {
+  if (kind === 'success' || kind === 'reward') return <CheckCircle2 size={17} />;
+  if (kind === 'warning') return <AlertTriangle size={17} />;
+  return <Info size={17} />;
+}
+
+function NotificationsPanel({
+  notifications,
+  onMarkRead,
+  onMarkAllRead,
+  onClose,
+}: {
+  notifications: NotificationItem[];
+  onMarkRead: (id: string) => void;
+  onMarkAllRead: () => void;
+  onClose: () => void;
+}) {
+  const unreadCount = notifications.filter((notification) => !notification.read).length;
+  return (
+    <div
+      data-testid="panel-notifications"
+      className="notification-panel absolute right-4 top-[4.9rem] z-50 w-[min(24rem,calc(100vw-2rem))] overflow-hidden rounded-[1.35rem] border border-[hsl(var(--border))] bg-[hsl(var(--card)/.97)] shadow-[0_20px_50px_hsl(190_43%_20%/.18)] backdrop-blur-xl"
+      dir={isArabic ? 'rtl' : 'ltr'}
+    >
+      <div className="flex items-center justify-between gap-3 border-b border-[hsl(var(--border))] px-4 py-3.5">
+        <div className="flex items-center gap-2">
+          <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-[hsl(329_79%_61%/.12)] text-[hsl(329_79%_52%)]">
+            <BellRing size={17} />
+          </span>
+          <div>
+            <h2 className="text-sm font-bold">{copy.notifications}</h2>
+            <p className="mt-0.5 text-[10px] text-[hsl(var(--muted-foreground))]">
+              {unreadCount > 0 ? `${unreadCount} ${isArabic ? 'غير مقروء' : 'unread'}` : copy.noNotifications}
+            </p>
+          </div>
+        </div>
+        <div className="flex items-center gap-1">
+          {unreadCount > 0 && (
+            <button
+              type="button"
+              data-testid="button-mark-notifications-read"
+              onClick={onMarkAllRead}
+              className="rounded-lg px-2 py-1.5 text-[10px] font-bold text-[hsl(34_75%_42%)] transition hover:bg-[hsl(39_94%_62%/.12)]"
+            >
+              {copy.markAllRead}
+            </button>
+          )}
+          <button type="button" aria-label={isArabic ? 'إغلاق الإشعارات' : 'Close notifications'} onClick={onClose} className="rounded-lg p-1.5 text-[hsl(var(--muted-foreground))] transition hover:bg-[hsl(var(--muted))]">
+            <X size={16} />
+          </button>
+        </div>
+      </div>
+      <div className="max-h-[min(26rem,60vh)] overflow-y-auto p-2">
+        {notifications.length === 0 ? (
+          <div className="flex flex-col items-center gap-2 px-5 py-10 text-center text-[hsl(var(--muted-foreground))]">
+            <Bell size={22} className="opacity-50" />
+            <span className="text-xs">{copy.noNotifications}</span>
+          </div>
+        ) : (
+          notifications.map((notification) => (
+            <button
+              key={notification.id}
+              type="button"
+              data-testid={`notification-${notification.id}`}
+              onClick={() => onMarkRead(notification.id)}
+              className={`notification-item notification-${notification.kind} flex w-full items-start gap-3 rounded-xl p-3 text-right transition hover:brightness-[.98] ${notification.read ? 'opacity-65' : ''}`}
+            >
+              <span className="notification-icon flex h-9 w-9 shrink-0 items-center justify-center rounded-xl">
+                <NotificationIcon kind={notification.kind} />
+              </span>
+              <span className="min-w-0 flex-1">
+                <span className="flex items-center justify-between gap-2">
+                  <span className="truncate text-xs font-bold">{notification.title}</span>
+                  {!notification.read && <span className="notification-dot h-2 w-2 shrink-0 rounded-full" />}
+                </span>
+                <span className="mt-1 block text-[11px] leading-5 opacity-80">{notification.body}</span>
+                <span className="mt-1.5 block text-[9px] font-semibold opacity-55">{notification.time}</span>
+              </span>
+            </button>
+          ))
+        )}
+      </div>
+    </div>
+  );
 }
 
 function Shell({
@@ -726,14 +857,22 @@ function Shell({
   user,
   isDemo,
   wallet,
+  notifications,
+  onMarkNotificationRead,
+  onMarkAllNotificationsRead,
 }: {
   children: ReactNode;
   user: TelegramUser;
   isDemo: boolean;
   wallet: Wallet;
+  notifications: NotificationItem[];
+  onMarkNotificationRead: (id: string) => void;
+  onMarkAllNotificationsRead: () => void;
 }) {
   const [location] = useLocation();
   const [menuOpen, setMenuOpen] = useState(false);
+  const [notificationsOpen, setNotificationsOpen] = useState(false);
+  const unreadNotifications = notifications.filter((notification) => !notification.read).length;
   const navItems = [
     { href: '/', label: copy.nav.home, icon: Home },
     { href: '/tasks', label: copy.nav.tasks, icon: BadgeCheck },
@@ -752,11 +891,12 @@ function Shell({
 
   useEffect(() => {
     setMenuOpen(false);
+    setNotificationsOpen(false);
   }, [location]);
 
   return (
     <div dir={isArabic ? 'rtl' : 'ltr'} className="app-shell text-[hsl(var(--foreground))]">
-      <header className="sticky top-0 z-40 border-b border-[hsl(var(--border)/.75)] bg-[hsl(42_38%_96%/.9)] backdrop-blur-xl">
+      <header className="relative sticky top-0 z-40 border-b border-[hsl(var(--border)/.75)] bg-[hsl(42_38%_96%/.9)] backdrop-blur-xl">
         <div className="mx-auto flex h-[4.5rem] max-w-5xl items-center justify-between px-5 sm:px-8">
           <Link href="/" data-testid="link-brand" className="flex items-center gap-3">
             <BrandMark small />
@@ -774,12 +914,31 @@ function Shell({
               <Clock3 size={15} />
               <span className="hidden sm:inline">{copy.nav.history}</span>
             </Link>
+            <button
+              type="button"
+              aria-label={copy.notifications}
+              aria-expanded={notificationsOpen}
+              data-testid="button-open-notifications"
+              onClick={() => setNotificationsOpen((open) => !open)}
+              className={`relative rounded-full border p-2.5 transition ${notificationsOpen ? 'border-[hsl(329_79%_61%/.45)] bg-[hsl(329_79%_61%/.12)] text-[hsl(329_79%_52%)]' : 'border-[hsl(var(--border))] bg-[hsl(var(--card)/.8)] text-[hsl(var(--muted-foreground))] hover:bg-[hsl(329_79%_61%/.1)] hover:text-[hsl(329_79%_52%)]'}`}
+            >
+              {unreadNotifications > 0 ? <BellRing size={17} /> : <Bell size={17} />}
+              {unreadNotifications > 0 && <span data-testid="text-unread-notifications" className="absolute -right-1 -top-1 flex h-4 min-w-4 items-center justify-center rounded-full bg-[hsl(329_79%_61%)] px-1 text-[9px] font-bold text-white shadow-[0_3px_10px_hsl(329_79%_61%/.35)]">{unreadNotifications > 9 ? '9+' : unreadNotifications}</span>}
+            </button>
             <button type="button" aria-label={copy.openMenu} aria-expanded={menuOpen} aria-controls="mobile-nav-menu" data-testid="button-open-menu" onClick={() => setMenuOpen((open) => !open)} className="rounded-full p-2.5 text-[hsl(var(--muted-foreground))] transition hover:bg-[hsl(var(--muted))] sm:hidden">
               {menuOpen ? <X size={20} /> : <Menu size={20} />}
             </button>
             <Link href="/wallet" data-testid="link-avatar-header"><Avatar user={user} /></Link>
           </div>
         </div>
+        {notificationsOpen && (
+          <NotificationsPanel
+            notifications={notifications}
+            onMarkRead={onMarkNotificationRead}
+            onMarkAllRead={onMarkAllNotificationsRead}
+            onClose={() => setNotificationsOpen(false)}
+          />
+        )}
       </header>
 
       {menuOpen && (
@@ -842,7 +1001,7 @@ function PageHeading({ eyebrow, title, description, action }: { eyebrow: string;
 
 function BalanceCard({ wallet }: { wallet: Wallet }) {
   return (
-    <div className="balance-card relative overflow-hidden rounded-[1.65rem] p-6 text-[hsl(42_38%_96%)] shadow-[0_18px_40px_hsl(190_43%_20%/.2)] sm:p-8">
+    <div className="balance-card shine-card relative overflow-hidden rounded-[1.65rem] p-6 text-[hsl(42_38%_96%)] shadow-[0_18px_40px_hsl(190_43%_20%/.2)] sm:p-8">
       <div className="absolute bottom-0 right-0 h-40 w-40 translate-x-16 translate-y-16 rounded-full bg-[hsl(12_73%_65%/.16)] blur-2xl" />
       <div className="relative flex items-start justify-between">
         <div>
@@ -864,7 +1023,7 @@ function BalanceCard({ wallet }: { wallet: Wallet }) {
 
 function AdsgramPreviewCard({ task }: { task: Task }) {
   return (
-    <section data-testid="card-adsgram-preview" className="adsgram-feature-card relative mt-5 overflow-hidden rounded-2xl border border-[hsl(226_25%_34%)] p-2.5 text-[hsl(228_42%_99%)]">
+    <section data-testid="card-adsgram-preview" className="adsgram-feature-card shine-card relative mt-5 overflow-hidden rounded-2xl border border-[hsl(226_25%_34%)] p-2.5 text-[hsl(228_42%_99%)]">
       <div className="mb-2 flex items-center justify-between px-1">
         <div className="flex items-center gap-2 text-[10px] font-bold uppercase tracking-[.13em] text-[hsl(228_20%_76%)]">
           <span className="h-1.5 w-1.5 rounded-full bg-[hsl(42_94%_63%)]" />
@@ -899,7 +1058,7 @@ function TaskCard({ task, onStart, verification }: { task: Task; onStart: (task:
   const blocked = Boolean(verification && !active);
   const progress = task.dailyLimit ? Math.round((task.completedToday / task.dailyLimit) * 100) : 0;
   return (
-      <div data-testid={`card-task-${task.id}`} className={`${task.kind === 'adstera' ? 'adstera-task-card' : 'adsgram-feature-card'} task-row relative overflow-hidden rounded-2xl border p-2.5 text-[hsl(228_42%_99%)] ${active ? 'border-[hsl(42_94%_63%/.8)] shadow-[0_14px_34px_hsl(42_94%_63%/.16)]' : task.kind === 'adstera' ? 'border-[hsl(0_72%_52%/.7)]' : 'border-[hsl(226_25%_34%)]'} ${blocked ? 'opacity-60' : ''}`}>
+      <div data-testid={`card-task-${task.id}`} className={`${task.kind === 'adstera' ? 'adstera-task-card' : 'adsgram-feature-card'} shine-card task-row relative overflow-hidden rounded-2xl border p-2.5 text-[hsl(228_42%_99%)] ${active ? 'border-[hsl(42_94%_63%/.8)] shadow-[0_14px_34px_hsl(42_94%_63%/.16)]' : task.kind === 'adstera' ? 'border-[hsl(0_72%_52%/.7)]' : 'border-[hsl(226_25%_34%)]'} ${blocked ? 'opacity-60' : ''}`}>
        <div className="adsgram-ad-row flex items-center gap-2.5 rounded-xl px-2.5">
          <div className="adsgram-logo-frame flex h-10 w-10 shrink-0 items-center justify-center overflow-hidden rounded-[0.7rem]">
             {task.kind === 'ad' ? (
@@ -990,7 +1149,7 @@ function TrustStrip() {
 
 function ChannelJoinCard() {
   return (
-     <section data-testid="card-channel-join" className="channel-card relative mt-4 flex min-h-[76px] items-center gap-3 overflow-hidden rounded-[1.45rem] px-4 py-3 text-[hsl(42_38%_96%)] shadow-[0_14px_30px_hsl(190_43%_20%/.16)]">
+     <section data-testid="card-channel-join" className="channel-card shine-card relative mt-4 flex min-h-[76px] items-center gap-3 overflow-hidden rounded-[1.45rem] px-4 py-3 text-[hsl(42_38%_96%)] shadow-[0_14px_30px_hsl(190_43%_20%/.16)]">
        <div className="relative flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl bg-[hsl(39_94%_62%/.16)] text-[hsl(39_94%_62%)]">
         <ArrowUpLeft size={16} />
       </div>
@@ -1026,7 +1185,7 @@ function HomePage({ user, isDemo, tasks, wallet }: { user: TelegramUser; isDemo:
         <div className="hidden rounded-2xl bg-[hsl(12_73%_65%/.12)] p-3 text-[hsl(12_73%_65%)] sm:block"><Sparkles size={22} /></div>
       </div>
        <div className="mb-6">
-         <div data-testid="card-telegram-profile" className="flex min-h-[4.5rem] items-center gap-3 rounded-2xl border border-[hsl(var(--border))] bg-[hsl(var(--card)/.6)] px-4 py-3">
+          <div data-testid="card-telegram-profile" className="shine-card relative flex min-h-[4.5rem] items-center gap-3 overflow-hidden rounded-2xl border border-[hsl(var(--border))] bg-[hsl(var(--card)/.6)] px-4 py-3">
            <Avatar user={user} />
            <div className="min-w-0 flex-1">
              <div data-testid="text-telegram-name" className="truncate text-sm font-bold">{displayName(user)}</div>
@@ -1038,7 +1197,7 @@ function HomePage({ user, isDemo, tasks, wallet }: { user: TelegramUser; isDemo:
        </div>
       <div className="grid gap-5 lg:grid-cols-[1.08fr_.92fr]">
         <div className="rise-in"><BalanceCard wallet={wallet} /></div>
-        <div className="rise-in delay-1 rounded-[1.65rem] border border-[hsl(var(--border))] bg-[hsl(var(--card)/.72)] p-6 sm:p-7">
+         <div className="shine-card rise-in delay-1 relative overflow-hidden rounded-[1.65rem] border border-[hsl(var(--border))] bg-[hsl(var(--card)/.72)] p-6 sm:p-7">
           <div className="flex items-start justify-between">
             <div><div className="text-xs font-semibold text-[hsl(var(--muted-foreground))]">{copy.dailyProgress}</div><div data-testid="text-daily-progress" className="mt-2 text-2xl font-bold">{formatNumber(done)} <span className="text-sm font-normal text-[hsl(var(--muted-foreground))]">{isArabic ? 'من' : 'of'} {formatNumber(possible)} {copy.tasksCount}</span></div></div>
             <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-[hsl(12_73%_65%/.13)] text-[hsl(12_73%_65%)]"><BarChart3 size={19} /></div>
@@ -1271,12 +1430,12 @@ function WalletPage({ wallet, onWithdraw }: { wallet: Wallet; onWithdraw: (amoun
     <div className="screen-enter safe-bottom">
       <PageHeading eyebrow={copy.walletEyebrow} title={copy.walletTitle} description={copy.walletDescription} />
       <div className="grid gap-5 lg:grid-cols-[.9fr_1.1fr]">
-        <section className="rounded-[1.65rem] bg-[hsl(190_43%_20%)] p-7 text-[hsl(42_38%_96%)] shadow-[0_18px_40px_hsl(190_43%_20%/.16)] sm:p-9">
+        <section className="shine-card relative overflow-hidden rounded-[1.65rem] bg-[hsl(190_43%_20%)] p-7 text-[hsl(42_38%_96%)] shadow-[0_18px_40px_hsl(190_43%_20%/.16)] sm:p-9">
           <div className="flex items-center gap-2 text-sm text-[hsl(42_20%_76%)]"><WalletCards size={17} className="text-[hsl(39_94%_62%)]" />{copy.walletBalance}</div>
             <div data-testid="text-wallet-page-balance" className="mt-5 font-mono text-5xl font-bold tracking-[-.08em]">{formatNumber(wallet.balance, 4)} <span className="font-sans text-sm font-normal tracking-normal text-[hsl(42_20%_76%)]">USDT</span></div>
            <div className="mt-8 flex items-center gap-2 text-xs text-[hsl(42_20%_76%)]"><Coins size={15} className="text-[hsl(39_94%_62%)]" />{copy.tonNetwork} · USDT</div>
         </section>
-        <section className="rounded-[1.65rem] border border-[hsl(var(--border))] bg-[hsl(var(--card)/.76)] p-6 sm:p-8">
+         <section className="shine-card relative overflow-hidden rounded-[1.65rem] border border-[hsl(var(--border))] bg-[hsl(var(--card)/.76)] p-6 sm:p-8">
           <div className="mb-5 flex items-start justify-between gap-3">
             <div><h2 className="text-lg font-bold">{copy.withdrawalTitle}</h2><p className="mt-1 text-xs leading-6 text-[hsl(var(--muted-foreground))]">{copy.withdrawalDescription}</p></div>
             <Banknote size={22} className="text-[hsl(34_75%_42%)]" />
@@ -1298,11 +1457,11 @@ function WalletPage({ wallet, onWithdraw }: { wallet: Wallet; onWithdraw: (amoun
         </section>
       </div>
       <div className="mt-5 grid grid-cols-2 gap-3 sm:grid-cols-3">
-         <div data-testid="stat-today-earned" className="rounded-2xl border border-[hsl(var(--border))] bg-[hsl(var(--card)/.75)] p-5"><div className="text-xs text-[hsl(var(--muted-foreground))]">{copy.today}</div><div className="mt-3 font-mono text-2xl font-bold text-[hsl(34_75%_42%)]">+{formatUsdt(wallet.todayEarned)}</div></div>
-         <div data-testid="stat-total-earned" className="rounded-2xl border border-[hsl(var(--border))] bg-[hsl(var(--card)/.75)] p-5"><div className="text-xs text-[hsl(var(--muted-foreground))]">{copy.total}</div><div className="mt-3 font-mono text-2xl font-bold text-[hsl(196_41%_17%)]">{formatUsdt(wallet.totalEarned)}</div></div>
-        <div data-testid="stat-streak" className="col-span-2 rounded-2xl border border-[hsl(var(--border))] bg-[hsl(var(--card)/.75)] p-5 sm:col-span-1"><div className="text-xs text-[hsl(var(--muted-foreground))]">{copy.streak}</div><div className="mt-3 flex items-center gap-2 font-mono text-2xl font-bold text-[hsl(12_73%_65%)]">{formatNumber(wallet.streak)} <span className="font-sans text-xs font-normal text-[hsl(var(--muted-foreground))]">{copy.days}</span></div></div>
+          <div data-testid="stat-today-earned" className="shine-card relative overflow-hidden rounded-2xl border border-[hsl(var(--border))] bg-[hsl(var(--card)/.75)] p-5"><div className="text-xs text-[hsl(var(--muted-foreground))]">{copy.today}</div><div className="mt-3 font-mono text-2xl font-bold text-[hsl(34_75%_42%)]">+{formatUsdt(wallet.todayEarned)}</div></div>
+          <div data-testid="stat-total-earned" className="shine-card relative overflow-hidden rounded-2xl border border-[hsl(var(--border))] bg-[hsl(var(--card)/.75)] p-5"><div className="text-xs text-[hsl(var(--muted-foreground))]">{copy.total}</div><div className="mt-3 font-mono text-2xl font-bold text-[hsl(196_41%_17%)]">{formatUsdt(wallet.totalEarned)}</div></div>
+         <div data-testid="stat-streak" className="shine-card relative col-span-2 overflow-hidden rounded-2xl border border-[hsl(var(--border))] bg-[hsl(var(--card)/.75)] p-5 sm:col-span-1"><div className="text-xs text-[hsl(var(--muted-foreground))]">{copy.streak}</div><div className="mt-3 flex items-center gap-2 font-mono text-2xl font-bold text-[hsl(12_73%_65%)]">{formatNumber(wallet.streak)} <span className="font-sans text-xs font-normal text-[hsl(var(--muted-foreground))]">{copy.days}</span></div></div>
       </div>
-      <div className="mt-6 flex items-center gap-3 rounded-2xl border border-[hsl(var(--border))] p-4 text-xs leading-6 text-[hsl(var(--muted-foreground))]"><ShieldCheck size={18} className="shrink-0 text-[hsl(155_39%_40%)]" /><span>{copy.walletNote}</span></div>
+       <div className="shine-card relative mt-6 flex items-center gap-3 overflow-hidden rounded-2xl border border-[hsl(var(--border))] p-4 text-xs leading-6 text-[hsl(var(--muted-foreground))]"><ShieldCheck size={18} className="shrink-0 text-[hsl(155_39%_40%)]" /><span>{copy.walletNote}</span></div>
     </div>
   );
 }
@@ -1312,7 +1471,7 @@ function WithdrawalHistoryPage({ userWithdrawals }: { userWithdrawals: Withdrawa
   return (
     <div className="screen-enter safe-bottom">
       <PageHeading eyebrow={copy.historyEyebrow} title={copy.historyTitle} description={copy.historyDescription} />
-      <section data-testid="card-my-withdrawal-history" className="overflow-hidden rounded-[1.65rem] border border-[hsl(var(--border))] bg-[hsl(var(--card)/.78)]">
+       <section data-testid="card-my-withdrawal-history" className="shine-card relative overflow-hidden rounded-[1.65rem] border border-[hsl(var(--border))] bg-[hsl(var(--card)/.78)]">
         <div className="flex items-center gap-3 border-b border-[hsl(var(--border))] px-5 py-4">
           <span className="flex h-10 w-10 items-center justify-center rounded-xl bg-[hsl(155_39%_46%/.12)] text-[hsl(155_39%_35%)]"><Banknote size={18} /></span>
           <div>
@@ -1338,7 +1497,7 @@ function WithdrawalHistoryPage({ userWithdrawals }: { userWithdrawals: Withdrawa
           ))}
         </div>
       </section>
-      <section data-testid="card-public-withdrawal-history" className="mt-5 max-w-2xl overflow-hidden rounded-2xl border border-[hsl(var(--border))] bg-[hsl(var(--card)/.6)]">
+       <section data-testid="card-public-withdrawal-history" className="shine-card relative mt-5 max-w-2xl overflow-hidden rounded-2xl border border-[hsl(var(--border))] bg-[hsl(var(--card)/.6)]">
         <div className="border-b border-[hsl(var(--border))] px-4 py-3">
           <h2 className="text-xs font-bold">{copy.publicHistoryTitle}</h2>
           <p className="mt-1 text-[10px] text-[hsl(var(--muted-foreground))]">{copy.publicHistoryDescription}</p>
@@ -1379,13 +1538,13 @@ function HelpPage({ user, isDemo }: { user: TelegramUser; isDemo: boolean }) {
       <div className="space-y-3">
         {items.map(({ id, icon: ItemIcon, title, text }) => {
           const isOpen = open === id;
-          return <div key={id} className={`rounded-2xl border bg-[hsl(var(--card)/.72)] transition ${isOpen ? 'border-[hsl(39_94%_62%/.55)]' : 'border-[hsl(var(--border))]'}`}>
+           return <div key={id} className={`shine-card relative overflow-hidden rounded-2xl border bg-[hsl(var(--card)/.72)] transition ${isOpen ? 'border-[hsl(39_94%_62%/.55)]' : 'border-[hsl(var(--border))]'}`}>
             <button type="button" data-testid={`button-help-${id}`} onClick={() => setOpen(isOpen ? null : id)} className="flex w-full items-center gap-3 p-5 text-right"><span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-[hsl(190_43%_20%/.1)] text-[hsl(190_43%_20%)]"><ItemIcon size={17} /></span><span className="flex-1 text-sm font-bold">{title}</span><ChevronLeft size={17} className={`transition-transform ${isOpen ? '-rotate-90' : ''}`} /></button>
             {isOpen && <p data-testid={`text-help-answer-${id}`} className="px-5 pb-5 pr-[4.25rem] text-xs leading-7 text-[hsl(var(--muted-foreground))]">{text}</p>}
           </div>;
         })}
       </div>
-       <div className="mt-8 rounded-2xl bg-[hsl(12_73%_65%/.1)] p-5"><div className="flex items-center gap-2 text-sm font-bold text-[hsl(12_66%_45%)]"><HelpCircle size={18} /> {copy.helpNeed}</div><p className="mt-2 text-xs leading-6 text-[hsl(var(--muted-foreground))]">{copy.helpNeedText}</p></div>
+        <div className="shine-card relative mt-8 overflow-hidden rounded-2xl bg-[hsl(12_73%_65%/.1)] p-5"><div className="flex items-center gap-2 text-sm font-bold text-[hsl(12_66%_45%)]"><HelpCircle size={18} /> {copy.helpNeed}</div><p className="mt-2 text-xs leading-6 text-[hsl(var(--muted-foreground))]">{copy.helpNeedText}</p></div>
        <div className="mt-5 grid gap-2 sm:grid-cols-2">
          {[
            { href: '/privacy', label: copy.privacyTitle, icon: ShieldCheck },
@@ -1418,7 +1577,7 @@ function PolicyPage({ kind }: { kind: PolicyKind }) {
       <PageHeading eyebrow={copy.policyEyebrow} title={content.title} description={content.description} />
       <div className="space-y-3">
         {content.blocks.map(([title, text], index) => (
-          <section key={title} className="policy-card rounded-2xl border border-[hsl(var(--border))] bg-[hsl(var(--card)/.72)] p-5" style={{ animationDelay: `${index * 70}ms` }}>
+          <section key={title} className="policy-card shine-card relative overflow-hidden rounded-2xl border border-[hsl(var(--border))] bg-[hsl(var(--card)/.72)] p-5" style={{ animationDelay: `${index * 70}ms` }}>
             <div className="flex items-start gap-3">
               <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-xl bg-[hsl(39_94%_62%/.16)] text-[hsl(34_75%_42%)]">{index + 1}</span>
               <div>
@@ -1481,11 +1640,60 @@ function RouterContent() {
     startTask,
     completeTask,
     requestWithdrawal,
+    lastEvent,
   } = rewardly;
+  const [notifications, setNotifications] = useState<NotificationItem[]>(() => [
+    {
+      id: 'welcome',
+      kind: 'info',
+      title: copy.welcomeNotificationTitle,
+      body: copy.welcomeNotificationBody,
+      time: copy.justNow,
+      read: false,
+    },
+  ]);
   const [, setLocation] = useLocation();
   const adsteraTask = tasks.find((task) => task.kind === 'adstera');
+
+  useEffect(() => {
+    if (!lastEvent) return;
+    const notification: NotificationItem = lastEvent.type === 'reward'
+      ? {
+          id: `reward-${lastEvent.id}`,
+          kind: 'reward',
+          title: copy.rewardNotificationTitle,
+          body: `${copy.rewardNotificationBody} +${formatNumber(lastEvent.amount, 4)} USDT · ${lastEvent.taskTitle}`,
+          time: copy.justNow,
+          read: false,
+        }
+      : {
+          id: `withdrawal-${lastEvent.id}`,
+          kind: 'warning',
+          title: copy.withdrawalNotificationTitle,
+          body: `${copy.withdrawalNotificationBody} ${formatNumber(lastEvent.amount, 4)} USDT`,
+          time: copy.justNow,
+          read: false,
+        };
+    setNotifications((current) => [notification, ...current].slice(0, 8));
+  }, [lastEvent]);
+
+  const markNotificationRead = (id: string) => {
+    setNotifications((current) => current.map((notification) => notification.id === id ? { ...notification, read: true } : notification));
+  };
+
+  const markAllNotificationsRead = () => {
+    setNotifications((current) => current.map((notification) => ({ ...notification, read: true })));
+  };
+
   return (
-    <Shell user={user} isDemo={isDemo} wallet={wallet}>
+    <Shell
+      user={user}
+      isDemo={isDemo}
+      wallet={wallet}
+      notifications={notifications}
+      onMarkNotificationRead={markNotificationRead}
+      onMarkAllNotificationsRead={markAllNotificationsRead}
+    >
       <Switch>
         <Route path="/">
           <HomePage user={user} isDemo={isDemo} tasks={tasks} wallet={wallet} />
