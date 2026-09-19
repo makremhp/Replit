@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState, type FormEvent, type ReactNode } from 'react';
+import { useEffect, useMemo, useRef, useState, type FormEvent, type ReactNode } from 'react';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { ErrorBoundary } from '@/components/error-boundary';
 import { Toaster } from '@/components/ui/toaster';
@@ -178,7 +178,7 @@ const copy = {
     adsteraPageTitle: 'أكمل وقت التصفح واحصل على مكافأتك.',
     adsteraPageDescription: 'ابقَ في هذه الصفحة حتى انتهاء العداد للحصول على 0.0005$.',
     adsteraCongratulations: 'تهانينا، لقد أكملت عملية التصفح',
-    adsteraClaim: 'حصول',
+    adsteraClaim: 'استلام المكافأة',
      channelReward: '+0.005$',
     channelTask: 'تعرّف على قناة Urumfaucet',
     channelTaskDescription: 'انضم للقناة الرسمية لتصلك التحديثات.',
@@ -385,6 +385,89 @@ declare global {
 const queryClient = new QueryClient();
 const STORAGE_KEY = 'rewardly-local-state-v2';
 const CHANNEL_URL = 'https://t.me/Urumfaucet';
+export const ADSTERRA_COUNTDOWN_SECONDS = 30;
+
+type AdScriptDefinition = {
+  src: string;
+  options?: {
+    key: string;
+    format: 'iframe';
+    height: number;
+    width: number;
+    params: Record<string, never>;
+  };
+};
+
+const ADSTERRA_SCRIPT_BATCH: AdScriptDefinition[] = [
+  { src: 'https://interventioncopiedloitering.com/b895987c82805b8778a34f54911e8de0/invoke.js', options: { key: 'b895987c82805b8778a34f54911e8de0', format: 'iframe', height: 50, width: 320, params: {} } },
+  { src: 'https://interventioncopiedloitering.com/ab4615d3d759a81e9b876abbcebaf690/invoke.js', options: { key: 'ab4615d3d759a81e9b876abbcebaf690', format: 'iframe', height: 50, width: 320, params: {} } },
+  { src: 'https://interventioncopiedloitering.com/3b49398bb9242d548c0464f244b621fa/invoke.js', options: { key: '3b49398bb9242d548c0464f244b621fa', format: 'iframe', height: 50, width: 320, params: {} } },
+  { src: 'https://interventioncopiedloitering.com/b3570e82f7fb6c462dfdfded816f1576/invoke.js', options: { key: 'b3570e82f7fb6c462dfdfded816f1576', format: 'iframe', height: 50, width: 320, params: {} } },
+  { src: 'https://interventioncopiedloitering.com/de29a44d70992e967ae5d20275e77fab/invoke.js', options: { key: 'de29a44d70992e967ae5d20275e77fab', format: 'iframe', height: 50, width: 320, params: {} } },
+  { src: 'https://interventioncopiedloitering.com/280eab7c354ed87595a376b2f5e270cb/invoke.js', options: { key: '280eab7c354ed87595a376b2f5e270cb', format: 'iframe', height: 50, width: 320, params: {} } },
+  { src: 'https://interventioncopiedloitering.com/d47f719464108005a03a03e6d49fba1a/invoke.js', options: { key: 'd47f719464108005a03a03e6d49fba1a', format: 'iframe', height: 50, width: 320, params: {} } },
+  { src: 'https://interventioncopiedloitering.com/04bcf6532017b6790ab2ddac95a5621d/invoke.js', options: { key: '04bcf6532017b6790ab2ddac95a5621d', format: 'iframe', height: 50, width: 320, params: {} } },
+  { src: 'https://interventioncopiedloitering.com/8c0574e870e5a3843e89d947bd38aaff/invoke.js', options: { key: '8c0574e870e5a3843e89d947bd38aaff', format: 'iframe', height: 50, width: 320, params: {} } },
+  { src: 'https://interventioncopiedloitering.com/9f6fe4084cb3d8a8eb4d8246ee57ed25/invoke.js', options: { key: '9f6fe4084cb3d8a8eb4d8246ee57ed25', format: 'iframe', height: 50, width: 320, params: {} } },
+  { src: 'https://interventioncopiedloitering.com/5d/77/0f/5d770ff402768d79ddda9c1cd67e9819.js' },
+  { src: 'https://interventioncopiedloitering.com/96/90/da/9690da690d344e2579dffa12d4e2ac24.js' },
+  { src: 'https://interventioncopiedloitering.com/f0/07/9c/f0079c7c7d8c3c01bd28c4116a805f4a.js' },
+  { src: 'https://interventioncopiedloitering.com/7e/7f/2b/7e7f2b6f7c43d86c6859e5b0a40afe3e.js' },
+  { src: 'https://interventioncopiedloitering.com/7e/28/55/7e2855c2f9fb53ed0ca536022ca067df.js' },
+  { src: 'https://interventioncopiedloitering.com/d0/f6/b3/d0f6b318f29b5787025697029ae72f23.js' },
+  { src: 'https://interventioncopiedloitering.com/58/0d/ca/580dcaa1a10c7fb3943a7ea94b700f42.js' },
+  { src: 'https://interventioncopiedloitering.com/da/5e/c3/da5ec3a230bfa740492f3f78bd1ed182.js' },
+];
+
+const ADSTERRA_BANNER_BATCH = ADSTERRA_SCRIPT_BATCH.filter(
+  (script): script is AdScriptDefinition & {
+    options: NonNullable<AdScriptDefinition['options']>;
+  } => Boolean(script.options),
+);
+
+const ADSTERRA_SOCIAL_BATCH = ADSTERRA_SCRIPT_BATCH.filter(
+  (script) => !script.options,
+);
+
+function appendAdScript(
+  root: HTMLElement,
+  definition: AdScriptDefinition,
+) {
+  if (definition.options) {
+    const configuration = document.createElement('script');
+    configuration.type = 'text/javascript';
+    configuration.text = `window.atOptions = ${JSON.stringify(definition.options)};`;
+    root.appendChild(configuration);
+  }
+
+  const script = document.createElement('script');
+  script.async = false;
+  script.src = definition.src;
+  script.dataset.rewardlyAdsterra = 'true';
+  root.appendChild(script);
+}
+
+function appendIsolatedBanner(
+  root: HTMLElement,
+  definition: (typeof ADSTERRA_BANNER_BATCH)[number],
+) {
+  const frame = document.createElement('iframe');
+  frame.title = `Adsterra banner ${definition.options.key}`;
+  frame.width = String(definition.options.width);
+  frame.height = String(definition.options.height);
+  frame.loading = 'eager';
+  frame.referrerPolicy = 'no-referrer-when-downgrade';
+  frame.dataset.rewardlyAdsterraKey = definition.options.key;
+  frame.srcdoc = `<!doctype html>
+<html>
+  <head><meta charset="utf-8"></head>
+  <body style="margin:0;overflow:hidden;background:transparent">
+    <script>window.atOptions=${JSON.stringify(definition.options)};</script>
+    <script src="${definition.src}"></script>
+  </body>
+</html>`;
+  root.appendChild(frame);
+}
 
 const initialTasks: Task[] = [
   {
@@ -993,30 +1076,152 @@ function AdsPage({ tasks, verification, onStart }: { tasks: Task[]; verification
   );
 }
 
-function AdsteraPage({ task, onClaim }: { task: Task; onClaim: () => void }) {
-  const [remaining, setRemaining] = useState(30);
+function AdsteraBannerSlot({
+  definition,
+  active,
+  refreshKey,
+  index,
+}: {
+  definition: (typeof ADSTERRA_BANNER_BATCH)[number];
+  active: boolean;
+  refreshKey: number;
+  index: number;
+}) {
+  const slotRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    if (remaining <= 0) return;
-    const timer = window.setTimeout(() => setRemaining((value) => Math.max(value - 1, 0)), 1000);
-    return () => window.clearTimeout(timer);
-  }, [remaining]);
+    const root = slotRef.current;
+    if (!root || !active) {
+      root?.replaceChildren();
+      return;
+    }
 
-  const finished = remaining === 0;
+    root.replaceChildren();
+    appendIsolatedBanner(root, definition);
+    return () => root.replaceChildren();
+  }, [active, definition, refreshKey]);
+
   return (
-    <div dir={isArabic ? 'rtl' : 'ltr'} className="adstera-full-page fixed inset-0 z-[70] min-h-dvh overflow-hidden bg-[hsl(226_34%_11%)] text-[hsl(228_42%_99%)]">
-      <div data-testid="text-adstera-countdown" className="absolute left-1/2 top-9 -translate-x-1/2 rounded-2xl border border-[hsl(42_94%_63%/.35)] bg-[hsl(42_94%_63%/.12)] px-6 py-3 text-center">
-        <div className="font-mono text-2xl font-bold text-[hsl(42_94%_63%)]">{remaining}</div>
-        <div className="text-[9px] text-[hsl(228_20%_76%)]">{copy.seconds}</div>
-      </div>
+    <div
+      ref={slotRef}
+      data-testid={`adsterra-banner-slot-${index + 1}`}
+      className="adstera-banner-slot"
+      aria-label={`Adsterra banner ${index + 1}`}
+    />
+  );
+}
 
-      {finished && (
-        <div data-testid="modal-adstera-complete" className="absolute inset-0 flex items-center justify-center bg-[hsl(226_34%_11%/.82)] p-5 backdrop-blur-sm">
+function AdsteraSocialScripts({
+  active,
+  refreshKey,
+}: {
+  active: boolean;
+  refreshKey: number;
+}) {
+  const socialRootRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const root = socialRootRef.current;
+    if (!root || !active) {
+      root?.replaceChildren();
+      return;
+    }
+
+    root.replaceChildren();
+    ADSTERRA_SOCIAL_BATCH.forEach((definition) =>
+      appendAdScript(root, definition),
+    );
+    return () => root.replaceChildren();
+  }, [active, refreshKey]);
+
+  return (
+    <div
+      ref={socialRootRef}
+      aria-hidden="true"
+      className="adstera-social-scripts"
+    />
+  );
+}
+
+function AdsteraPage({
+  task,
+  onClaim,
+}: {
+  task: Task;
+  onClaim: () => void;
+}) {
+  const [remaining, setRemaining] = useState(ADSTERRA_COUNTDOWN_SECONDS);
+  const [refreshKey, setRefreshKey] = useState(0);
+  const active = remaining > 0;
+
+  useEffect(() => {
+    if (!active) return;
+    const timer = window.setTimeout(
+      () => setRemaining((value) => Math.max(value - 1, 0)),
+      1000,
+    );
+    return () => window.clearTimeout(timer);
+  }, [active, remaining]);
+
+  useEffect(() => {
+    if (!active) return;
+    const refreshTimer = window.setInterval(
+      () => setRefreshKey((value) => value + 1),
+      5000,
+    );
+    return () => window.clearInterval(refreshTimer);
+  }, [active]);
+
+  return (
+    <div
+      dir={isArabic ? 'rtl' : 'ltr'}
+      className="adstera-full-page fixed inset-0 z-[70] min-h-dvh overflow-y-auto bg-[hsl(226_34%_11%)] text-[hsl(228_42%_99%)]"
+    >
+      <div className="mx-auto flex min-h-full w-full max-w-[390px] flex-col items-center px-4 pb-10 pt-7">
+        <div
+          data-testid="text-adstera-countdown"
+          aria-live="polite"
+          className="font-mono text-5xl font-bold tracking-[-.08em] text-[hsl(42_94%_63%)]"
+        >
+          {remaining}
+        </div>
+        <div
+          data-testid="container-adsterra-banners"
+          className="adstera-banner-stack mt-6 w-full"
+        >
+          {ADSTERRA_BANNER_BATCH.map((definition, index) => (
+            <AdsteraBannerSlot
+              key={`${definition.src}-${refreshKey}`}
+              definition={definition}
+              active={active}
+              refreshKey={refreshKey}
+              index={index}
+            />
+          ))}
+        </div>
+        <AdsteraSocialScripts active={active} refreshKey={refreshKey} />
+      </div>
+      {!active && (
+        <div
+          data-testid="modal-adstera-complete"
+          className="absolute inset-0 flex items-center justify-center bg-[hsl(226_34%_11%/.86)] p-5 backdrop-blur-sm"
+        >
           <section className="w-full max-w-sm rounded-[1.6rem] border border-[hsl(42_94%_63%/.3)] bg-[hsl(190_43%_14%)] p-6 text-center shadow-[0_24px_70px_hsl(0_0%_0%/.35)]">
-            <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-2xl bg-[hsl(155_58%_67%/.14)] text-[hsl(155_58%_67%)]"><BadgeCheck size={28} /></div>
-            <h2 className="mt-5 text-lg font-bold">{copy.adsteraCongratulations}</h2>
-            <p className="mt-2 text-xs leading-6 text-[hsl(42_20%_76%)]">+{formatReward(task)}</p>
-            <button type="button" data-testid="button-claim-adstera" onClick={onClaim} className="mt-6 flex h-12 w-full items-center justify-center gap-2 rounded-xl bg-[hsl(42_94%_63%)] text-sm font-bold text-[hsl(226_34%_15%)] transition hover:bg-[hsl(42_94%_70%)]">
+            <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-2xl bg-[hsl(155_58%_67%/.14)] text-[hsl(155_58%_67%)]">
+              <BadgeCheck size={28} />
+            </div>
+            <h2 className="mt-5 text-lg font-bold">
+              {copy.adsteraCongratulations}
+            </h2>
+            <p className="mt-2 text-xs leading-6 text-[hsl(42_20%_76%)]">
+              +{formatReward(task)}
+            </p>
+            <button
+              type="button"
+              data-testid="button-claim-adstera"
+              onClick={onClaim}
+              className="mt-6 flex h-12 w-full items-center justify-center gap-2 rounded-xl bg-[hsl(42_94%_63%)] text-sm font-bold text-[hsl(226_34%_15%)] transition hover:bg-[hsl(42_94%_70%)]"
+            >
               <Gift size={17} />
               {copy.adsteraClaim}
             </button>
@@ -1231,9 +1436,17 @@ function PolicyPage({ kind }: { kind: PolicyKind }) {
 function RouterContent() {
   const { user, isDemo } = useMemo(getTelegramUser, []);
   const rewardly = useRewardlyState(user.id);
-  const { tasks, wallet, userWithdrawals, verification, startTask, completeTask, requestWithdrawal } = rewardly;
+  const {
+    tasks,
+    wallet,
+    userWithdrawals,
+    verification,
+    startTask,
+    completeTask,
+    requestWithdrawal,
+  } = rewardly;
   const [, setLocation] = useLocation();
-  const adsteraTask = tasks.find((task) => task.id === 'adstera-daily') ?? initialTasks[1];
+  const adsteraTask = tasks.find((task) => task.kind === 'adstera');
   return (
     <Shell user={user} isDemo={isDemo} wallet={wallet}>
       <Switch>
@@ -1247,7 +1460,15 @@ function RouterContent() {
           <AdsPage tasks={tasks} verification={verification} onStart={startTask} />
         </Route>
         <Route path="/adstera">
-          <AdsteraPage task={adsteraTask} onClaim={() => { completeTask(adsteraTask.id); setLocation('/ads'); }} />
+          {adsteraTask && (
+            <AdsteraPage
+              task={adsteraTask}
+              onClaim={() => {
+                completeTask(adsteraTask.id);
+                setLocation('/ads');
+              }}
+            />
+          )}
         </Route>
         <Route path="/wallet"><WalletPage wallet={wallet} onWithdraw={requestWithdrawal} /></Route>
         <Route path="/withdrawals"><WithdrawalHistoryPage userWithdrawals={userWithdrawals} /></Route>
