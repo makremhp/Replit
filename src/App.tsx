@@ -216,6 +216,16 @@ const copy = {
     channelCardDescription: 'تابع أخبار Rewardly والتنبيهات المهمة من الرابط الرسمي فقط.',
     channelCardMeta: 'رابط Telegram الرسمي',
     joinChannel: 'انضم للقناة',
+    proofChannelTitle: 'إثباتات السحب',
+    proofChannelDescription: 'شاهد إثباتات السحب والتحديثات المتعلقة بالطلبات عبر قناتنا.',
+    proofChannelMeta: 'قناة معلوماتية بدون جائزة',
+    proofChannelOpen: 'مشاهدة القناة',
+    proofNoticeTitle: 'تفقد قناتنا لإثباتات السحب',
+    proofNoticeBody: 'اطّلع على إثباتات السحب والتحديثات من قناتنا الرسمية.',
+    proofNoticeOpen: 'الانتقال',
+    close: 'إغلاق',
+    adsgramManagerNoteTitle: 'ملاحظة لمديري Adsgram',
+    adsgramManagerNoteBody: 'تطبيقنا بسيط وشفاف، ولا نطلب من المستخدمين النقر على الإعلانات. نرجو الموافقة عليه حتى نبدأ العمل تدريجياً.',
     secondAdTask: 'إعلان Adsgram إضافي',
     secondAdTaskDescription: 'إعلان يومي إضافي بمكافأة USDT واضحة.',
     seconds: 'ثانية',
@@ -366,6 +376,16 @@ const copy = {
     channelCardDescription: 'Follow Rewardly news and important updates from the official Telegram link.',
     channelCardMeta: 'Official Telegram link',
     joinChannel: 'Join channel',
+    proofChannelTitle: 'Withdrawal proofs',
+    proofChannelDescription: 'See withdrawal proofs and request updates in our channel.',
+    proofChannelMeta: 'Informational channel · no reward',
+    proofChannelOpen: 'View channel',
+    proofNoticeTitle: 'Check our withdrawal proofs channel',
+    proofNoticeBody: 'See withdrawal proofs and updates from our official channel.',
+    proofNoticeOpen: 'Open channel',
+    close: 'Close',
+    adsgramManagerNoteTitle: 'Note for Adsgram managers',
+    adsgramManagerNoteBody: 'Our app is simple and transparent. We never ask users to click ads. Please approve it so we can start small and grow gradually.',
     secondAdTask: 'Another Adsgram ad',
     secondAdTaskDescription: 'Another daily ad with a clear USDT reward.',
     seconds: 'seconds',
@@ -426,6 +446,7 @@ declare global {
 const queryClient = new QueryClient();
 const STORAGE_KEY = 'rewardly-local-state-v2';
 const CHANNEL_URL = 'https://t.me/Urumfaucet';
+const PROOF_CHANNEL_URL = 'https://t.me/withdrawlProof2026';
 export const ADSTERRA_COUNTDOWN_SECONDS = 30;
 
 type AdScriptDefinition = {
@@ -653,13 +674,17 @@ function Avatar({ user, large = false }: { user: TelegramUser; large?: boolean }
   );
 }
 
-function openOfficialChannel() {
+function openTelegramChannel(url: string) {
   const webApp = window.Telegram?.WebApp;
   if (webApp?.openTelegramLink) {
-    webApp.openTelegramLink(CHANNEL_URL);
+    webApp.openTelegramLink(url);
     return;
   }
-  window.open(CHANNEL_URL, '_blank', 'noopener,noreferrer');
+  window.open(url, '_blank', 'noopener,noreferrer');
+}
+
+function openOfficialChannel() {
+  openTelegramChannel(CHANNEL_URL);
 }
 
 function useRewardlyState(userId: number) {
@@ -781,6 +806,63 @@ function FloatingNotification({ notification }: { notification: NotificationItem
           <span className="block text-sm font-bold">{notification.title}</span>
           <span className="mt-0.5 block text-xs leading-5 opacity-85">{notification.body}</span>
         </span>
+      </div>
+    </div>
+  );
+}
+
+function ProofChannelModal({ open, onClose }: { open: boolean; onClose: () => void }) {
+  if (!open) return null;
+
+  const openProofChannel = () => {
+    openTelegramChannel(PROOF_CHANNEL_URL);
+    onClose();
+  };
+
+  return (
+    <div
+      data-testid="modal-proof-channel"
+      className="fixed inset-0 z-[90] flex items-center justify-center bg-[hsl(190_43%_20%/.56)] p-5 backdrop-blur-sm"
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="proof-channel-modal-title"
+      dir={isArabic ? 'rtl' : 'ltr'}
+    >
+      <div className="w-full max-w-sm rounded-[1.7rem] border border-[hsl(var(--border))] bg-[hsl(42_38%_96%)] p-6 text-[hsl(196_41%_17%)] shadow-[0_24px_70px_hsl(190_43%_20%/.28)]">
+        <div className="flex items-start justify-between gap-4">
+          <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-[hsl(39_94%_62%/.2)] text-[hsl(34_75%_42%)]">
+            <ShieldCheck size={24} />
+          </div>
+          <button
+            type="button"
+            data-testid="button-close-proof-channel"
+            onClick={onClose}
+            aria-label={copy.close}
+            className="rounded-xl p-2 text-[hsl(var(--muted-foreground))] transition hover:bg-[hsl(var(--muted))] hover:text-[hsl(var(--foreground))]"
+          >
+            <X size={18} />
+          </button>
+        </div>
+        <h2 id="proof-channel-modal-title" className="mt-5 text-lg font-bold">{copy.proofNoticeTitle}</h2>
+        <p className="mt-2 text-sm leading-7 text-[hsl(var(--muted-foreground))]">{copy.proofNoticeBody}</p>
+        <div className="mt-6 flex gap-2">
+          <button
+            type="button"
+            data-testid="button-open-proof-channel"
+            onClick={openProofChannel}
+            className="flex-1 rounded-xl bg-[hsl(190_43%_20%)] px-4 py-3 text-sm font-bold text-[hsl(42_38%_96%)] transition hover:bg-[hsl(190_43%_25%)]"
+          >
+            {copy.proofNoticeOpen}
+          </button>
+          <button
+            type="button"
+            data-testid="button-dismiss-proof-channel"
+            onClick={onClose}
+            className="rounded-xl border border-[hsl(var(--border))] px-4 py-3 text-sm font-semibold text-[hsl(var(--muted-foreground))] transition hover:bg-[hsl(var(--muted))]"
+          >
+            {copy.close}
+          </button>
+        </div>
       </div>
     </div>
   );
@@ -1074,6 +1156,33 @@ function ChannelJoinCard() {
   );
 }
 
+function ProofChannelCard() {
+  return (
+    <section data-testid="card-proof-channel" className="channel-card shine-card relative mt-3 flex min-h-[76px] items-center gap-3 overflow-hidden rounded-[1.45rem] px-4 py-3 text-[hsl(42_38%_96%)] shadow-[0_14px_30px_hsl(190_43%_20%/.16)]">
+      <div className="relative flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl bg-[hsl(190_79%_68%/.14)] text-[hsl(190_79%_68%)]">
+        <ShieldCheck size={17} />
+      </div>
+      <div className="relative min-w-0 flex-1">
+        <h3 className="truncate text-xs font-bold">{copy.proofChannelTitle}</h3>
+        <p className="mt-1 truncate text-[10px] text-[hsl(42_20%_76%)]">{copy.proofChannelDescription}</p>
+        <div className="mt-1 flex items-center gap-1 text-[9px] text-[hsl(190_79%_68%)]">
+          <Info size={11} />
+          {copy.proofChannelMeta}
+        </div>
+      </div>
+      <button
+        type="button"
+        data-testid="button-open-proof-channel-task"
+        onClick={() => openTelegramChannel(PROOF_CHANNEL_URL)}
+        className="relative inline-flex shrink-0 items-center gap-1.5 rounded-xl bg-[hsl(190_79%_68%)] px-3.5 py-2.5 text-[10px] font-bold text-[hsl(196_41%_17%)] transition hover:bg-[hsl(190_79%_76%)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[hsl(190_79%_68%)] focus-visible:ring-offset-2 focus-visible:ring-offset-[hsl(190_43%_20%)]"
+      >
+        {copy.proofChannelOpen}
+        <ArrowLeft size={12} />
+      </button>
+    </section>
+  );
+}
+
 function HomePage({ user, isDemo, tasks, wallet }: { user: TelegramUser; isDemo: boolean; tasks: Task[]; wallet: Wallet }) {
   const adsgramTask = tasks.find((task) => task.id === 'adsgram-daily');
   const rewardTasks = tasks.filter((task) => task.kind === 'ad' || task.kind === 'adstera');
@@ -1123,6 +1232,7 @@ function TasksPage() {
     <div className="screen-enter safe-bottom">
       <PageHeading eyebrow={copy.pageTasksEyebrow} title={copy.pageTasksTitle} description={copy.pageTasksDescription} />
       <ChannelJoinCard />
+      <ProofChannelCard />
       <div className="mt-4 flex items-center gap-2 rounded-xl border border-dashed border-[hsl(var(--border))] px-4 py-3 text-xs text-[hsl(var(--muted-foreground))]">
         <Sparkles size={15} className="shrink-0 text-[hsl(34_75%_42%)]" />
         {copy.moreTasksNote}
@@ -1141,6 +1251,7 @@ function AdsPage({ tasks, verification, onStart }: { tasks: Task[]; verification
       <div className="mb-6 flex items-center justify-between rounded-2xl border border-[hsl(39_94%_62%/.36)] bg-[hsl(39_94%_62%/.1)] px-4 py-3 text-xs"><span className="flex items-center gap-2 font-semibold text-[hsl(34_64%_34%)]"><Zap size={15} /> {formatNumber(completeCount)} {isArabic ? 'من' : 'of'} {formatNumber(dailyLimit)} {copy.adsToday}</span><span className="text-[hsl(34_75%_42%)]">{copy.resetsDaily}</span></div>
        <div className="space-y-3">{rewardTasks.map((task) => <TaskCard key={task.id} task={task} onStart={onStart} verification={verification} />)}</div>
        <div data-testid="status-task-rules" className="mt-7 flex gap-3 rounded-2xl bg-[hsl(190_43%_20%)] p-5 text-[hsl(42_38%_96%)]"><LockKeyhole className="mt-0.5 shrink-0 text-[hsl(39_94%_62%)]" size={18} /><div><div className="text-sm font-bold">{copy.whyLimits}</div><p className="mt-1 text-xs leading-6 text-[hsl(42_20%_76%)]">{copy.limitsDescription}</p></div></div>
+       <div data-testid="note-adsgram-managers" className="mt-4 flex gap-3 rounded-2xl border border-[hsl(190_79%_68%/.35)] bg-[hsl(190_79%_68%/.08)] p-4 text-[hsl(196_41%_17%)]"><Info className="mt-0.5 shrink-0 text-[hsl(190_43%_32%)]" size={18} /><div><div className="text-sm font-bold">{copy.adsgramManagerNoteTitle}</div><p className="mt-1 text-xs leading-6 text-[hsl(var(--muted-foreground))]">{copy.adsgramManagerNoteBody}</p></div></div>
     </div>
   );
 }
@@ -1549,8 +1660,27 @@ function RouterContent() {
     lastEvent,
   } = rewardly;
   const [floatingNotification, setFloatingNotification] = useState<NotificationItem | null>(null);
+  const [showProofNotice, setShowProofNotice] = useState(false);
   const [, setLocation] = useLocation();
   const adsteraTask = tasks.find((task) => task.kind === 'adstera');
+
+  useEffect(() => {
+    const noticeKey = `rewardly-proof-channel-notice-seen-${user.id}`;
+    try {
+      setShowProofNotice(localStorage.getItem(noticeKey) !== '1');
+    } catch {
+      setShowProofNotice(true);
+    }
+  }, [user.id]);
+
+  const dismissProofNotice = () => {
+    setShowProofNotice(false);
+    try {
+      localStorage.setItem(`rewardly-proof-channel-notice-seen-${user.id}`, '1');
+    } catch {
+      // localStorage is optional in Telegram webviews.
+    }
+  };
 
   useEffect(() => {
     if (!lastEvent) return;
@@ -1582,6 +1712,7 @@ function RouterContent() {
   return (
     <>
       <FloatingNotification notification={floatingNotification} />
+      <ProofChannelModal open={showProofNotice} onClose={dismissProofNotice} />
       <Shell user={user} isDemo={isDemo} wallet={wallet}>
       <Switch>
         <Route path="/">
