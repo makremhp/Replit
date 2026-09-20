@@ -1137,18 +1137,18 @@ function TrustStrip() {
 
 function ChannelJoinCard() {
   return (
-     <section data-testid="card-channel-join" className="channel-card shine-card relative mt-4 flex min-h-[76px] items-center gap-3 overflow-hidden rounded-[1.45rem] px-4 py-3 text-[hsl(42_38%_96%)] shadow-[0_14px_30px_hsl(190_43%_20%/.16)]">
+     <section data-testid="card-channel-join" className="channel-card shine-card font-english relative mt-4 flex min-h-[76px] items-center gap-3 overflow-hidden rounded-[1.45rem] px-4 py-3 text-[hsl(42_38%_96%)] shadow-[0_14px_30px_hsl(190_43%_20%/.16)] transition duration-300 hover:-translate-y-0.5 hover:shadow-[0_18px_38px_hsl(190_43%_20%/.22)]">
        <div className="relative flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl bg-[hsl(39_94%_62%/.16)] text-[hsl(39_94%_62%)]">
         <ArrowUpLeft size={16} />
       </div>
       <div className="relative min-w-0 flex-1">
-        <h3 className="truncate text-xs font-bold">{copy.channelCardTitle}</h3>
-         <div className="mt-1 flex items-center gap-2 text-[9px] text-[hsl(42_20%_76%)]">
+        <h3 className="break-words text-xs font-bold leading-5">{copy.channelCardTitle}</h3>
+         <div className="mt-1 flex flex-wrap items-center gap-x-2 gap-y-0.5 text-[9px] leading-4 text-[hsl(42_20%_76%)]">
           <span className="flex items-center gap-1"><ShieldCheck size={11} className="text-[hsl(155_58%_67%)]" />{copy.channelCardMeta}</span>
           <span className="font-mono font-bold text-[hsl(39_94%_62%)]">{copy.channelReward}</span>
         </div>
       </div>
-       <button type="button" data-testid="button-join-channel" onClick={openOfficialChannel} className="relative inline-flex shrink-0 items-center gap-1.5 rounded-xl bg-[hsl(39_94%_62%)] px-3.5 py-2.5 text-[10px] font-bold text-[hsl(196_41%_17%)] transition hover:bg-[hsl(39_94%_70%)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[hsl(39_94%_62%)] focus-visible:ring-offset-2 focus-visible:ring-offset-[hsl(190_43%_20%)]">
+       <button type="button" data-testid="button-join-channel" onClick={openOfficialChannel} className="relative inline-flex shrink-0 items-center gap-1.5 rounded-xl bg-[hsl(39_94%_62%)] px-3.5 py-2.5 text-[10px] font-bold text-[hsl(196_41%_17%)] transition hover:-translate-y-0.5 hover:bg-[hsl(39_94%_70%)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[hsl(39_94%_62%)] focus-visible:ring-offset-2 focus-visible:ring-offset-[hsl(190_43%_20%)]">
         {copy.joinChannel}
         <ArrowLeft size={12} />
       </button>
@@ -1158,14 +1158,14 @@ function ChannelJoinCard() {
 
 function ProofChannelCard() {
   return (
-    <section data-testid="card-proof-channel" className="channel-card shine-card relative mt-3 flex min-h-[76px] items-center gap-3 overflow-hidden rounded-[1.45rem] px-4 py-3 text-[hsl(42_38%_96%)] shadow-[0_14px_30px_hsl(190_43%_20%/.16)]">
+    <section data-testid="card-proof-channel" className="channel-card shine-card font-english relative mt-3 flex min-h-[76px] items-center gap-3 overflow-hidden rounded-[1.45rem] px-4 py-3 text-[hsl(42_38%_96%)] shadow-[0_14px_30px_hsl(190_43%_20%/.16)] transition duration-300 hover:-translate-y-0.5 hover:shadow-[0_18px_38px_hsl(190_43%_20%/.22)]">
       <div className="relative flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl bg-[hsl(190_79%_68%/.14)] text-[hsl(190_79%_68%)]">
         <ShieldCheck size={17} />
       </div>
       <div className="relative min-w-0 flex-1">
-        <h3 className="truncate text-xs font-bold">{copy.proofChannelTitle}</h3>
-        <p className="mt-1 truncate text-[10px] text-[hsl(42_20%_76%)]">{copy.proofChannelDescription}</p>
-        <div className="mt-1 flex items-center gap-1 text-[9px] text-[hsl(190_79%_68%)]">
+        <h3 className="break-words text-xs font-bold leading-5">{copy.proofChannelTitle}</h3>
+        <p className="mt-1 break-words text-[10px] leading-4 text-[hsl(42_20%_76%)]">{copy.proofChannelDescription}</p>
+        <div className="mt-1 flex items-center gap-1 text-[9px] leading-4 text-[hsl(190_79%_68%)]">
           <Info size={11} />
           {copy.proofChannelMeta}
         </div>
@@ -1174,7 +1174,7 @@ function ProofChannelCard() {
         type="button"
         data-testid="button-open-proof-channel-task"
         onClick={() => openTelegramChannel(PROOF_CHANNEL_URL)}
-        className="relative inline-flex shrink-0 items-center gap-1.5 rounded-xl bg-[hsl(190_79%_68%)] px-3.5 py-2.5 text-[10px] font-bold text-[hsl(196_41%_17%)] transition hover:bg-[hsl(190_79%_76%)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[hsl(190_79%_68%)] focus-visible:ring-offset-2 focus-visible:ring-offset-[hsl(190_43%_20%)]"
+        className="relative inline-flex shrink-0 items-center gap-1.5 rounded-xl bg-[hsl(190_79%_68%)] px-3.5 py-2.5 text-[10px] font-bold text-[hsl(196_41%_17%)] transition hover:-translate-y-0.5 hover:bg-[hsl(190_79%_76%)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[hsl(190_79%_68%)] focus-visible:ring-offset-2 focus-visible:ring-offset-[hsl(190_43%_20%)]"
       >
         {copy.proofChannelOpen}
         <ArrowLeft size={12} />
@@ -1251,7 +1251,7 @@ function AdsPage({ tasks, verification, onStart }: { tasks: Task[]; verification
       <div className="mb-6 flex items-center justify-between rounded-2xl border border-[hsl(39_94%_62%/.36)] bg-[hsl(39_94%_62%/.1)] px-4 py-3 text-xs"><span className="flex items-center gap-2 font-semibold text-[hsl(34_64%_34%)]"><Zap size={15} /> {formatNumber(completeCount)} {isArabic ? 'من' : 'of'} {formatNumber(dailyLimit)} {copy.adsToday}</span><span className="text-[hsl(34_75%_42%)]">{copy.resetsDaily}</span></div>
        <div className="space-y-3">{rewardTasks.map((task) => <TaskCard key={task.id} task={task} onStart={onStart} verification={verification} />)}</div>
        <div data-testid="status-task-rules" className="mt-7 flex gap-3 rounded-2xl bg-[hsl(190_43%_20%)] p-5 text-[hsl(42_38%_96%)]"><LockKeyhole className="mt-0.5 shrink-0 text-[hsl(39_94%_62%)]" size={18} /><div><div className="text-sm font-bold">{copy.whyLimits}</div><p className="mt-1 text-xs leading-6 text-[hsl(42_20%_76%)]">{copy.limitsDescription}</p></div></div>
-       <div data-testid="note-adsgram-managers" className="mt-4 flex gap-3 rounded-2xl border border-[hsl(190_79%_68%/.35)] bg-[hsl(190_79%_68%/.08)] p-4 text-[hsl(196_41%_17%)]"><Info className="mt-0.5 shrink-0 text-[hsl(190_43%_32%)]" size={18} /><div><div className="text-sm font-bold">{copy.adsgramManagerNoteTitle}</div><p className="mt-1 text-xs leading-6 text-[hsl(var(--muted-foreground))]">{copy.adsgramManagerNoteBody}</p></div></div>
+       <div data-testid="note-adsgram-managers" className="mt-4 flex gap-3 rounded-2xl border border-[hsl(190_79%_68%/.35)] bg-[linear-gradient(135deg,hsl(190_79%_68%/.14),hsl(39_94%_62%/.1))] p-4 text-[hsl(196_41%_17%)] shadow-[0_10px_26px_hsl(190_43%_20%/.07)]"><Info className="mt-0.5 shrink-0 text-[hsl(190_43%_32%)]" size={18} /><div className="min-w-0"><div className="font-english text-[10px] font-bold uppercase tracking-[.08em] text-[hsl(190_43%_32%)]">Adsgram review note</div><div className="mt-1 text-sm font-bold">{copy.adsgramManagerNoteTitle}</div><p className="mt-1 text-[11px] leading-5 text-[hsl(var(--muted-foreground))]">{copy.adsgramManagerNoteBody}</p></div></div>
     </div>
   );
 }
