@@ -10,6 +10,7 @@ import {
   Banknote,
   BarChart3,
   ChevronLeft,
+  CheckCircle2,
   CircleHelp,
   Clock3,
   Coins,
@@ -23,6 +24,7 @@ import {
   ShieldCheck,
   Sparkles,
   WalletCards,
+  AlertTriangle,
   X,
   Zap,
 } from 'lucide-react';
@@ -82,6 +84,21 @@ type PublicWithdrawalRecord = {
 
 type Locale = 'ar' | 'en';
 
+type NotificationKind = 'success' | 'info' | 'warning' | 'reward';
+
+type NotificationItem = {
+  id: string;
+  kind: NotificationKind;
+  title: string;
+  body: string;
+  time: string;
+  read: boolean;
+};
+
+type RewardEvent =
+  | { type: 'reward'; taskTitle: string; amount: number; id: number }
+  | { type: 'withdrawal'; amount: number; id: number };
+
 function getBrowserLocale(): Locale {
   return typeof navigator !== 'undefined' && navigator.language.toLowerCase().startsWith('ar') ? 'ar' : 'en';
 }
@@ -96,6 +113,16 @@ const copy = {
     bootTagline: 'مكافآت يومية، بخطوات واضحة',
     bootStatus: 'جارٍ تجهيز مساحة المكافآت',
     openMenu: 'فتح القائمة',
+    notifications: 'الإشعارات',
+    markAllRead: 'تحديد الكل كمقروء',
+    noNotifications: 'لا توجد إشعارات جديدة',
+    welcomeNotificationTitle: 'مرحباً بك في Rewardly',
+    welcomeNotificationBody: 'تابع مهامك اليومية واحصل على مكافآتك بوضوح.',
+    rewardNotificationTitle: 'تهانينا! تمت مشاهدة الإعلان',
+    rewardNotificationBody: 'تم تحديث رصيدك بعد إكمال المهمة بنجاح.',
+    withdrawalNotificationTitle: 'تم إرسال طلب السحب',
+    withdrawalNotificationBody: 'طلبك قيد المراجعة وسيظهر في سجل السحوبات.',
+    justNow: 'الآن',
     demoMode: 'وضع العرض خارج Telegram',
     demoData: 'بيانات العرض',
     fromTelegram: 'من Telegram',
@@ -236,6 +263,16 @@ const copy = {
     bootTagline: 'Daily rewards, clearly earned',
     bootStatus: 'Preparing your rewards space',
     openMenu: 'Open menu',
+    notifications: 'Notifications',
+    markAllRead: 'Mark all as read',
+    noNotifications: 'No new notifications',
+    welcomeNotificationTitle: 'Welcome to Rewardly',
+    welcomeNotificationBody: 'Follow your daily tasks and track every reward clearly.',
+    rewardNotificationTitle: 'Congratulations! Ad completed',
+    rewardNotificationBody: 'Your balance was updated after completing the task.',
+    withdrawalNotificationTitle: 'Withdrawal submitted',
+    withdrawalNotificationBody: 'Your request is under review and is now in your withdrawal history.',
+    justNow: 'Just now',
     demoMode: 'Demo mode outside Telegram',
     demoData: 'Demo data',
     fromTelegram: 'From Telegram',
@@ -414,6 +451,13 @@ const ADSTERRA_SCRIPT_BATCH: AdScriptDefinition[] = [
   { src: 'https://interventioncopiedloitering.com/8c0574e870e5a3843e89d947bd38aaff/invoke.js', options: { key: '8c0574e870e5a3843e89d947bd38aaff', format: 'iframe', height: 50, width: 320, params: {} } },
   { src: 'https://interventioncopiedloitering.com/9f6fe4084cb3d8a8eb4d8246ee57ed25/invoke.js', options: { key: '9f6fe4084cb3d8a8eb4d8246ee57ed25', format: 'iframe', height: 50, width: 320, params: {} } },
   { src: 'https://interventioncopiedloitering.com/5d/77/0f/5d770ff402768d79ddda9c1cd67e9819.js' },
+  { src: 'https://interventioncopiedloitering.com/96/90/da/9690da690d344e2579dffa12d4e2ac24.js' },
+  { src: 'https://interventioncopiedloitering.com/f0/07/9c/f0079c7c7d8c3c01bd28c4116a805f4a.js' },
+  { src: 'https://interventioncopiedloitering.com/7e/7f/2b/7e7f2b6f7c43d86c6859e5b0a40afe3e.js' },
+  { src: 'https://interventioncopiedloitering.com/7e/28/55/7e2855c2f9fb53ed0ca536022ca067df.js' },
+  { src: 'https://interventioncopiedloitering.com/d0/f6/b3/d0f6b318f29b5787025697029ae72f23.js' },
+  { src: 'https://interventioncopiedloitering.com/58/0d/ca/580dcaa1a10c7fb3943a7ea94b700f42.js' },
+  { src: 'https://interventioncopiedloitering.com/da/5e/c3/da5ec3a230bfa740492f3f78bd1ed182.js' },
 ];
 
 const ADSTERRA_BANNER_BATCH = ADSTERRA_SCRIPT_BATCH.filter(
@@ -628,6 +672,7 @@ function useRewardlyState(userId: number) {
   const storageKey = `${STORAGE_KEY}-${userId}`;
   const [state, setState] = useState(() => loadState(storageKey));
   const [verification, setVerification] = useState<{ taskId: string; phase: 'watching' | 'waiting' } | null>(null);
+  const [lastEvent, setLastEvent] = useState<RewardEvent | null>(null);
   const [, setLocation] = useLocation();
 
   useEffect(() => {
@@ -639,6 +684,8 @@ function useRewardlyState(userId: number) {
   }, [state, storageKey]);
 
   const completeTask = (taskId: string) => {
+    const target = state.tasks.find((task) => task.id === taskId);
+    if (!target || target.completedToday >= target.dailyLimit) return;
     setState((current) => {
       const target = current.tasks.find((task) => task.id === taskId);
       if (!target || target.completedToday >= target.dailyLimit) return current;
@@ -660,10 +707,12 @@ function useRewardlyState(userId: number) {
         userWithdrawals: current.userWithdrawals,
       };
     });
+    setLastEvent({ type: 'reward', taskTitle: target.title, amount: target.reward, id: Date.now() });
     setVerification(null);
   };
 
   const requestWithdrawal = (amount: number) => {
+    if (state.wallet.balance < amount) return;
     setState((current) => current.wallet.balance < amount
       ? current
       : {
@@ -682,6 +731,7 @@ function useRewardlyState(userId: number) {
              },
            ],
         });
+    setLastEvent({ type: 'withdrawal', amount, id: Date.now() });
   };
 
   const startTask = (task: Task) => {
@@ -711,7 +761,35 @@ function useRewardlyState(userId: number) {
      }, 1800);
   };
 
-  return { ...state, verification, setVerification, startTask, completeTask, requestWithdrawal };
+  return { ...state, verification, setVerification, startTask, completeTask, requestWithdrawal, lastEvent };
+}
+
+function NotificationIcon({ kind }: { kind: NotificationKind }) {
+  if (kind === 'success' || kind === 'reward') return <CheckCircle2 size={17} />;
+  if (kind === 'warning') return <AlertTriangle size={17} />;
+  return <Info size={17} />;
+}
+
+function FloatingNotification({ notification }: { notification: NotificationItem | null }) {
+  if (!notification) return null;
+
+  return (
+    <div
+      data-testid="floating-notification"
+      className="pointer-events-none fixed inset-x-4 top-4 z-[100] flex justify-center"
+      dir={isArabic ? 'rtl' : 'ltr'}
+    >
+      <div className={`notification-toast notification-${notification.kind} flex w-full max-w-md items-center gap-3 rounded-2xl border p-3.5 shadow-[0_18px_45px_hsl(190_43%_20%/.2)] backdrop-blur-xl`}>
+        <span className="notification-icon flex h-10 w-10 shrink-0 items-center justify-center rounded-xl">
+          <NotificationIcon kind={notification.kind} />
+        </span>
+        <span className="min-w-0 flex-1">
+          <span className="block text-sm font-bold">{notification.title}</span>
+          <span className="mt-0.5 block text-xs leading-5 opacity-85">{notification.body}</span>
+        </span>
+      </div>
+    </div>
+  );
 }
 
 function Shell({
@@ -749,7 +827,7 @@ function Shell({
 
   return (
     <div dir={isArabic ? 'rtl' : 'ltr'} className="app-shell text-[hsl(var(--foreground))]">
-      <header className="sticky top-0 z-40 border-b border-[hsl(var(--border)/.75)] bg-[hsl(42_38%_96%/.9)] backdrop-blur-xl">
+      <header className="relative sticky top-0 z-40 border-b border-[hsl(var(--border)/.75)] bg-[hsl(42_38%_96%/.9)] backdrop-blur-xl">
         <div className="mx-auto flex h-[4.5rem] max-w-5xl items-center justify-between px-5 sm:px-8">
           <Link href="/" data-testid="link-brand" className="flex items-center gap-3">
             <BrandMark small />
@@ -835,7 +913,7 @@ function PageHeading({ eyebrow, title, description, action }: { eyebrow: string;
 
 function BalanceCard({ wallet }: { wallet: Wallet }) {
   return (
-    <div className="balance-card relative overflow-hidden rounded-[1.65rem] p-6 text-[hsl(42_38%_96%)] shadow-[0_18px_40px_hsl(190_43%_20%/.2)] sm:p-8">
+    <div className="balance-card shine-card relative overflow-hidden rounded-[1.65rem] p-6 text-[hsl(42_38%_96%)] shadow-[0_18px_40px_hsl(190_43%_20%/.2)] sm:p-8">
       <div className="absolute bottom-0 right-0 h-40 w-40 translate-x-16 translate-y-16 rounded-full bg-[hsl(12_73%_65%/.16)] blur-2xl" />
       <div className="relative flex items-start justify-between">
         <div>
@@ -857,7 +935,7 @@ function BalanceCard({ wallet }: { wallet: Wallet }) {
 
 function AdsgramPreviewCard({ task }: { task: Task }) {
   return (
-    <section data-testid="card-adsgram-preview" className="adsgram-feature-card relative mt-5 overflow-hidden rounded-2xl border border-[hsl(226_25%_34%)] p-2.5 text-[hsl(228_42%_99%)]">
+    <section data-testid="card-adsgram-preview" className="adsgram-feature-card shine-card relative mt-5 overflow-hidden rounded-2xl border border-[hsl(226_25%_34%)] p-2.5 text-[hsl(228_42%_99%)]">
       <div className="mb-2 flex items-center justify-between px-1">
         <div className="flex items-center gap-2 text-[10px] font-bold uppercase tracking-[.13em] text-[hsl(228_20%_76%)]">
           <span className="h-1.5 w-1.5 rounded-full bg-[hsl(42_94%_63%)]" />
@@ -892,7 +970,7 @@ function TaskCard({ task, onStart, verification }: { task: Task; onStart: (task:
   const blocked = Boolean(verification && !active);
   const progress = task.dailyLimit ? Math.round((task.completedToday / task.dailyLimit) * 100) : 0;
   return (
-      <div data-testid={`card-task-${task.id}`} className={`${task.kind === 'adstera' ? 'adstera-task-card' : 'adsgram-feature-card'} task-row relative overflow-hidden rounded-2xl border p-2.5 text-[hsl(228_42%_99%)] ${active ? 'border-[hsl(42_94%_63%/.8)] shadow-[0_14px_34px_hsl(42_94%_63%/.16)]' : task.kind === 'adstera' ? 'border-[hsl(0_72%_52%/.7)]' : 'border-[hsl(226_25%_34%)]'} ${blocked ? 'opacity-60' : ''}`}>
+      <div data-testid={`card-task-${task.id}`} className={`${task.kind === 'adstera' ? 'adstera-task-card' : 'adsgram-feature-card'} shine-card task-row relative overflow-hidden rounded-2xl border p-2.5 text-[hsl(228_42%_99%)] ${active ? 'border-[hsl(42_94%_63%/.8)] shadow-[0_14px_34px_hsl(42_94%_63%/.16)]' : task.kind === 'adstera' ? 'border-[hsl(0_72%_52%/.7)]' : 'border-[hsl(226_25%_34%)]'} ${blocked ? 'opacity-60' : ''}`}>
        <div className="adsgram-ad-row flex items-center gap-2.5 rounded-xl px-2.5">
          <div className="adsgram-logo-frame flex h-10 w-10 shrink-0 items-center justify-center overflow-hidden rounded-[0.7rem]">
             {task.kind === 'ad' ? (
@@ -983,7 +1061,7 @@ function TrustStrip() {
 
 function ChannelJoinCard() {
   return (
-     <section data-testid="card-channel-join" className="channel-card relative mt-4 flex min-h-[76px] items-center gap-3 overflow-hidden rounded-[1.45rem] px-4 py-3 text-[hsl(42_38%_96%)] shadow-[0_14px_30px_hsl(190_43%_20%/.16)]">
+     <section data-testid="card-channel-join" className="channel-card shine-card relative mt-4 flex min-h-[76px] items-center gap-3 overflow-hidden rounded-[1.45rem] px-4 py-3 text-[hsl(42_38%_96%)] shadow-[0_14px_30px_hsl(190_43%_20%/.16)]">
        <div className="relative flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl bg-[hsl(39_94%_62%/.16)] text-[hsl(39_94%_62%)]">
         <ArrowUpLeft size={16} />
       </div>
@@ -1019,7 +1097,7 @@ function HomePage({ user, isDemo, tasks, wallet }: { user: TelegramUser; isDemo:
         <div className="hidden rounded-2xl bg-[hsl(12_73%_65%/.12)] p-3 text-[hsl(12_73%_65%)] sm:block"><Sparkles size={22} /></div>
       </div>
        <div className="mb-6">
-         <div data-testid="card-telegram-profile" className="flex min-h-[4.5rem] items-center gap-3 rounded-2xl border border-[hsl(var(--border))] bg-[hsl(var(--card)/.6)] px-4 py-3">
+          <div data-testid="card-telegram-profile" className="shine-card relative flex min-h-[4.5rem] items-center gap-3 overflow-hidden rounded-2xl border border-[hsl(var(--border))] bg-[hsl(var(--card)/.6)] px-4 py-3">
            <Avatar user={user} />
            <div className="min-w-0 flex-1">
              <div data-testid="text-telegram-name" className="truncate text-sm font-bold">{displayName(user)}</div>
@@ -1031,7 +1109,7 @@ function HomePage({ user, isDemo, tasks, wallet }: { user: TelegramUser; isDemo:
        </div>
       <div className="grid gap-5 lg:grid-cols-[1.08fr_.92fr]">
         <div className="rise-in"><BalanceCard wallet={wallet} /></div>
-        <div className="rise-in delay-1 rounded-[1.65rem] border border-[hsl(var(--border))] bg-[hsl(var(--card)/.72)] p-6 sm:p-7">
+         <div className="shine-card rise-in delay-1 relative overflow-hidden rounded-[1.65rem] border border-[hsl(var(--border))] bg-[hsl(var(--card)/.72)] p-6 sm:p-7">
           <div className="flex items-start justify-between">
             <div><div className="text-xs font-semibold text-[hsl(var(--muted-foreground))]">{copy.dailyProgress}</div><div data-testid="text-daily-progress" className="mt-2 text-2xl font-bold">{formatNumber(done)} <span className="text-sm font-normal text-[hsl(var(--muted-foreground))]">{isArabic ? 'من' : 'of'} {formatNumber(possible)} {copy.tasksCount}</span></div></div>
             <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-[hsl(12_73%_65%/.13)] text-[hsl(12_73%_65%)]"><BarChart3 size={19} /></div>
@@ -1264,12 +1342,12 @@ function WalletPage({ wallet, onWithdraw }: { wallet: Wallet; onWithdraw: (amoun
     <div className="screen-enter safe-bottom">
       <PageHeading eyebrow={copy.walletEyebrow} title={copy.walletTitle} description={copy.walletDescription} />
       <div className="grid gap-5 lg:grid-cols-[.9fr_1.1fr]">
-        <section className="rounded-[1.65rem] bg-[hsl(190_43%_20%)] p-7 text-[hsl(42_38%_96%)] shadow-[0_18px_40px_hsl(190_43%_20%/.16)] sm:p-9">
+        <section className="shine-card relative overflow-hidden rounded-[1.65rem] bg-[hsl(190_43%_20%)] p-7 text-[hsl(42_38%_96%)] shadow-[0_18px_40px_hsl(190_43%_20%/.16)] sm:p-9">
           <div className="flex items-center gap-2 text-sm text-[hsl(42_20%_76%)]"><WalletCards size={17} className="text-[hsl(39_94%_62%)]" />{copy.walletBalance}</div>
             <div data-testid="text-wallet-page-balance" className="mt-5 font-mono text-5xl font-bold tracking-[-.08em]">{formatNumber(wallet.balance, 4)} <span className="font-sans text-sm font-normal tracking-normal text-[hsl(42_20%_76%)]">USDT</span></div>
            <div className="mt-8 flex items-center gap-2 text-xs text-[hsl(42_20%_76%)]"><Coins size={15} className="text-[hsl(39_94%_62%)]" />{copy.tonNetwork} · USDT</div>
         </section>
-        <section className="rounded-[1.65rem] border border-[hsl(var(--border))] bg-[hsl(var(--card)/.76)] p-6 sm:p-8">
+         <section className="shine-card relative overflow-hidden rounded-[1.65rem] border border-[hsl(var(--border))] bg-[hsl(var(--card)/.76)] p-6 sm:p-8">
           <div className="mb-5 flex items-start justify-between gap-3">
             <div><h2 className="text-lg font-bold">{copy.withdrawalTitle}</h2><p className="mt-1 text-xs leading-6 text-[hsl(var(--muted-foreground))]">{copy.withdrawalDescription}</p></div>
             <Banknote size={22} className="text-[hsl(34_75%_42%)]" />
@@ -1291,11 +1369,11 @@ function WalletPage({ wallet, onWithdraw }: { wallet: Wallet; onWithdraw: (amoun
         </section>
       </div>
       <div className="mt-5 grid grid-cols-2 gap-3 sm:grid-cols-3">
-         <div data-testid="stat-today-earned" className="rounded-2xl border border-[hsl(var(--border))] bg-[hsl(var(--card)/.75)] p-5"><div className="text-xs text-[hsl(var(--muted-foreground))]">{copy.today}</div><div className="mt-3 font-mono text-2xl font-bold text-[hsl(34_75%_42%)]">+{formatUsdt(wallet.todayEarned)}</div></div>
-         <div data-testid="stat-total-earned" className="rounded-2xl border border-[hsl(var(--border))] bg-[hsl(var(--card)/.75)] p-5"><div className="text-xs text-[hsl(var(--muted-foreground))]">{copy.total}</div><div className="mt-3 font-mono text-2xl font-bold text-[hsl(196_41%_17%)]">{formatUsdt(wallet.totalEarned)}</div></div>
-        <div data-testid="stat-streak" className="col-span-2 rounded-2xl border border-[hsl(var(--border))] bg-[hsl(var(--card)/.75)] p-5 sm:col-span-1"><div className="text-xs text-[hsl(var(--muted-foreground))]">{copy.streak}</div><div className="mt-3 flex items-center gap-2 font-mono text-2xl font-bold text-[hsl(12_73%_65%)]">{formatNumber(wallet.streak)} <span className="font-sans text-xs font-normal text-[hsl(var(--muted-foreground))]">{copy.days}</span></div></div>
+          <div data-testid="stat-today-earned" className="shine-card relative overflow-hidden rounded-2xl border border-[hsl(var(--border))] bg-[hsl(var(--card)/.75)] p-5"><div className="text-xs text-[hsl(var(--muted-foreground))]">{copy.today}</div><div className="mt-3 font-mono text-2xl font-bold text-[hsl(34_75%_42%)]">+{formatUsdt(wallet.todayEarned)}</div></div>
+          <div data-testid="stat-total-earned" className="shine-card relative overflow-hidden rounded-2xl border border-[hsl(var(--border))] bg-[hsl(var(--card)/.75)] p-5"><div className="text-xs text-[hsl(var(--muted-foreground))]">{copy.total}</div><div className="mt-3 font-mono text-2xl font-bold text-[hsl(196_41%_17%)]">{formatUsdt(wallet.totalEarned)}</div></div>
+         <div data-testid="stat-streak" className="shine-card relative col-span-2 overflow-hidden rounded-2xl border border-[hsl(var(--border))] bg-[hsl(var(--card)/.75)] p-5 sm:col-span-1"><div className="text-xs text-[hsl(var(--muted-foreground))]">{copy.streak}</div><div className="mt-3 flex items-center gap-2 font-mono text-2xl font-bold text-[hsl(12_73%_65%)]">{formatNumber(wallet.streak)} <span className="font-sans text-xs font-normal text-[hsl(var(--muted-foreground))]">{copy.days}</span></div></div>
       </div>
-      <div className="mt-6 flex items-center gap-3 rounded-2xl border border-[hsl(var(--border))] p-4 text-xs leading-6 text-[hsl(var(--muted-foreground))]"><ShieldCheck size={18} className="shrink-0 text-[hsl(155_39%_40%)]" /><span>{copy.walletNote}</span></div>
+       <div className="shine-card relative mt-6 flex items-center gap-3 overflow-hidden rounded-2xl border border-[hsl(var(--border))] p-4 text-xs leading-6 text-[hsl(var(--muted-foreground))]"><ShieldCheck size={18} className="shrink-0 text-[hsl(155_39%_40%)]" /><span>{copy.walletNote}</span></div>
     </div>
   );
 }
@@ -1305,7 +1383,7 @@ function WithdrawalHistoryPage({ userWithdrawals }: { userWithdrawals: Withdrawa
   return (
     <div className="screen-enter safe-bottom">
       <PageHeading eyebrow={copy.historyEyebrow} title={copy.historyTitle} description={copy.historyDescription} />
-      <section data-testid="card-my-withdrawal-history" className="overflow-hidden rounded-[1.65rem] border border-[hsl(var(--border))] bg-[hsl(var(--card)/.78)]">
+       <section data-testid="card-my-withdrawal-history" className="shine-card relative overflow-hidden rounded-[1.65rem] border border-[hsl(var(--border))] bg-[hsl(var(--card)/.78)]">
         <div className="flex items-center gap-3 border-b border-[hsl(var(--border))] px-5 py-4">
           <span className="flex h-10 w-10 items-center justify-center rounded-xl bg-[hsl(155_39%_46%/.12)] text-[hsl(155_39%_35%)]"><Banknote size={18} /></span>
           <div>
@@ -1331,7 +1409,7 @@ function WithdrawalHistoryPage({ userWithdrawals }: { userWithdrawals: Withdrawa
           ))}
         </div>
       </section>
-      <section data-testid="card-public-withdrawal-history" className="mt-5 max-w-2xl overflow-hidden rounded-2xl border border-[hsl(var(--border))] bg-[hsl(var(--card)/.6)]">
+       <section data-testid="card-public-withdrawal-history" className="shine-card relative mt-5 max-w-2xl overflow-hidden rounded-2xl border border-[hsl(var(--border))] bg-[hsl(var(--card)/.6)]">
         <div className="border-b border-[hsl(var(--border))] px-4 py-3">
           <h2 className="text-xs font-bold">{copy.publicHistoryTitle}</h2>
           <p className="mt-1 text-[10px] text-[hsl(var(--muted-foreground))]">{copy.publicHistoryDescription}</p>
@@ -1372,13 +1450,13 @@ function HelpPage({ user, isDemo }: { user: TelegramUser; isDemo: boolean }) {
       <div className="space-y-3">
         {items.map(({ id, icon: ItemIcon, title, text }) => {
           const isOpen = open === id;
-          return <div key={id} className={`rounded-2xl border bg-[hsl(var(--card)/.72)] transition ${isOpen ? 'border-[hsl(39_94%_62%/.55)]' : 'border-[hsl(var(--border))]'}`}>
+           return <div key={id} className={`shine-card relative overflow-hidden rounded-2xl border bg-[hsl(var(--card)/.72)] transition ${isOpen ? 'border-[hsl(39_94%_62%/.55)]' : 'border-[hsl(var(--border))]'}`}>
             <button type="button" data-testid={`button-help-${id}`} onClick={() => setOpen(isOpen ? null : id)} className="flex w-full items-center gap-3 p-5 text-right"><span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-[hsl(190_43%_20%/.1)] text-[hsl(190_43%_20%)]"><ItemIcon size={17} /></span><span className="flex-1 text-sm font-bold">{title}</span><ChevronLeft size={17} className={`transition-transform ${isOpen ? '-rotate-90' : ''}`} /></button>
             {isOpen && <p data-testid={`text-help-answer-${id}`} className="px-5 pb-5 pr-[4.25rem] text-xs leading-7 text-[hsl(var(--muted-foreground))]">{text}</p>}
           </div>;
         })}
       </div>
-       <div className="mt-8 rounded-2xl bg-[hsl(12_73%_65%/.1)] p-5"><div className="flex items-center gap-2 text-sm font-bold text-[hsl(12_66%_45%)]"><HelpCircle size={18} /> {copy.helpNeed}</div><p className="mt-2 text-xs leading-6 text-[hsl(var(--muted-foreground))]">{copy.helpNeedText}</p></div>
+        <div className="shine-card relative mt-8 overflow-hidden rounded-2xl bg-[hsl(12_73%_65%/.1)] p-5"><div className="flex items-center gap-2 text-sm font-bold text-[hsl(12_66%_45%)]"><HelpCircle size={18} /> {copy.helpNeed}</div><p className="mt-2 text-xs leading-6 text-[hsl(var(--muted-foreground))]">{copy.helpNeedText}</p></div>
        <div className="mt-5 grid gap-2 sm:grid-cols-2">
          {[
            { href: '/privacy', label: copy.privacyTitle, icon: ShieldCheck },
@@ -1411,7 +1489,7 @@ function PolicyPage({ kind }: { kind: PolicyKind }) {
       <PageHeading eyebrow={copy.policyEyebrow} title={content.title} description={content.description} />
       <div className="space-y-3">
         {content.blocks.map(([title, text], index) => (
-          <section key={title} className="policy-card rounded-2xl border border-[hsl(var(--border))] bg-[hsl(var(--card)/.72)] p-5" style={{ animationDelay: `${index * 70}ms` }}>
+          <section key={title} className="policy-card shine-card relative overflow-hidden rounded-2xl border border-[hsl(var(--border))] bg-[hsl(var(--card)/.72)] p-5" style={{ animationDelay: `${index * 70}ms` }}>
             <div className="flex items-start gap-3">
               <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-xl bg-[hsl(39_94%_62%/.16)] text-[hsl(34_75%_42%)]">{index + 1}</span>
               <div>
@@ -1474,11 +1552,40 @@ function RouterContent() {
     startTask,
     completeTask,
     requestWithdrawal,
+    lastEvent,
   } = rewardly;
+  const [floatingNotification, setFloatingNotification] = useState<NotificationItem | null>(null);
   const [, setLocation] = useLocation();
   const adsteraTask = tasks.find((task) => task.kind === 'adstera');
+
+  useEffect(() => {
+    if (!lastEvent) return;
+    const notification: NotificationItem = lastEvent.type === 'reward'
+      ? {
+          id: `reward-${lastEvent.id}`,
+          kind: 'success',
+          title: copy.rewardNotificationTitle,
+          body: `+${formatNumber(lastEvent.amount, 4)}$ · ${lastEvent.taskTitle}`,
+          time: copy.justNow,
+          read: false,
+        }
+      : {
+          id: `withdrawal-${lastEvent.id}`,
+          kind: 'warning',
+          title: copy.withdrawalNotificationTitle,
+          body: `${copy.withdrawalNotificationBody} ${formatNumber(lastEvent.amount, 4)} USDT`,
+          time: copy.justNow,
+          read: false,
+        };
+    setFloatingNotification(notification);
+    const timeoutId = window.setTimeout(() => setFloatingNotification(null), 4300);
+    return () => window.clearTimeout(timeoutId);
+  }, [lastEvent]);
+
   return (
-    <Shell user={user} isDemo={isDemo} wallet={wallet}>
+    <>
+      <FloatingNotification notification={floatingNotification} />
+      <Shell user={user} isDemo={isDemo} wallet={wallet}>
       <Switch>
         <Route path="/">
           <HomePage user={user} isDemo={isDemo} tasks={tasks} wallet={wallet} />
@@ -1511,7 +1618,8 @@ function RouterContent() {
           <div className="py-20 text-center"><h1 className="text-3xl font-bold">{locale === 'ar' ? 'الصفحة غير موجودة' : 'Page not found'}</h1><Link href="/" data-testid="link-not-found-home" className="mt-5 inline-flex rounded-xl bg-[hsl(190_43%_20%)] px-5 py-3 text-sm font-bold text-white">{copy.nav.home}</Link></div>
         </Route>
       </Switch>
-    </Shell>
+      </Shell>
+    </>
   );
 }
 
